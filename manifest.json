@@ -1,0 +1,11 @@
+{
+	"id": "obsidian-file-tree-view",
+	"name": "File Tree View",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Adds a file tree view to display the structure of your vault.",
+	"author": "jeansordes",
+	"authorUrl": "https://github.com/jeansordes",
+	"fundingUrl": "https://obsidian.md/pricing",
+	"isDesktopOnly": false
+}
