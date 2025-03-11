@@ -1,0 +1,156 @@
+/*
+
+This CSS file will be included with your plugin, and
+available in the app when your plugin is enabled.
+
+If your plugin does not need CSS, delete this file.
+
+*/
+
+/* File Tree View Styles */
+.file-tree-container {
+    margin-top: 10px;
+    overflow: auto;
+    max-height: calc(100vh - 150px);
+}
+
+.file-tree-list,
+.file-tree-nested-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.file-tree-nested-list {
+    padding-left: 20px;
+}
+
+.file-tree-collapsed {
+    display: none;
+}
+
+.file-tree-folder,
+.file-tree-file {
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.file-tree-folder:hover,
+.file-tree-file:hover {
+    background-color: var(--background-secondary);
+}
+
+.file-tree-folder-toggle {
+    display: inline-block;
+    width: 16px;
+    text-align: center;
+    margin-right: 4px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.file-tree-folder-name,
+.file-tree-file-name {
+    margin-left: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Existing styles */
+.my-plugin-ribbon-class {
+    color: var(--text-accent);
+}
+
+/* Dendron Tree View Styles */
+.dendron-tree-container {
+    padding: 8px 4px;
+    user-select: none;
+}
+
+.dendron-tree-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    padding-left: 4px;
+}
+
+.tree-item {
+    padding-left: 4px;
+}
+
+.tree-item-self {
+    display: flex;
+    align-items: center;
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--nav-item-color);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tree-item-self:hover {
+    background-color: var(--nav-item-background-hover);
+    color: var(--nav-item-color-hover);
+}
+
+.tree-item-icon {
+    display: flex;
+    align-items: center;
+    padding-right: 4px;
+    width: 16px;
+    height: 16px;
+}
+
+.tree-item-inner {
+    flex: 1 1 auto;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    min-width: 0;
+    padding-right: 10px;
+}
+
+.tree-item-children {
+    padding-left: 4px;
+}
+
+.tree-item.is-collapsed > .tree-item-children {
+    display: none;
+}
+
+.tree-item.is-collapsed > .tree-item-self .right-triangle {
+    transform: rotate(-90deg);
+}
+
+.right-triangle {
+    transition: transform 100ms ease-in-out;
+}
+
+.collapse-icon svg {
+    width: 14px;
+    height: 14px;
+    color: var(--nav-collapse-icon-color);
+}
+
+.tree-item-inner.mod-create-new::after {
+    content: " (create)";
+    opacity: 0.5;
+    font-size: 0.9em;
+    margin-left: 4px;
+}
+
+/* Additional utility classes */
+.is-clickable {
+    cursor: pointer;
+}
+
+.mod-collapsible {
+    position: relative;
+}
+
+.structured-tree-not-found {
+    opacity: 0.5;
+}
