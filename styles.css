@@ -1,156 +1,119 @@
-/*
-
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
-*/
-
-/* File Tree View Styles */
-.file-tree-container {
-    margin-top: 10px;
-    overflow: auto;
-    max-height: calc(100vh - 150px);
-}
-
-.file-tree-list,
-.file-tree-nested-list {
-    list-style: none;
-    padding-left: 0;
-    margin: 0;
-}
-
-.file-tree-nested-list {
-    padding-left: 20px;
-}
-
-.file-tree-collapsed {
-    display: none;
-}
-
-.file-tree-folder,
-.file-tree-file {
-    padding: 4px 0;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    border-radius: 4px;
-}
-
-.file-tree-folder:hover,
-.file-tree-file:hover {
-    background-color: var(--background-secondary);
-}
-
-.file-tree-folder-toggle {
-    display: inline-block;
-    width: 16px;
-    text-align: center;
-    margin-right: 4px;
-    cursor: pointer;
-    user-select: none;
-}
-
-.file-tree-folder-name,
-.file-tree-file-name {
-    margin-left: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Existing styles */
-.my-plugin-ribbon-class {
-    color: var(--text-accent);
-}
-
-/* Dendron Tree View Styles */
 .dendron-tree-container {
-    padding: 8px 4px;
-    user-select: none;
-}
+    --bg2-5: hsla(0, 0%, calc(96% - 50%), 0.06);
+    --bg-clickable: var(--bg2-5);
+    --bg-hover: var(--bg3);
+    --line-height: 1.5rem;
+    --button-icon-size: 14px;
+    --button-size: calc(var(--line-height));
+    --border-radius: 3px;
 
-.dendron-tree-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    padding-left: 4px;
-}
+    * {
+        user-select: none;
+    }
 
-.tree-item {
-    padding-left: 4px;
-}
+    .dendron-tree-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
 
-.tree-item-self {
-    display: flex;
-    align-items: center;
-    padding: 1px 6px;
-    border-radius: 3px;
-    color: var(--nav-item-color);
-    cursor: pointer;
-    white-space: nowrap;
-}
+    .tree-item-content {
+        display: flex;
+        align-items: center;
+        flex: 1;
+    }
 
-.tree-item-self:hover {
-    background-color: var(--nav-item-background-hover);
-    color: var(--nav-item-color-hover);
-}
+    .tree-item-inner {
+        flex: 1 1 auto;
+        padding: 0 6px;
+        margin-left: 2px;
+        margin-bottom: 2px;
+        border-radius: var(--border-radius);
+        line-height: 1.5rem;
+        white-space: nowrap;
+    }
 
-.tree-item-icon {
-    display: flex;
-    align-items: center;
-    padding-right: 4px;
-    width: 16px;
-    height: 16px;
-}
+    .tree-item-inner.is-clickable {
+        color: var(--nav-item-color-hover);
+        background-color: var(--bg-clickable);
+        cursor: pointer;
+    }
 
-.tree-item-inner {
-    flex: 1 1 auto;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    min-width: 0;
-    padding-right: 10px;
-}
+    .tree-item-inner.is-clickable:hover {
+        background-color: var(--bg-hover);
+    }
 
-.tree-item-children {
-    padding-left: 4px;
-}
+    .tree-item-self {
+        padding-top: 0;
+        padding-bottom: 0;
+    }
 
-.tree-item.is-collapsed > .tree-item-children {
-    display: none;
-}
+    .tree-item-folder-icon svg {
+        width: var(--button-icon-size);
+        height: var(--button-icon-size);
+        transform: translate(5px, 1px);
+    }
 
-.tree-item.is-collapsed > .tree-item-self .right-triangle {
-    transform: rotate(-90deg);
-}
+    .tree-item.is-collapsed>.tree-item-children {
+        display: none;
+    }
 
-.right-triangle {
-    transition: transform 100ms ease-in-out;
-}
+    .tree-item.is-collapsed>.tree-item-self .right-triangle {
+        transform: rotate(-90deg);
+    }
 
-.collapse-icon svg {
-    width: 14px;
-    height: 14px;
-    color: var(--nav-collapse-icon-color);
-}
+    .right-triangle {
+        transition: transform 100ms ease-in-out;
+    }
 
-.tree-item-inner.mod-create-new::after {
-    content: " (create)";
-    opacity: 0.5;
-    font-size: 0.9em;
-    margin-left: 4px;
-}
+    .collapse-icon svg {
+        color: var(--nav-collapse-icon-color);
+        transform: translate(-0.5px, 0px);
+    }
 
-/* Additional utility classes */
-.is-clickable {
-    cursor: pointer;
-}
+    .collapse-icon:hover svg {
+        color: var(--nav-item-color-hover);
+    }
 
-.mod-collapsible {
-    position: relative;
-}
+    .collapse-icon:before {
+        content: '';
+        display: block;
+        position: absolute;
+        left: -4px;
+        top: -7px;
+        width: var(--button-size);
+        height: var(--button-size);
+        border-radius: var(--border-radius);
+        background-color: var(--bg-clickable);
+    }
 
-.structured-tree-not-found {
-    opacity: 0.5;
+    .collapse-icon:hover:before {
+        background-color: var(--bg-hover);
+    }
+
+    .is-clickable {
+        cursor: pointer;
+    }
+
+    .tree-item-create-button:before {
+        content: '';
+        display: block;
+        position: absolute;
+        right: 8px;
+        top: 0;
+        width: var(--button-size);
+        height: var(--button-size);
+        border-radius: var(--border-radius);
+        background-color: var(--bg-clickable);
+    }
+
+    .tree-item-create-button:hover:before {
+        background-color: var(--bg-hover);
+    }
+
+    .tree-item-create-button svg {
+        width: var(--button-icon-size);
+        height: var(--button-icon-size);
+        transform: translate(-4px, 2px);
+    }
 }

@@ -1,314 +1,31 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFolder, TFile, ItemView, WorkspaceLeaf, ViewState } from 'obsidian';
-
-// Define the view type for our file tree view
-const FILE_TREE_VIEW_TYPE = 'dendron-tree-view';
-
-interface MyPluginSettings {
-	mySetting: string;
-}
-
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
-}
-
-interface DendronNode {
-	name: string;
-	children: Map<string, DendronNode>;
-	file?: TFile;
-	isFile: boolean;
-}
-
-// Dendron Tree View class
-class DendronTreeView extends ItemView {
-	private lastBuiltTree: DendronNode | null = null;
-	private container: HTMLElement | null = null;
-
-	constructor(leaf: WorkspaceLeaf) {
-		super(leaf);
-	}
-
-	getViewType(): string {
-		return FILE_TREE_VIEW_TYPE;
-	}
-
-	getDisplayText(): string {
-		return 'Dendron Tree';
-	}
-
-	getIcon(): string {
-		return 'folder';
-	}
-
-	async onOpen() {
-		const container = this.containerEl.children[1];
-		container.empty();
-		container.createEl('h4', { text: 'Dendron Tree' });
-		
-		// Create a container for the dendron tree
-		const treeContainer = container.createEl('div', { cls: 'dendron-tree-container' });
-		this.container = treeContainer;
-		
-		// Build the dendron tree
-		await this.buildDendronTree(treeContainer);
-
-		// Register event handlers for file changes
-		this.registerEvent(
-			this.app.vault.on('create', () => this.refresh())
-		);
-		this.registerEvent(
-			this.app.vault.on('modify', () => this.refresh())
-		);
-		this.registerEvent(
-			this.app.vault.on('delete', () => this.refresh())
-		);
-		this.registerEvent(
-			this.app.vault.on('rename', () => this.refresh())
-		);
-	}
-
-	async refresh() {
-		if (this.container) {
-			this.container.empty();
-			await this.buildDendronTree(this.container);
-		}
-	}
-
-	createDendronNode(): DendronNode {
-		return {
-			name: '',
-			children: new Map<string, DendronNode>(),
-			isFile: false
-		};
-	}
-
-	buildDendronStructure(files: TFile[]): DendronNode {
-		const root = this.createDendronNode();
-		const processedPaths = new Set<string>();
-		
-		for (const file of files) {
-			const parts = file.basename.split('.');
-			let current = root;
-			let currentPath = '';
-			
-			// Process all possible parent paths first
-			for (let i = 0; i < parts.length - 1; i++) {
-				const part = parts[i];
-				currentPath = currentPath ? currentPath + '.' + part : part;
-				
-				if (!current.children.has(currentPath)) {
-					current.children.set(currentPath, {
-						name: currentPath,
-						children: new Map<string, DendronNode>(),
-						isFile: false
-					});
-				}
-				current = current.children.get(currentPath)!;
-				processedPaths.add(currentPath);
-			}
-
-			// Process the leaf (file) node
-			const leafName = parts[parts.length - 1];
-			currentPath = currentPath ? currentPath + '.' + leafName : leafName;
-			
-			if (!processedPaths.has(currentPath)) {
-				current.children.set(currentPath, {
-					name: currentPath,
-					children: new Map<string, DendronNode>(),
-					isFile: true,
-					file: file
-				});
-				processedPaths.add(currentPath);
-			}
-		}
-		
-		return root;
-	}
-
-	// Add these helper methods before renderDendronNode
-	private findParentFolder(node: DendronNode): string {
-		// First try to find a file in the current node's children
-		for (const [_, childNode] of node.children) {
-			if (childNode.file?.parent?.path) {
-				return childNode.file.parent.path;
-			}
-		}
-
-		// If no file found in children, look for files in parent nodes
-		let current = node;
-		while (current) {
-			for (const [_, siblingNode] of current.children) {
-				if (siblingNode.file?.parent?.path) {
-					return siblingNode.file.parent.path;
-				}
-			}
-			// Move up the tree by finding the parent node
-			let found = false;
-			for (const [_, potentialParent] of this.lastBuiltTree?.children || new Map()) {
-				if (potentialParent.children.has(current.name)) {
-					current = potentialParent;
-					found = true;
-					break;
-				}
-			}
-			if (!found) break;
-		}
-
-		// If no files found in the tree, return empty string (vault root)
-		return "";
-	}
-
-	async buildDendronTree(container: HTMLElement) {
-		// Get all markdown files
-		const files = this.app.vault.getMarkdownFiles();
-		
-		// Build the dendron structure
-		const root = this.buildDendronStructure(files);
-		this.lastBuiltTree = root;
-		
-		// Create the tree view
-		const rootList = container.createEl('ul', { cls: 'dendron-tree-list' });
-		this.renderDendronNode(root, rootList, '');
-	}
-
-	renderDendronNode(node: DendronNode, parentEl: HTMLElement, prefix: string) {
-		// Sort children by name
-		const sortedChildren = Array.from(node.children.entries())
-			.sort(([aKey], [bKey]) => aKey.localeCompare(bKey));
-
-		sortedChildren.forEach(([name, childNode], index) => {
-			const item = parentEl.createEl('div', { cls: 'tree-item is-clickable' });
-			
-			const itemSelf = item.createEl('div', { 
-				cls: 'tree-item-self is-clickable' + (childNode.children.size > 0 ? ' mod-collapsible' : '')
-			});
-
-			if (childNode.children.size > 0) {
-				const iconDiv = itemSelf.createEl('div', { cls: 'tree-item-icon collapse-icon' });
-				iconDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle"><path d="M3 8L12 17L21 8"></path></svg>`;
-			}
-
-			// Display name without the path
-			const displayName = name.split('.').pop() || name;
-			const innerDiv = itemSelf.createEl('div', { 
-				cls: 'tree-item-inner' + (!childNode.file && childNode.isFile ? ' mod-create-new' : ''),
-				text: displayName
-			});
-
-			if (!childNode.isFile && childNode.children.size === 0) {
-				itemSelf.createEl('div', { cls: 'structured-tree-not-found' });
-			}
-
-			// Track clicks for double-click detection
-			let clickTimeout: NodeJS.Timeout | null = null;
-			let preventSingleClick = false;
-
-			// Handle click events
-			itemSelf.addEventListener('click', async (event) => {
-				if (preventSingleClick) {
-					preventSingleClick = false;
-					return;
-				}
-
-				// Handle single click
-				if (childNode.children.size > 0) {
-					item.toggleClass('is-collapsed', !item.hasClass('is-collapsed'));
-					const triangle = itemSelf.querySelector('.right-triangle');
-					if (triangle) {
-						triangle.classList.toggle('is-collapsed');
-					}
-				}
-
-				if (childNode.isFile && childNode.file) {
-					const leaf = this.app.workspace.getLeaf(false);
-					if (leaf) {
-						await leaf.openFile(childNode.file);
-					}
-				}
-			});
-
-			// Handle double-click events
-			itemSelf.addEventListener('dblclick', async (event) => {
-				preventSingleClick = true;
-				
-				if (clickTimeout) {
-					clearTimeout(clickTimeout);
-					clickTimeout = null;
-				}
-
-				// Handle folder note creation/opening
-				if (childNode.children.size > 0) {
-					const parentFolder = this.findParentFolder(childNode);
-					const folderNotePath = parentFolder 
-						? `${parentFolder}/${name}.md`
-						: `${name}.md`;
-
-					let folderNote = this.app.vault.getAbstractFileByPath(folderNotePath);
-					
-					if (!folderNote) {
-						try {
-							folderNote = await this.app.vault.create(folderNotePath, '');
-							new Notice('Created folder note: ' + folderNotePath);
-						} catch (error) {
-							console.error('Failed to create folder note:', error);
-							new Notice('Failed to create folder note: ' + folderNotePath);
-						}
-					}
-
-					if (folderNote instanceof TFile) {
-						const leaf = this.app.workspace.getLeaf(false);
-						if (leaf) {
-							await leaf.openFile(folderNote);
-						}
-					}
-				}
-
-				// Handle file creation for non-existent files
-				if (childNode.isFile && !childNode.file) {
-					try {
-						const parentFolder = this.findParentFolder(childNode);
-						const fullPath = parentFolder 
-							? `${parentFolder}/${name}.md`
-							: `${name}.md`;
-
-						const file = await this.app.vault.create(fullPath, '');
-						new Notice('Created file: ' + fullPath);
-						const leaf = this.app.workspace.getLeaf(false);
-						if (leaf) {
-							await leaf.openFile(file);
-						}
-					} catch (error) {
-						console.error('Failed to create file:', error);
-						new Notice('Failed to create file: ' + name + '.md');
-					}
-				}
-			});
-
-			if (childNode.children.size > 0) {
-				const childrenDiv = item.createEl('div', { 
-					cls: 'tree-item-children',
-					attr: { style: '' }
-				});
-
-				this.renderDendronNode(childNode, childrenDiv, '');
-			}
-		});
-	}
-}
+import { App, Modal, Notice, Plugin, TFile, ViewState, WorkspaceLeaf } from 'obsidian';
+import { FILE_TREE_VIEW_TYPE, PluginSettings, DEFAULT_SETTINGS } from './src/models/types';
+import DendronTreeView from './src/views/DendronTreeView';
 
 export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+	settings: PluginSettings;
+	private viewRegistered = false;
+	private isInitializing = false;
 
 	async onload() {
 		await this.loadSettings();
+
+		// Always unregister the view type first to ensure clean registration
+		try {
+			(this.app as any).viewRegistry.unregisterView(FILE_TREE_VIEW_TYPE);
+		} catch (e) {
+			// This is normal if it's the first load
+		}
 
 		// Register the file tree view
 		this.registerView(
 			FILE_TREE_VIEW_TYPE,
 			(leaf) => new DendronTreeView(leaf)
 		);
+		this.viewRegistered = true;
 
 		// Add a ribbon icon to open the file tree view
-		this.addRibbonIcon('folder', 'Open File Tree', (evt: MouseEvent) => {
+		this.addRibbonIcon('structured-activity-bar', 'Open Dendron Tree', (evt: MouseEvent) => {
 			this.activateView();
 		});
 
@@ -321,35 +38,85 @@ export default class MyPlugin extends Plugin {
 			}
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		// Use a timeout to ensure we don't initialize too early
+        // and create a new leaf before checking for existing leaves
+        // resulting in a race condition, with 2 leaves created in the end
+		setTimeout(() => {
+			this.app.workspace.onLayoutReady(() => {
+				this.checkAndInitializeView();
+			});
+		}, 100);
+	}
+
+	private async checkAndInitializeView() {
+		// Check for leaves with our view type
+		const leaves = this.app.workspace.getLeavesOfType(FILE_TREE_VIEW_TYPE);
+		
+		// If we already have a leaf with our view type, don't create another one
+		if (leaves.length > 0) {
+			return;
+		}
+		
+		// Check for any leaves that might have our view type but are not properly initialized
+		const allLeaves = this.app.workspace.getLeavesOfType('');
+		
+		// Find any leaves that might be our view but not properly registered
+		const potentialDendronLeaves = allLeaves.filter(leaf => 
+			leaf.view?.containerEl?.querySelector('.dendron-tree-container') !== null
+		);
+		
+		if (potentialDendronLeaves.length > 0) {
+			for (const leaf of potentialDendronLeaves) {
+				await leaf.setViewState({
+					type: FILE_TREE_VIEW_TYPE,
+					active: false
+				} as ViewState);
+			}
+			return;
+		}
+		
+		// If no existing leaves are found, create a new one
+		await this.initLeaf();
+	}
+
+	async initLeaf(): Promise<void> {
+		// Set flag to indicate we're initializing
+		this.isInitializing = true;
+		
+		try {
+			// Always create the view in the left panel
+			const leaf = this.app.workspace.getLeftLeaf(false);
+			if (!leaf) return;
+			
+			// Set the view state
+			await leaf.setViewState({
+				type: FILE_TREE_VIEW_TYPE,
+				active: false // Set to false to avoid automatically focusing the view
+			} as ViewState);
+		} finally {
+			// Reset the flag
+			this.isInitializing = false;
+		}
 	}
 
 	async activateView() {
-		// If the view is already open, do nothing
-		if (this.app.workspace.getLeavesOfType(FILE_TREE_VIEW_TYPE).length > 0) {
+		// If the view is already open, reveal it
+		const existing = this.app.workspace.getLeavesOfType(FILE_TREE_VIEW_TYPE);
+		
+		if (existing.length > 0) {
+			this.app.workspace.revealLeaf(existing[0]);
 			return;
 		}
 
-		// Open the view in the right sidebar
-		const leaf = this.app.workspace.getRightLeaf(false);
+		// Otherwise, create a new leaf in the left sidebar
+		const leaf = this.app.workspace.getLeftLeaf(false);
 		if (leaf) {
 			await leaf.setViewState({
 				type: FILE_TREE_VIEW_TYPE,
-				active: true,
+				active: true
 			} as ViewState);
+			this.app.workspace.revealLeaf(leaf);
 		}
-
-		// Reveal the leaf
-		const newLeaf = this.app.workspace.getLeavesOfType(FILE_TREE_VIEW_TYPE)[0];
-		if (newLeaf) {
-			this.app.workspace.revealLeaf(newLeaf);
-		}
-	}
-
-	onunload() {
-		// Unregister the view when the plugin is disabled
-		this.app.workspace.detachLeavesOfType(FILE_TREE_VIEW_TYPE);
 	}
 
 	async loadSettings() {
@@ -359,46 +126,8 @@ export default class MyPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
-}
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
+	onunload() {
+		// Don't detach leaves to keep the view open when the plugin is unloaded
 	}
 }
