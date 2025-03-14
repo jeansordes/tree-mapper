@@ -1,14 +1,34 @@
-import { App, ItemView, Notice, TFile, WorkspaceLeaf, setIcon } from 'obsidian';
-import { DendronNode, DendronNodeType, FILE_TREE_VIEW_TYPE } from '../models/types';
+import { App, ItemView, Notice, TFile, WorkspaceLeaf } from 'obsidian';
+import { DendronNode, DendronNodeType, FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON } from '../models/types';
 import { buildDendronStructure } from '../utils/treeUtils';
+import { t } from '../i18n';
+import { DendronNodeRenderer } from './components/DendronNodeRenderer';
+import { DendronEventHandler } from './components/DendronEventHandler';
+import { DendronControls } from './components/DendronControls';
 
 // Dendron Tree View class
 export default class DendronTreeView extends ItemView {
     private lastBuiltTree: DendronNode | null = null;
     private container: HTMLElement | null = null;
+    private activeFile: TFile | null = null;
+    private fileItemsMap: Map<string, HTMLElement> = new Map();
+    private nodePathMap: Map<string, DendronNode> = new Map();
+    private expandedNodes: Set<string> = new Set();
+    private settings: PluginSettings;
+    
+    // Component instances
+    private nodeRenderer: DendronNodeRenderer;
+    private eventHandler: DendronEventHandler;
+    private controls: DendronControls;
 
-    constructor(leaf: WorkspaceLeaf) {
+    constructor(leaf: WorkspaceLeaf, settings: PluginSettings) {
         super(leaf);
+        this.settings = settings;
+        
+        // Initialize components
+        this.nodeRenderer = new DendronNodeRenderer(this.app, this.fileItemsMap);
+        this.eventHandler = new DendronEventHandler(this.app, this.refresh.bind(this));
+        // Controls will be initialized in onOpen when container is available
     }
 
     getViewType(): string {
@@ -16,263 +36,257 @@ export default class DendronTreeView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Dendron Tree';
+        return t('viewName');
     }
 
     getIcon(): string {
-        return 'structured-activity-bar';
+        return TREE_VIEW_ICON;
     }
 
     async onOpen() {
         const container = this.containerEl.children[1];
         container.empty();
+        
+        // Set the main container to be a flex container with column direction
+        container.addClass('dendron-view-container');
 
-        // Create a container for the dendron tree
-        const treeContainer = container.createEl('div', { cls: 'dendron-tree-container' });
+        // Create a fixed header with controls
+        const header = document.createElement('div');
+        header.className = 'dendron-tree-header';
+        container.appendChild(header);
+        
+        // Create a scrollable container for the dendron tree
+        const scrollContainer = document.createElement('div');
+        scrollContainer.className = 'dendron-tree-scroll-container';
+        container.appendChild(scrollContainer);
+        
+        // Create the actual tree container inside the scroll container
+        const treeContainer = document.createElement('div');
+        treeContainer.className = 'dendron-tree-container';
+        scrollContainer.appendChild(treeContainer);
         this.container = treeContainer;
+        
+        // Initialize controls with the container
+        this.controls = new DendronControls(this.containerEl, this.expandedNodes);
+        
+        // Add control buttons to the header
+        this.controls.addControlButtons(header);
 
         // Register file system events
-        this.registerFileEvents();
+        this.eventHandler.registerFileEvents();
+
+        // Register event for active file change
+        this.eventHandler.registerActiveFileEvents((file) => {
+            this.activeFile = file;
+            this.highlightActiveFile();
+        });
 
         // Build the dendron tree
         await this.buildDendronTree(treeContainer);
+
+        // Get the active file when the view is first opened
+        const activeFile = this.app.workspace.getActiveFile();
+        if (activeFile) {
+            this.activeFile = activeFile;
+            // Use a small timeout to ensure the tree is fully rendered
+            setTimeout(() => {
+                this.highlightActiveFile();
+            }, 100);
+        }
     }
 
     /**
-     * Register file system events
+     * Public method to highlight a specific file in the tree view
+     * This can be called from the main plugin
      */
-    private registerFileEvents(): void {
-        // Register individual events to avoid type issues
-        this.registerEvent(
-            this.app.vault.on('create', () => this.refresh())
-        );
-        this.registerEvent(
-            this.app.vault.on('modify', () => this.refresh())
-        );
-        this.registerEvent(
-            this.app.vault.on('delete', () => this.refresh())
-        );
-        this.registerEvent(
-            this.app.vault.on('rename', () => this.refresh())
-        );
+    public highlightFile(file: TFile): void {
+        this.activeFile = file;
+        this.highlightActiveFile();
     }
 
-    async refresh() {
-        if (this.container) {
-            this.container.empty();
-            await this.buildDendronTree(this.container);
+    /**
+     * Highlight the active file in the tree view and scroll it into view
+     */
+    private highlightActiveFile(): void {
+        if (!this.activeFile || !this.container) return;
+
+        // Clear previous active file highlighting
+        const previousActive = this.container.querySelector('.tree-item-inner.is-active');
+        if (previousActive) {
+            previousActive.removeClass('is-active');
         }
+
+        // Find the element for the active file
+        const filePath = this.activeFile.path;
+        const fileItem = this.fileItemsMap.get(filePath);
+
+        if (fileItem) {
+            // Add active class
+            fileItem.addClass('is-active');
+            
+            // Scroll into view with a small delay to ensure DOM is updated
+            setTimeout(() => {
+                fileItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 50);
+            
+            // Ensure all parent folders are expanded
+            let parent = fileItem.closest('.tree-item');
+            while (parent) {
+                if (parent.hasClass('is-collapsed')) {
+                    parent.removeClass('is-collapsed');
+                    
+                    // Update expanded nodes set
+                    const path = parent.getAttribute('data-path');
+                    if (path) {
+                        this.expandedNodes.add(path);
+                    }
+                }
+                const parentElement = parent.parentElement;
+                parent = parentElement ? parentElement.closest('.tree-item') : null;
+            }
+        }
+    }
+
+    /**
+     * Save the expanded state of nodes
+     */
+    private saveExpandedState(): void {
+        this.expandedNodes.clear();
+        if (this.container) {
+            const expandedItems = this.container.querySelectorAll('.tree-item:not(.is-collapsed)');
+            expandedItems.forEach(item => {
+                const path = item.getAttribute('data-path');
+                if (path) {
+                    this.expandedNodes.add(path);
+                }
+            });
+        }
+    }
+
+    /**
+     * Restore the expanded state of nodes
+     */
+    private restoreExpandedState(): void {
+        if (this.container) {
+            this.expandedNodes.forEach(path => {
+                const item = this.container?.querySelector(`.tree-item[data-path="${path}"]`);
+                if (item) {
+                    item.removeClass('is-collapsed');
+                    const triangle = item.querySelector('.right-triangle');
+                    if (triangle) {
+                        triangle.addClass('is-collapsed');
+                    }
+                }
+            });
+        }
+    }
+    
+    async refresh(changedPath?: string, forceFullRefresh: boolean = false) {
+        if (!this.container) {
+            return;
+        }
+
+        // For file creation, deletion, or renaming, we need a full rebuild
+        // The incremental update only works well for content modifications
+        // Try incremental update if a path is provided and it's not a create/delete operation
+        if (changedPath && !forceFullRefresh && 
+            this.eventHandler.tryIncrementalUpdate(
+                changedPath, 
+                this.container, 
+                this.lastBuiltTree, 
+                this.nodePathMap,
+                (node, container) => this.nodeRenderer.renderDendronNode(node, container, this.expandedNodes)
+            )) {
+            this.highlightActiveFile();
+            return;
+        }
+
+        // Save expanded state before refresh
+        this.saveExpandedState();
+        
+        // Clear the container and maps
+        this.container.empty();
+        this.fileItemsMap.clear();
+        
+        // Build the dendron tree
+        await this.buildDendronTree(this.container);
+        
+        // Restore expanded state
+        this.restoreExpandedState();
+        
+        // Highlight active file
+        this.highlightActiveFile();
     }
 
     async buildDendronTree(container: HTMLElement) {
         // Get all markdown files and folders
         const folders = this.app.vault.getAllFolders();
         const files = this.app.vault.getMarkdownFiles();
-
+        
         // Build the dendron structure
         const root = buildDendronStructure(folders, files);
         this.lastBuiltTree = root;
-
-        // Create the tree view
-        const rootList = container.createEl('div', { cls: 'dendron-tree-list' });
-        this.renderDendronNode(root, rootList);
-    }
-
-    /**
-     * Render a node in the tree
-     */
-    renderDendronNode(node: DendronNode, parentEl: HTMLElement) {
-        // Sort children by name
-        const sortedChildren = Array.from(node.children.entries())
-            .sort(([aKey], [bKey]) => aKey.localeCompare(bKey));
-
-        sortedChildren.forEach(([name, childNode]) => {
-            const item = parentEl.createEl('div', { cls: 'tree-item' });
-            const hasChildren = childNode.children.size > 0;
-
-            const itemSelf = item.createEl('div', {
-                cls: 'tree-item-self' + (hasChildren ? ' mod-collapsible' : '')
-            });
-
-            // Create a container for the toggle button and name
-            const contentWrapper = itemSelf.createEl('div', { cls: 'tree-item-content' });
-
-            this.renderToggleButton(contentWrapper, item, hasChildren);
-            
-            // Check if a folder note exists for folders
-            const folderNoteExists = this.checkFolderNoteExists(childNode, name);
-
-            // If the node is a folder, add a folder icon
-            if (childNode.nodeType === DendronNodeType.FOLDER) {
-                this.renderFolderIcon(contentWrapper);
-            }
-
-            // Display name without the path
-            this.renderNodeName(contentWrapper, name, childNode, folderNoteExists);
-
-            // Add a "+" button for virtual nodes
-            if (childNode.nodeType === DendronNodeType.VIRTUAL) {
-                this.renderCreateButton(itemSelf, childNode, name);
-            }
-
-            // Render children if any
-            if (hasChildren) {
-                const childrenDiv = item.createEl('div', {
-                    cls: 'tree-item-children'
-                });
-
-                this.renderDendronNode(childNode, childrenDiv);
-            }
-        });
-    }
-
-    /**
-     * Render toggle button for collapsible nodes
-     */
-    private renderToggleButton(contentWrapper: HTMLElement, item: HTMLElement, hasChildren: boolean): void {
-        if (hasChildren) {
-            const toggleButton = contentWrapper.createEl('div', { 
-                cls: 'tree-item-icon collapse-icon is-clickable' 
-            });
-            setIcon(toggleButton, 'right-triangle');
-
-            // Handle toggle button click
-            toggleButton.addEventListener('click', (event) => {
-                event.stopPropagation();
-                item.toggleClass('is-collapsed', !item.hasClass('is-collapsed'));
-                const triangle = toggleButton.querySelector('.right-triangle');
-                if (triangle) {
-                    triangle.classList.toggle('is-collapsed');
-                }
-            });
-        } else {
-            // Add a spacer div to maintain alignment
-            contentWrapper.createEl('div', { cls: 'tree-item-icon-spacer' });
-        }
-    }
-
-    /**
-     * Check if a folder note exists for a folder node
-     */
-    private checkFolderNoteExists(node: DendronNode, name: string): boolean {
-        if (node.children.size > 0) {
-            const folderNotePath = `${node.realPath ? node.realPath + '/' : ''}${name}.md`;
-            const folderNote = this.app.vault.getAbstractFileByPath(folderNotePath);
-            return folderNote instanceof TFile;
-        }
-        return false;
-    }
-
-    /**
-     * Render folder icon
-     */
-    private renderFolderIcon(contentWrapper: HTMLElement): void {
-        const folderIcon = contentWrapper.createEl('div', {
-            cls: 'tree-item-folder-icon',
-            attr: { title: 'Folder' }
-        });
-        setIcon(folderIcon, 'folder');
-    }
-
-    /**
-     * Render node name with appropriate styling
-     */
-    private renderNodeName(
-        contentWrapper: HTMLElement, 
-        name: string, 
-        node: DendronNode, 
-        folderNoteExists: boolean
-    ): void {
-        const displayName = name.split('.').pop() || name;
-        const isClickable = node.obsidianResource || (node.children.size > 0 && folderNoteExists);
-        const isCreateNew = !node.obsidianResource && node.nodeType === DendronNodeType.FILE;
         
-        let className = 'tree-item-inner';
-        if (isCreateNew) className += ' mod-create-new';
-        if (isClickable) className += ' is-clickable';
+        // Build the node path map for quick lookups
+        this.nodePathMap.clear();
+        this.buildNodePathMap(root, '');
+
+        // Create a document fragment for batch DOM operations
+        const fragment = document.createDocumentFragment();
+        const rootList = document.createElement('div');
+        rootList.className = 'dendron-tree-list';
+        fragment.appendChild(rootList);
         
-        const innerDiv = contentWrapper.createEl('div', {
-            cls: className,
-            text: displayName
-        });
-
-        // Add click handler for existing resources
-        if (isClickable) {
-            this.addClickHandler(innerDiv, node, name, folderNoteExists);
+        // Render the tree using the node renderer
+        this.nodeRenderer.renderDendronNode(root, rootList, this.expandedNodes);
+        
+        // Add the fragment to the container in one operation
+        container.appendChild(fragment);
+    }
+    
+    /**
+     * Build a map of paths to nodes for quick lookups
+     */
+    private buildNodePathMap(node: DendronNode, parentPath: string): void {
+        for (const [name, childNode] of node.children.entries()) {
+            const path = name;
+            this.nodePathMap.set(path, childNode);
+            this.buildNodePathMap(childNode, path);
         }
     }
 
     /**
-     * Add click handler to open files or folder notes
+     * Get expanded nodes for saving in settings
      */
-    private addClickHandler(
-        element: HTMLElement, 
-        node: DendronNode, 
-        name: string, 
-        folderNoteExists: boolean
-    ): void {
-        element.addEventListener('click', async () => {
-            if (node.nodeType === DendronNodeType.FILE && node.obsidianResource) {
-                await this.openFile(node.obsidianResource as TFile);
-            } else if (node.children.size > 0 && folderNoteExists) {
-                const folderNotePath = `${node.realPath ? node.realPath + '/' : ''}${name}.md`;
-                const folderNote = this.app.vault.getAbstractFileByPath(folderNotePath);
-
-                if (folderNote instanceof TFile) {
-                    await this.openFile(folderNote);
-                }
-            }
-        });
+    public getExpandedNodesForSettings(): string[] {
+        return this.controls ? this.controls.getExpandedNodesForSettings() : Array.from(this.expandedNodes);
     }
 
     /**
-     * Open a file in a new leaf
+     * Restore expanded nodes from settings
      */
-    private async openFile(file: TFile): Promise<void> {
-        const leaf = this.app.workspace.getLeaf(false);
-        if (leaf) {
-            await leaf.openFile(file);
+    public restoreExpandedNodesFromSettings(nodes: string[]): void {
+        this.expandedNodes = new Set(nodes);
+        if (this.controls) {
+            this.controls.restoreExpandedNodesFromSettings(nodes);
         }
     }
 
     /**
-     * Render create button for virtual nodes
+     * Collapse all nodes in the tree
      */
-    private renderCreateButton(itemSelf: HTMLElement, node: DendronNode, name: string): void {
-        const createButton = itemSelf.createEl('div', {
-            cls: 'tree-item-create-button is-clickable',
-            attr: { title: 'Create note' }
-        });
-        setIcon(createButton, 'plus');
-
-        // Handle create button click
-        createButton.addEventListener('click', async (event) => {
-            event.stopPropagation();
-            await this.createAndOpenNote(node, name);
-        });
+    public collapseAllNodes(): void {
+        if (this.controls) {
+            this.controls.collapseAllNodes();
+        }
     }
 
     /**
-     * Create and open a new note
+     * Expand all nodes in the tree
      */
-    private async createAndOpenNote(node: DendronNode, name: string): Promise<void> {
-        const dendronFolderPath = node.realPath.replace('/', '.');
-        const baseName = name.replace(dendronFolderPath + '.', '');
-        const notePath = node.realPath + '/' + baseName + '.md';
-        let note = this.app.vault.getAbstractFileByPath(notePath);
-
-        if (!note) {
-            try {
-                note = await this.app.vault.create(notePath, '');
-                new Notice('Created note: ' + notePath);
-            } catch (error) {
-                console.error('Failed to create note:', error);
-                new Notice('Failed to create note: ' + notePath);
-            }
-        }
-
-        if (note instanceof TFile) {
-            await this.openFile(note);
+    public expandAllNodes(): void {
+        if (this.controls) {
+            this.controls.expandAllNodes();
         }
     }
 
@@ -280,8 +294,13 @@ export default class DendronTreeView extends ItemView {
      * Clean up resources when the view is closed
      */
     async onClose() {
+        // Save expanded state before closing
+        this.saveExpandedState();
+        
         // Clear references
         this.container = null;
         this.lastBuiltTree = null;
+        this.fileItemsMap.clear();
+        this.activeFile = null;
     }
 } 
