@@ -7,7 +7,7 @@ import { DendronNode, DendronNodeType } from '../models/types';
 export function createDendronNode(options: Partial<DendronNode> = {}): DendronNode {
     return {
         dendronPath: '',
-        filePath: '',
+        filePath: '.',
         children: new Map<string, DendronNode>(),
         folderPath: '',
         nodeType: DendronNodeType.VIRTUAL,
@@ -24,13 +24,17 @@ export function buildDendronStructure(folders: TFolder[], files: TFile[]): Dendr
 
     // Create a set of all folder paths for quick lookup
     const folderPaths = new Set<string>();
+    const folderByPath = new Map<string, TFolder>();
     for (const folder of folders) {
         folderPaths.add(folder.path.replace(/\//g, '.'));
+        folderByPath.set(folder.path, folder);
     }
     // ... and file paths
     const filePaths = new Set<string>();
+    const fileByPath = new Map<string, TFile>();
     for (const file of files) {
         filePaths.add(file.path.replace(/\.md$/, '').replace(/\//g, '.'));
+        fileByPath.set(file.path, file);
     }
 
     // Process each file to build the Dendron structure
@@ -47,30 +51,48 @@ export function buildDendronStructure(folders: TFolder[], files: TFile[]): Dendr
             const isLeaf = i === parts.length - 1;
             
             if (!current.children.has(pathSoFar) && !processedPaths.has(pathSoFar)) {
-                const folderPath = file.parent ? file.parent.path : '';
+                let folderPath = file.parent ? file.parent.path : '';
                 const nodeType = folderPaths.has(pathSoFar) ? DendronNodeType.FOLDER : (filePaths.has(pathSoFar) ? DendronNodeType.FILE : DendronNodeType.VIRTUAL);
+                let resource: TFile | TFolder | undefined;
                 
                 // Determine the file path based on node type
                 let filePath = '';
-                if (nodeType === DendronNodeType.FILE) {
-                    // For leaf nodes, use the actual file path
-                    filePath = file.path;
-                } else if (nodeType === DendronNodeType.FOLDER) {
-                    // For folder nodes, use the parent folder path
-                    filePath = file.parent ? file.parent.path : '';
+                const dendronFolderPath = folderPath.replace('/', '.');
+                const baseName = pathSoFar.replace(dendronFolderPath + '.', '');
+                
+                if (nodeType === DendronNodeType.FOLDER) {
+                    // For folders, the filePath should be the folder path itself
+                    const folderPathFromDendron = pathSoFar.replace(/\./g, '/');
+                    filePath = folderPathFromDendron;
+                    // Update folderPath to match the actual folder path
+                    folderPath = folderPathFromDendron;
                 } else {
-                    // For virtual nodes, use the relative path
-                    filePath = pathSoFar.replace(folderPath + '.', '');
+                    // For files, append .md as before
+                    filePath = folderPath + '/' + baseName + '.md';
+                }
+                
+                // Handle root folder
+                if (filePath.startsWith('//')) {
+                    filePath = filePath.replace('//', '');
+                }
+                
+                // Get the resource
+                if (nodeType === DendronNodeType.FILE) {
+                    resource = fileByPath.get(filePath);
+                } else if (nodeType === DendronNodeType.FOLDER) {
+                    resource = folderByPath.get(filePath);
                 }
 
                 // Create the node with appropriate properties
-                current.children.set(pathSoFar, createDendronNode({
+                const node = createDendronNode({
                     dendronPath: pathSoFar,
                     nodeType: nodeType,
                     filePath: filePath,
                     folderPath: folderPath,
-                    ...(isLeaf ? { obsidianResource: file } : {})
-                }));
+                    obsidianResource: resource
+                });
+
+                current.children.set(pathSoFar, node);
                 
                 processedPaths.add(pathSoFar);
             }
