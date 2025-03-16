@@ -1,11 +1,10 @@
 {
-	"id": "another-dendron-plugin",
-	"name": "Another Dendron Plugin",
+	"id": "tree-mapper",
+	"name": "Tree Mapper",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "A Dendron-like hierarchical note management plugin for Obsidian.",
+	"description": "A Dendron-like hierarchical note management system for your vault.",
 	"author": "jeansordes",
 	"authorUrl": "https://github.com/jeansordes",
-	"fundingUrl": "https://obsidian.md/pricing",
 	"isDesktopOnly": false
 }
