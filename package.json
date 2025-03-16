@@ -6,16 +6,39 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"version": "node version-bump.mjs && git add manifest.json versions.json"
+		"version": "node version-bump.mjs && git add manifest.json versions.json",
+		"bump": "node version-bump.mjs patch",
+		"bump:minor": "node version-bump.mjs minor",
+		"bump:major": "node version-bump.mjs major",
+		"commit": "cz",
+		"changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+		"changelog:first": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
+		"release": "npm run build && npm run bump && npm run changelog && git add CHANGELOG.md && git add . && git commit -m \"chore(release): $(node -p \"require('./package.json').version\")\" && git tag \"$(node -p \"require('./package.json').version\")\" && git push origin master --tags",
+		"release:minor": "npm run build && npm run bump:minor && npm run changelog && git add CHANGELOG.md && git add . && git commit -m \"chore(release): $(node -p \"require('./package.json').version\")\" && git tag \"$(node -p \"require('./package.json').version\")\" && git push origin master --tags",
+		"release:major": "npm run build && npm run bump:major && npm run changelog && git add CHANGELOG.md && git add . && git commit -m \"chore(release): $(node -p \"require('./package.json').version\")\" && git tag \"$(node -p \"require('./package.json').version\")\" && git push origin master --tags"
 	},
-	"keywords": ["obsidian", "dendron", "hierarchical", "notes"],
-	"author": "",
+	"config": {
+		"commitizen": {
+			"path": "./node_modules/cz-conventional-changelog"
+		}
+	},
+	"keywords": [
+		"obsidian",
+		"dendron",
+		"hierarchical",
+		"notes",
+		"knowledge-management"
+	],
+	"author": "Jean Sordes",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
 		"builtin-modules": "3.3.0",
+		"commitizen": "^4.3.1",
+		"conventional-changelog-cli": "^5.0.0",
+		"cz-conventional-changelog": "^3.3.0",
 		"esbuild": "0.17.3",
 		"obsidian": "latest",
 		"tslib": "2.4.0",
