@@ -1,0 +1,78 @@
+name: Release Obsidian Plugin
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+' # Run workflow on version tags, e.g. 1.0.0
+
+permissions:
+  contents: write # This is required for creating releases
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Need full history for tags and changelog generation
+
+      - name: Get the version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build plugin
+        run: npm run build
+        
+      - name: Generate changelog
+        run: npm run changelog
+
+      - name: Extract changelog section
+        id: extract_changelog
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          # Create a temporary file for the extracted section
+          TEMP_FILE="release_notes.md"
+          
+          # Read the changelog and extract the section for this version
+          awk -v version="$VERSION" '
+            BEGIN { found=0; buffer="" }
+            /^## \[?'$VERSION'\]?/ { found=1; buffer=$0; next }
+            found==1 && /^## / { exit }
+            found==1 { buffer=buffer"\n"$0 }
+            END { print buffer }
+          ' CHANGELOG.md > $TEMP_FILE
+          
+          # If the file is empty, use a default message
+          if [ ! -s $TEMP_FILE ]; then
+            echo "# Release $VERSION" > $TEMP_FILE
+            echo "" >> $TEMP_FILE
+            echo "## What's Changed" >> $TEMP_FILE
+            echo "- Version bump to $VERSION" >> $TEMP_FILE
+          fi
+        
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          name: ${{ steps.get_version.outputs.VERSION }}
+          body_path: release_notes.md
+          files: |
+            main.js
+            manifest.json
+            styles.css
+          draft: false
+          prerelease: false
