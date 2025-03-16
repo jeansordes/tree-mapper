@@ -25,8 +25,8 @@ This plugin brings hierarchical note management capabilities to Obsidian, inspir
 
 ### Manual Installation
 
-1. Download the latest release from the [Releases page](https://github.com/jeansordes/obsidian-another-dendron-plugin/releases)
-2. Extract the files to your vault's plugins folder: `<vault>/.obsidian/plugins/obsidian-another-dendron-plugin/`
+1. Download the latest release from the [Releases page](https://github.com/jeansordes/another-dendron-plugin/releases)
+2. Extract the files to your vault's plugins folder: `<vault>/.obsidian/plugins/another-dendron-plugin/`
 3. Reload Obsidian
 4. Go to Settings > Community plugins and enable "Another Dendron Plugin"
 
@@ -85,7 +85,7 @@ Following this convention makes the changelog more useful and helps with semanti
 1. Create a symbolic link or copy the built files to your Obsidian vault's plugins folder:
    ```bash
    # Example (adjust paths as needed)
-   ln -s /path/to/project /path/to/vault/.obsidian/plugins/obsidian-another-dendron-plugin
+   ln -s /path/to/project /path/to/vault/.obsidian/plugins/another-dendron-plugin
    ```
 2. Restart Obsidian or reload plugins
 3. Enable the plugin in Obsidian settings

@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-another-dendron-plugin",
+	"name": "another-dendron-plugin",
 	"version": "1.0.0",
 	"description": "A Dendron-like hierarchical note management plugin for Obsidian",
 	"main": "main.js",
