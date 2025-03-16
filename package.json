@@ -1,6 +1,6 @@
 {
 	"name": "tree-mapper",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "A Dendron-like hierarchical note management plugin for Obsidian",
 	"main": "main.js",
 	"scripts": {
