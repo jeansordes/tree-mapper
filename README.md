@@ -1,5 +1,7 @@
 # Tree Mapper
 
+![CleanShot 2025-03-17 at 00 25 39@2x](https://github.com/user-attachments/assets/2aa914d7-3602-4b9d-8cba-9c50840438b3)
+
 A hierarchical note management system with Dendron-like features.
 
 This tool brings hierarchical note management capabilities to your vault, inspired by Dendron. It allows you to organize your notes in a tree-like structure, making it easier to navigate and manage large knowledge bases.
