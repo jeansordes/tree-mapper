@@ -3,7 +3,7 @@ import { FILE_TREE_VIEW_TYPE, PluginSettings, DEFAULT_SETTINGS, TREE_VIEW_ICON }
 import DendronTreeView from './src/views/DendronTreeView';
 import { t } from './src/i18n';
 
-export default class MyPlugin extends Plugin {
+export default class TreeMapperPlugin extends Plugin {
 	settings: PluginSettings;
 	private viewRegistered = false;
 	private isInitializing = false;
