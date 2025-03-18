@@ -8,6 +8,7 @@ export default {
     commandShowFile: 'Afficher le fichier dans l\'arborescence Dendron',
     commandCollapseAll: 'Réduire tous les nœuds dans l\'arborescence Dendron',
     commandExpandAll: 'Développer tous les nœuds dans l\'arborescence Dendron',
+    commandCreateChildNote: 'Créer une note enfant',
     
     // UI Elements
     buttonCollapseAll: 'Tout réduire',
@@ -21,7 +22,11 @@ export default {
     // Notices
     noticeCreatedNote: 'Note créée : {{path}}',
     noticeFailedCreateNote: 'Échec de création de la note : {{path}}',
+    noticeRenameNote: 'Appuyez sur F2 pour renommer la note',
     
     // Ribbon
     ribbonTooltip: 'Ouvrir l\'arborescence Dendron',
+
+    // Untitled
+    untitledPath: 'sans-titre',
 }; 

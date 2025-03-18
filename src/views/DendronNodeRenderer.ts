@@ -1,6 +1,6 @@
 import { App, Notice, TFile, setIcon } from 'obsidian';
-import { DendronNode, DendronNodeType } from '../../models/types';
-import { t } from '../../i18n';
+import { DendronNode, DendronNodeType } from '../types';
+import { t } from '../i18n';
 
 export class DendronNodeRenderer {
     private fileItemsMap: Map<string, HTMLElement>;
@@ -236,12 +236,8 @@ export class DendronNodeRenderer {
      * Get the path for a child note
      */
     private getChildPath(node: DendronNode): string {
-        if (node.nodeType === DendronNodeType.FOLDER) {
-            return `${node.folderPath}/new.md`;
-        }
-        
-        // For files or virtual nodes
-        return node.filePath.replace(/\.md$/, '.new.md');
+
+        return node.filePath.replace(/\.md$/, '.' + t('untitledPath') + '.md');
     }
 
     /**

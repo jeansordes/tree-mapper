@@ -1,7 +1,7 @@
 import { App, Modal, Notice, Plugin, TFile, ViewState, WorkspaceLeaf } from 'obsidian';
-import { FILE_TREE_VIEW_TYPE, PluginSettings, DEFAULT_SETTINGS, TREE_VIEW_ICON } from './src/models/types';
-import DendronTreeView from './src/views/DendronTreeView';
-import { t } from './src/i18n';
+import { FILE_TREE_VIEW_TYPE, PluginSettings, DEFAULT_SETTINGS, TREE_VIEW_ICON } from './types';
+import DendronTreeView from './views/DendronTreeView';
+import { t } from './i18n';
 
 export default class TreeMapperPlugin extends Plugin {
 	settings: PluginSettings;
@@ -79,6 +79,23 @@ export default class TreeMapperPlugin extends Plugin {
 				if (this.dendronView) {
 					this.dendronView.expandAllNodes();
 				}
+			}
+		});
+
+		// Add a command to create a child note to the current note
+		this.addCommand({
+			id: 'create-child-note',
+			name: t('commandCreateChildNote'),
+			checkCallback: (checking: boolean) => {
+				// Only enable the command if there's an active file
+				const activeFile = this.app.workspace.getActiveFile();
+				if (!activeFile) return false;
+				
+				if (!checking) {
+					this.createChildNote(activeFile);
+				}
+				
+				return true;
 			}
 		});
 
@@ -210,6 +227,77 @@ export default class TreeMapperPlugin extends Plugin {
 			setTimeout(() => {
 				dendronView.highlightFile(activeFile);
 			}, 100);
+		}
+	}
+
+	/**
+	 * Create a child note to the current file
+	 */
+	private async createChildNote(file: TFile): Promise<void> {
+		// Generate child note path by replacing .md with .new.md
+		const childPath = file.path.replace(/\.md$/, '.' + t('untitledPath') + '.md');
+		
+		let note = this.app.vault.getAbstractFileByPath(childPath);
+
+		if (!note) {
+			try {
+				note = await this.app.vault.create(childPath, '');
+				new Notice(t('noticeCreatedNote', { path: childPath }));
+			} catch (error) {
+				new Notice(t('noticeFailedCreateNote', { path: childPath }));
+				return;
+			}
+		}
+
+		if (note instanceof TFile) {
+			// Open the file in a new leaf
+			const leaf = this.app.workspace.getLeaf(false);
+			if (leaf) {
+				await leaf.openFile(note, { active: true });
+				
+				// Focus on the editor
+				this.app.workspace.setActiveLeaf(leaf, { focus: true });
+				
+				// Wait for the UI to fully render
+				setTimeout(() => {
+					// Method 1: Try to find the title element in the active leaf's view
+					const containerEl = leaf.view?.containerEl;
+					if (containerEl) {
+						// First try with more specific selectors for Obsidian file title
+						let titleElement = containerEl.querySelector('.view-header-title-container .view-header-title') as HTMLElement;
+						
+						// Fallback to less specific selectors
+						if (!titleElement) {
+							titleElement = containerEl.querySelector('.view-header-title') as HTMLElement;
+						}
+						
+						if (titleElement) {
+							// First focus the element
+							titleElement.focus();
+							
+							// Try double click to enter edit mode (this is how Obsidian's UI works)
+							titleElement.dispatchEvent(new MouseEvent('dblclick', {
+								view: window,
+								bubbles: true,
+								cancelable: true
+							}));
+							
+							// Fallback - if double-clicking doesn't work, try to select the text
+							// which might trigger Obsidian's rename behavior
+							const selection = window.getSelection();
+							const range = document.createRange();
+							range.selectNodeContents(titleElement);
+							selection?.removeAllRanges();
+							selection?.addRange(range);
+							
+							return;
+						}
+					}
+					
+					// Fallback method - show notice
+					new Notice(t('noticeRenameNote'));
+				}, 400);
+			}
 		}
 	}
 

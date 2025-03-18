@@ -8,6 +8,7 @@ export default {
     commandShowFile: 'Show File in Dendron Tree View',
     commandCollapseAll: 'Collapse All Nodes in Dendron Tree',
     commandExpandAll: 'Expand All Nodes in Dendron Tree',
+    commandCreateChildNote: 'Create Child Note',
     
     // UI Elements
     buttonCollapseAll: 'Collapse All',
@@ -21,7 +22,11 @@ export default {
     // Notices
     noticeCreatedNote: 'Created note: {{path}}',
     noticeFailedCreateNote: 'Failed to create note: {{path}}',
+    noticeRenameNote: 'Press F2 to rename the note',
     
     // Ribbon
     ribbonTooltip: 'Open Dendron Tree',
+
+    // Untitled
+    untitledPath: 'untitled',
 }; 

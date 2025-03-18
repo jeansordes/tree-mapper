@@ -1,10 +1,10 @@
 import { App, ItemView, Notice, TFile, WorkspaceLeaf } from 'obsidian';
-import { DendronNode, DendronNodeType, FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON } from '../models/types';
+import { DendronNode, DendronNodeType, FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON } from '../types';
 import { buildDendronStructure } from '../utils/treeUtils';
 import { t } from '../i18n';
-import { DendronNodeRenderer } from './components/DendronNodeRenderer';
-import { DendronEventHandler } from './components/DendronEventHandler';
-import { DendronControls } from './components/DendronControls';
+import { DendronNodeRenderer } from './DendronNodeRenderer';
+import { DendronEventHandler } from '../handlers/EventHandler';
+import { DendronControls } from './DendronControls';
 
 // Dendron Tree View class
 export default class DendronTreeView extends ItemView {

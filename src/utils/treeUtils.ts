@@ -1,5 +1,5 @@
 import { TFile, TFolder } from 'obsidian';
-import { DendronNode, DendronNodeType } from '../models/types';
+import { DendronNode, DendronNodeType } from '../types';
 
 /**
  * Creates an empty DendronNode with default values

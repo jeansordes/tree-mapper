@@ -1,5 +1,5 @@
 import { App, TFile } from 'obsidian';
-import { DendronNode } from '../../models/types';
+import { DendronNode } from '../types';
 
 export class DendronEventHandler {
     private app: App;
