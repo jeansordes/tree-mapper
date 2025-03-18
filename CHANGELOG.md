@@ -1,3 +1,12 @@
+## [1.0.3](https://github.com/jeansordes/tree-mapper/compare/1.0.2...1.0.3) (2025-03-18)
+
+
+### Features
+
+* "Add child note" command added ([1789898](https://github.com/jeansordes/tree-mapper/commit/178989856c689a4b2835cbde109f8af810d1bf85))
+
+
+
 ## [1.0.2](https://github.com/jeansordes/tree-mapper/compare/1.0.1...1.0.2) (2025-03-18)
 
 
