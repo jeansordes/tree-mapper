@@ -14,7 +14,7 @@ export default class TreeMapperPlugin extends Plugin {
 
 		// Always unregister the view type first to ensure clean registration
 		try {
-			(this.app as any).viewRegistry.unregisterView(FILE_TREE_VIEW_TYPE);
+			this.app.workspace.detachLeavesOfType(FILE_TREE_VIEW_TYPE);
 		} catch (e) {
 			// This is normal if it's the first load
 		}

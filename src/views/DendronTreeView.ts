@@ -91,7 +91,7 @@ export default class DendronTreeView extends ItemView {
             // Use a small timeout to ensure the tree is fully rendered
             setTimeout(() => {
                 this.highlightActiveFile();
-            }, 100);
+            }, 500);
         }
     }
 

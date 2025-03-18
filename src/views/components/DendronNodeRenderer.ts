@@ -153,18 +153,13 @@ export class DendronNodeRenderer {
         // Add click handler and store reference for file items
         if (isFile) {
             this.addEventHandler(nameEl, 'click', async () => {
-                if (node.obsidianResource) {
-                    await this.openFile(node.obsidianResource as TFile);
+                if (node.obsidianResource && node.obsidianResource instanceof TFile) {
+                    await this.openFile(node.obsidianResource);
                 }
             });
 
-            if (node.obsidianResource) {
-                this.fileItemsMap.set((node.obsidianResource as TFile).path, nameEl);
-            } else if (node.nodeType === DendronNodeType.FOLDER) {
-                this.fileItemsMap.set(
-                    `${node.folderPath ? node.folderPath + '/' : ''}${node.filePath}.md`, 
-                    nameEl
-                );
+            if (node.obsidianResource && node.obsidianResource instanceof TFile) {
+                this.fileItemsMap.set(node.obsidianResource.path, nameEl);
             }
         }
     }
