@@ -1,4 +1,5 @@
 import { TFile, TFolder } from "obsidian";
+import { t } from "src/i18n";
 import { NodeType } from "src/types";
 
 export class Tree {
@@ -12,17 +13,14 @@ export class Tree {
 
     public updatePathsByDepthLevel(files: TFile[], folders: TFolder[]): void {
         this.pathsByDepthLevel = new Map<number, Set<string>>();
-        this.pathsByDepthLevel.set(0, new Set<string>(['/']));
         this.nodeTypeByPath = new Map<string, NodeType>();
         this.childrenAmountByPath = new Map<string, number>();
 
         const folderPaths = new Set<string>();
-        this.registerNode('/', 0);
-        folderPaths.add('/');
         for (const folder of folders) {
             folderPaths.add(folder.path);
-            const depth = folder.path.split('/').length;
-            this.registerNode(folder.path, depth);
+            const depth = folder.path === '/' ? 0 : folder.path.split('/').length;
+            this.registerNode(folder.path, depth, NodeType.FOLDER);
         }
 
         for (const file of files) {
@@ -31,14 +29,14 @@ export class Tree {
             const depth = folderDepth + fileDepth;
 
             // File registration
-            this.registerNode(file.path, depth);
+            this.registerNode(file.path, depth, NodeType.FILE);
 
             // If the file contains dots, we add the VIRTUAL paths
             if (fileDepth > 1) {
                 let virtualPath = this.getParentPath(file.path);
                 let virtualDepth = depth - 1;
                 while (!folderPaths.has(virtualPath)) {
-                    this.registerNode(virtualPath, virtualDepth);
+                    this.registerNode(virtualPath, virtualDepth, NodeType.VIRTUAL);
                     virtualPath = this.getParentPath(virtualPath);
                     virtualDepth--;
                 }
@@ -74,7 +72,7 @@ export class Tree {
 
     public getParentPath(path: string): string {
         const nodeType = this.nodeTypeByPath.get(path);
-        if (nodeType !== undefined && nodeType === NodeType.FOLDER) {
+        if (nodeType === NodeType.FOLDER) {
             const result = path.replace(/[\/]?[^\/]*$/, '');
             return result === '' ? '/' : result;
         }
@@ -83,6 +81,16 @@ export class Tree {
         let result = path.replace(/(\/|^)[^\.\/]+.md$/, '');
         result = result === '' ? '/' : result.replace(/\.[^\.]+\.md$/, '.md');
         return result;
+    }
+
+    public getNewNotePath(path: string): string {
+        const newNoteName = t('untitledPath') + '.md';
+        const nodeType = this.nodeTypeByPath.get(path);
+        if (nodeType === NodeType.FOLDER) {
+            return path + '/' + newNoteName;
+        }
+        // Remove extension and add the new note name
+        return path.replace(/\.[^\.]+$/, '') + '.' + newNoteName;
     }
 
     // Getters - All

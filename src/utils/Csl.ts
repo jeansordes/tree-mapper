@@ -1,5 +1,5 @@
 /**
- * __Cnsl = console__
+ * __Csl = console__
  * 
  * This is useful for debugging purposes, in order to activate/deactivate the logging
  * on a per-function basis, combined with a detection of the environment (development/production).
@@ -8,10 +8,10 @@
  * 
  * ```typescript
  * function yourFunction() {
- *     const cnsl = new Cnsl(true); // or false when you want to disable the logging
- *     cnsl.clear();
+ *     const csl = new Csl(true); // or false when you want to disable the logging
+ *     csl.clear();
  *     ...
- *     cnsl.log('[variableName]', variableName);
+ *     csl.log('[variableName]', variableName);
  *     ...
  * }
  * ```
@@ -22,7 +22,7 @@
  * When the code is built for production, even if you forget to turn off the flag,
  * it will not log anything, because NODE_ENV will not be 'development'.
  */
-export class Cnsl {
+export class Csl {
     private isActive: boolean;
 
     constructor(debugIsActiveInThisFunction: boolean) {

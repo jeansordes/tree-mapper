@@ -1,27 +1,31 @@
-.dendron-view-container {
+[data-type="tree-mapper-view"] .view-content {
     user-select: none;
     padding: 0 !important;
-}
+    color: var(--color-text-clickable);
+    font-size: var(--nav-item-size);
 
-.dendron-view-container {
+    /* Colors */
     --bg2-5: hsla(0, 0%, calc(96% - 50%), 0.06);
     --bg-clickable: var(--bg2-5);
     --bg-hover: var(--bg3);
-    --line-height: 1.5rem;
-    --button-icon-size: 14px;
-    --button-size: calc(var(--line-height));
-    --border-radius: 3px;
     --accent-color: var(--ax3);
     --color-text-clickable: var(--tx2);
     --color-text-hover: var(--tx1);
 
-    .dendron-tree-list {
-        list-style: none;
-        padding: 0.3rem 0;
-        margin: 0;
+    /* Sizes */
+    --line-height: 1.5rem;
+    --button-icon-size: 14px;
+    --button-size: calc(var(--line-height));
+    --border-radius: 3px;
+
+    .tm_tree-item-root {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin: 10px;
     }
 
-    .tree-item-content {
+    .tm_tree-item-content {
         max-width: -webkit-fill-available;
         width: calc(-0px); /* trick to auto adjust the width */
         height: var(--line-height);
@@ -30,7 +34,7 @@
         flex: 1;
     }
 
-    .tree-item-inner {
+    .tm_tree-item-inner {
         flex: 1 1 auto;
         padding: 0 6px;
         margin-left: 2px;
@@ -39,17 +43,17 @@
         white-space: nowrap;
     }
 
-    .tree-item-inner.is-clickable {
+    .tm_tree-item-inner.is-clickable {
         color: var(--color-text-hover);
         background-color: var(--bg-clickable);
         cursor: pointer;
     }
 
-    .tree-item-inner.is-clickable:hover {
+    .tm_tree-item-inner.is-clickable:hover {
         background-color: var(--bg-hover);
     }
 
-    .tree-item-self {
+    .tm_tree-item-self {
         display: flex;
         align-items: center;
         gap: 4px;
@@ -58,47 +62,29 @@
         padding-bottom: 0;
     }
 
-    .tree-item-folder-icon svg {
+    .tm_tree-item-icon[data-icon="folder"] svg {
         width: var(--button-icon-size);
         height: var(--button-icon-size);
         transform: translate(5px, 1px);
     }
 
-    .tree-item.is-collapsed>.tree-item-children {
+    .tm_tree-item-children:not(.tm_root-children) {
+        border-inline-start: var(--nav-indentation-guide-width) solid var(--nav-indentation-guide-color);
+        padding-left: 1.5rem;
+    }
+
+    .tm_tree-item.is-collapsed>.tm_tree-item-children {
         display: none;
     }
 
-    .tree-item.is-collapsed>.tree-item-self .right-triangle {
-        transform: rotate(-90deg);
-    }
-
-    .right-triangle {
+    [data-icon="right-triangle"] svg {
+        height: 10px;
+        width: 10px;
         transition: transform 100ms ease-in-out;
     }
-
-    .collapse-icon svg {
-        color: var(--color-text-clickable);
-        transform: translate(-0.5px, 0px);
-    }
-
-    .collapse-icon:hover svg {
-        color: var(--color-text-hover);
-    }
-
-    .collapse-icon:before {
-        content: '';
-        display: block;
-        position: absolute;
-        left: -4px;
-        top: -7px;
-        width: var(--button-size);
-        height: var(--button-size);
-        border-radius: var(--border-radius);
-        background-color: var(--bg-clickable);
-    }
-
-    .collapse-icon:hover:before {
-        background-color: var(--bg-hover);
+    
+    .tm_tree-item.is-collapsed>.tm_tree-item-self [data-icon="right-triangle"] svg {
+        transform: rotate(-90deg);
     }
 
     .is-clickable {
@@ -106,80 +92,43 @@
     }
 
     /* Container for the create buttons */
-    .tree-item-buttons-container {
+    .tm_tree-item-buttons {
         display: flex;
         flex-direction: row;
         gap: 4px;
     }
     
     /* Styles for the create child note button */
-    .tree-item-button {
+    .tm_tree-item-icon.is-clickable {
         color: var(--color-text-clickable);
         border-radius: var(--border-radius);
         background-color: var(--bg-clickable);
         display: flex;
         align-items: center;
         justify-content: center;
-        width: var(--button-size);
+        min-width: var(--button-size);
         height: var(--button-size);
     }
 
-    .tree-item-button:hover {
+    .tm_tree-item-icon.is-clickable:hover {
         color: var(--color-text-hover);
         background-color: var(--bg-hover);
     }
 
-    .tree-item-button svg {
+    .tm_tree-item-icon svg {
         width: var(--button-icon-size);
         height: var(--button-icon-size);
     }
-    
-    .rotate-180deg {
-        transform: rotate(180deg);
-    }
 
     /* Style for the currently active file */
-    .tree-item-inner.is-active,
-    .tree-item-inner.is-active:hover {
+    .tm_tree-item-inner.is-active,
+    .tm_tree-item-inner.is-active:hover {
         color: var(--text-on-accent);
         background-color: var(--accent-color);
     }
 
-    /* Main container for the entire view */
-    .dendron-view-container {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        overflow: hidden;
-    }
-
-    /* Fixed header at the top */
-    .dendron-tree-header {
-        display: flex;
-        padding: 4px 8px;
-        border-bottom: 1px solid var(--background-modifier-border);
-        flex-shrink: 0;
-        position: sticky;
-        top: 0;
-        background-color: var(--background-secondary);
-        z-index: 10;
-    }
-
-    /* Scrollable container for the tree */
-    .dendron-tree-scroll-container {
-        flex-grow: 1;
-        overflow: auto;
-        padding: 0;
-        margin: 0;
-    }
-
-    .dendron-tree-buttons {
-        display: flex;
-        gap: 8px;
-    }
-
     /* Style for the toggle expand/collapse button */
-    .dendron-tree-toggle-button {
+    .toggle-button {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -193,32 +142,8 @@
         padding: 0;
     }
 
-    .dendron-tree-toggle-button:hover {
+    .toggle-button:hover {
         background-color: var(--bg-hover);
         color: var(--color-text-hover);
-    }
-
-    .dendron-tree-toggle-icon {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .dendron-tree-toggle-icon svg {
-        width: var(--button-icon-size);
-        height: var(--button-icon-size);
-    }
-
-    .dendron-tree-button {
-        font-size: 12px;
-        padding: 4px 8px;
-        border-radius: var(--border-radius);
-        background-color: var(--bg-clickable);
-        cursor: pointer;
-        border: none;
-    }
-
-    .dendron-tree-button:hover {
-        background-color: var(--bg-hover);
     }
 }
