@@ -1,13 +1,13 @@
 // English localization
 export default {
     // View
-    viewName: 'Dendron Tree',
+    viewName: 'Tree',
     
     // Commands
     commandOpenTree: 'Open File Tree View',
-    commandShowFile: 'Show File in Dendron Tree View',
-    commandCollapseAll: 'Collapse All Nodes in Dendron Tree',
-    commandExpandAll: 'Expand All Nodes in Dendron Tree',
+    commandShowFile: 'Show File in Tree View',
+    commandCollapseAll: 'Collapse All Nodes in Tree',
+    commandExpandAll: 'Expand All Nodes in Tree',
     commandCreateChildNote: 'Create Child Note',
     
     // UI Elements
@@ -25,7 +25,7 @@ export default {
     noticeRenameNote: 'Press F2 to rename the note',
     
     // Ribbon
-    ribbonTooltip: 'Open Dendron Tree',
+    ribbonTooltip: 'Open Tree',
 
     // Untitled
     untitledPath: 'untitled',

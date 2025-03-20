@@ -1,7 +1,6 @@
 import { App, TFile } from 'obsidian';
-import { DendronNode } from '../types';
 
-export class DendronEventHandler {
+export class EventHandler {
     private app: App;
     private refreshCallback: (path?: string, forceFullRefresh?: boolean) => void;
     private refreshDebounceTimeout: NodeJS.Timeout | null = null;
@@ -26,14 +25,6 @@ export class DendronEventHandler {
         this.app.vault.on('create', (file) => {
             // Force full refresh for file creation
             debouncedRefresh(undefined, true);
-        });
-
-        this.app.vault.on('modify', (file) => {
-            // Only refresh for markdown files
-            if (file instanceof TFile && file.extension === 'md') {
-                // Use incremental update for modifications
-                debouncedRefresh(file.path);
-            }
         });
 
         this.app.vault.on('delete', (file) => {
@@ -69,69 +60,5 @@ export class DendronEventHandler {
             callback();
             this.refreshDebounceTimeout = null;
         }, wait);
-    }
-
-    /**
-     * Try to update the tree incrementally based on the changed path
-     */
-    tryIncrementalUpdate(
-        changedPath: string,
-        container: HTMLElement,
-        lastBuiltTree: DendronNode | null,
-        nodePathMap: Map<string, DendronNode>,
-        renderCallback: (node: DendronNode, container: HTMLElement) => void
-    ): boolean {
-        if (!container || !lastBuiltTree) return false;
-        
-        try {
-            // Convert file path to dendron path format
-            const dendronPath = changedPath.replace(/\//g, '.').replace(/\.md$/, '');
-            
-            // Find the parent path that needs updating
-            const pathParts = dendronPath.split('.');
-            let parentPath = '';
-            
-            // Try to find the highest level parent that exists in the tree
-            for (let i = 0; i < pathParts.length; i++) {
-                const testPath = pathParts.slice(0, i + 1).join('.');
-                if (nodePathMap.has(testPath)) {
-                    parentPath = testPath;
-                }
-            }
-            
-            // If we can't find a parent path, we need a full rebuild
-            if (!parentPath) {
-                return false;
-            }
-            
-            // Find the DOM element for this path
-            const parentElement = container.querySelector(`.tree-item[data-path="${parentPath}"]`) as HTMLElement;
-            if (!parentElement) {
-                return false;
-            }
-            
-            // Find the children container
-            const childrenContainer = parentElement.querySelector('.tree-item-children') as HTMLElement;
-            if (!childrenContainer) {
-                return false;
-            }
-            
-            // Get the node from the path map
-            const node = nodePathMap.get(parentPath);
-            if (!node) {
-                return false;
-            }
-            
-            // Clear the children container
-            childrenContainer.empty();
-            
-            // Re-render just this subtree
-            renderCallback(node, childrenContainer);
-            
-            return true;
-        } catch (error) {
-            // If any error occurs, fall back to full rebuild
-            return false;
-        }
     }
 } 
