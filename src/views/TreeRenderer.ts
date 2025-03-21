@@ -1,8 +1,7 @@
 import { App, Notice, TFile, setIcon } from 'obsidian';
 import { Node, NodeType } from '../types';
 import { t } from '../i18n';
-import { basename } from 'path';
-
+import { basename } from '../utils/FileUtils';
 export class TreeRenderer {
     private fileItemsMap: Map<string, HTMLElement>;
     private app: App;
@@ -265,4 +264,4 @@ export class TreeRenderer {
             await leaf.openFile(file);
         }
     }
-} 
+}

@@ -4,7 +4,7 @@ import { Node } from '../types';
 export class DendronEventHandler {
     private app: App;
     private refreshCallback: (path?: string, forceFullRefresh?: boolean) => void;
-    private refreshDebounceTimeout: NodeJS.Timeout | null = null;
+    private refreshDebounceTimeout: number | null = null;
 
     constructor(app: App, refreshCallback: (path?: string, forceFullRefresh?: boolean) => void) {
         this.app = app;
@@ -63,9 +63,9 @@ export class DendronEventHandler {
      */
     private debounceRefresh(callback: Function, wait: number): void {
         if (this.refreshDebounceTimeout) {
-            clearTimeout(this.refreshDebounceTimeout);
+            window.clearTimeout(this.refreshDebounceTimeout);
         }
-        this.refreshDebounceTimeout = setTimeout(() => {
+        this.refreshDebounceTimeout = window.setTimeout(() => {
             callback();
             this.refreshDebounceTimeout = null;
         }, wait);

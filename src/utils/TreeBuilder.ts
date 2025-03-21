@@ -1,8 +1,7 @@
 import { App, TFile, TFolder } from 'obsidian';
 import { Node, NodeType } from 'src/types';
-import { basename } from 'path';
 import { t } from 'src/i18n';
-
+import { basename } from './FileUtils';
 export class TreeBuilder {
     private pathsByDepthLevel: Map<number, Set<string>> = new Map<number, Set<string>>();
     private nodeTypeByPath = new Map<string, NodeType>();
