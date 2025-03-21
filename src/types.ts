@@ -14,17 +14,15 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     expandedNodes: []
 }
 
-export enum DendronNodeType {
+export enum NodeType {
     FILE = 'file',
     FOLDER = 'folder',
     VIRTUAL = 'virtual'
 }
 
-export interface DendronNode {
-    dendronPath: string;
-    filePath: string;
-    folderPath: string;
-    nodeType: DendronNodeType;
+export interface Node {
+    path: string;
+    nodeType: NodeType;
     obsidianResource?: TFile | TFolder;
-    children: Map<string, DendronNode>;
+    children: Map<string, Node>;
 }

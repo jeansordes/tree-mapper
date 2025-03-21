@@ -1,8 +1,9 @@
 import { App, Notice, TFile, setIcon } from 'obsidian';
-import { DendronNode, DendronNodeType } from '../types';
+import { Node, NodeType } from '../types';
 import { t } from '../i18n';
+import { basename } from 'path';
 
-export class DendronNodeRenderer {
+export class TreeRenderer {
     private fileItemsMap: Map<string, HTMLElement>;
     private app: App;
 
@@ -14,7 +15,7 @@ export class DendronNodeRenderer {
     /**
      * Render a node in the tree
      */
-    renderDendronNode(node: DendronNode, parentEl: HTMLElement, expandedNodes: Set<string>) {
+    renderDendronNode(node: Node, parentEl: HTMLElement, expandedNodes: Set<string>) {
         // Use DocumentFragment for batch DOM operations
         const fragment = document.createDocumentFragment();
 
@@ -41,11 +42,11 @@ export class DendronNodeRenderer {
                 // Add components to the tree item
                 this.addToggleButton(contentWrapper, item, hasChildren, expandedNodes);
                 
-                if (childNode.nodeType === DendronNodeType.FOLDER) {
+                if (childNode.nodeType === NodeType.FOLDER) {
                     this.addIcon(contentWrapper, 'folder', t('tooltipFolder'));
                 }
                 
-                this.addNodeName(contentWrapper, childNode);
+                this.addNode(contentWrapper, childNode);
                 this.addActionButtons(itemSelf, childNode, name);
 
                 // Recursively render children
@@ -128,24 +129,23 @@ export class DendronNodeRenderer {
     }
 
     /**
-     * Add node name with appropriate styling
+     * Add node with appropriate styling
      */
-    private addNodeName(parent: HTMLElement, node: DendronNode): void {
-        const displayName = node.dendronPath.split('.').pop() || node.dendronPath;
-        const isFile = node.nodeType === DendronNodeType.FILE;
+    private addNode(parent: HTMLElement, node: Node): void {
+        const isFile = node.nodeType === NodeType.FILE;
         
         // Build class name and determine tooltip
         const className = [
             'tree-item-inner',
-            node.nodeType === DendronNodeType.VIRTUAL ? 'mod-create-new' : '',
+            node.nodeType === NodeType.VIRTUAL ? 'mod-create-new' : '',
             isFile ? 'is-clickable' : ''
         ].filter(Boolean).join(' ');
 
         // Create and append the name element
         const nameEl = this.createElement('div', {
             className,
-            textContent: displayName,
-            title: this.getNodeTooltip(node, displayName)
+            textContent: this.getNodeName(node),
+            title: node.path
         });
         
         parent.appendChild(nameEl);
@@ -164,16 +164,11 @@ export class DendronNodeRenderer {
         }
     }
 
-    /**
-     * Get tooltip text for a node
-     */
-    private getNodeTooltip(node: DendronNode, displayName: string): string {
-        if (node.nodeType === DendronNodeType.FILE) {
-            return node.folderPath ? `${node.folderPath}/${displayName}.md` : `${displayName}.md`;
-        } else if (node.nodeType === DendronNodeType.FOLDER) {
-            return node.folderPath ? `${node.folderPath}/${displayName}` : displayName;
+    private getNodeName(node: Node): string {
+        if (node.nodeType === NodeType.FOLDER) {
+            return basename(node.path);
         }
-        return '';
+        return basename(node.path).match(/([^.]+)\.[^.]+$/)?.[1] || basename(node.path);
     }
 
     /**
@@ -186,16 +181,16 @@ export class DendronNodeRenderer {
     /**
      * Add action buttons to a node
      */
-    private addActionButtons(parent: HTMLElement, node: DendronNode, name: string): void {
+    private addActionButtons(parent: HTMLElement, node: Node, name: string): void {
         const btnContainer = this.createElement('div', { className: 'tree-item-buttons-container' });
         parent.appendChild(btnContainer);
 
         // Add "create note" button for virtual nodes
-        if (node.nodeType === DendronNodeType.VIRTUAL) {
+        if (node.nodeType === NodeType.VIRTUAL) {
             btnContainer.appendChild(this.createActionButton({
                 icon: 'square-pen',
-                title: t('tooltipCreateNote', { path: node.filePath }),
-                onClick: () => this.createNote(node.filePath)
+                title: t('tooltipCreateNote', { path: node.path }),
+                onClick: () => this.createNote(node.path)
             }));
         }
 
@@ -235,9 +230,9 @@ export class DendronNodeRenderer {
     /**
      * Get the path for a child note
      */
-    private getChildPath(node: DendronNode): string {
+    private getChildPath(node: Node): string {
 
-        return node.filePath.replace(/\.md$/, '.' + t('untitledPath') + '.md');
+        return node.path.replace(/\.md$/, '.' + t('untitledPath') + '.md');
     }
 
     /**

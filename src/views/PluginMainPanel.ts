@@ -1,23 +1,23 @@
 import { App, ItemView, Notice, TFile, WorkspaceLeaf } from 'obsidian';
-import { DendronNode, DendronNodeType, FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON } from '../types';
-import { buildDendronStructure } from '../utils/treeUtils';
+import { Node, NodeType, FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON } from '../types';
+import { TreeBuilder } from '../utils/TreeBuilder';
 import { t } from '../i18n';
-import { DendronNodeRenderer } from './DendronNodeRenderer';
+import { TreeRenderer } from './TreeRenderer';
 import { DendronEventHandler } from '../handlers/EventHandler';
 import { DendronControls } from './DendronControls';
 
 // Dendron Tree View class
-export default class DendronTreeView extends ItemView {
-    private lastBuiltTree: DendronNode | null = null;
+export default class PluginMainPanel extends ItemView {
+    private lastBuiltTree: Node | null = null;
     private container: HTMLElement | null = null;
     private activeFile: TFile | null = null;
     private fileItemsMap: Map<string, HTMLElement> = new Map();
-    private nodePathMap: Map<string, DendronNode> = new Map();
+    private nodePathMap: Map<string, Node> = new Map();
     private expandedNodes: Set<string> = new Set();
     private settings: PluginSettings;
     
     // Component instances
-    private nodeRenderer: DendronNodeRenderer;
+    private nodeRenderer: TreeRenderer;
     private eventHandler: DendronEventHandler;
     private controls: DendronControls;
 
@@ -26,7 +26,7 @@ export default class DendronTreeView extends ItemView {
         this.settings = settings;
         
         // Initialize components
-        this.nodeRenderer = new DendronNodeRenderer(this.app, this.fileItemsMap);
+        this.nodeRenderer = new TreeRenderer(this.app, this.fileItemsMap);
         this.eventHandler = new DendronEventHandler(this.app, this.refresh.bind(this));
         // Controls will be initialized in onOpen when container is available
     }
@@ -126,7 +126,7 @@ export default class DendronTreeView extends ItemView {
             
             // Scroll into view with a small delay to ensure DOM is updated
             setTimeout(() => {
-                fileItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                fileItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 50);
             
             // Ensure all parent folders are expanded
@@ -224,7 +224,8 @@ export default class DendronTreeView extends ItemView {
         const files = this.app.vault.getMarkdownFiles();
         
         // Build the dendron structure
-        const root = buildDendronStructure(folders, files);
+        const treeBuilder = new TreeBuilder(this.app);
+        const root = treeBuilder.buildDendronStructure(folders, files);
         this.lastBuiltTree = root;
         
         // Build the node path map for quick lookups
@@ -247,7 +248,7 @@ export default class DendronTreeView extends ItemView {
     /**
      * Build a map of paths to nodes for quick lookups
      */
-    private buildNodePathMap(node: DendronNode, parentPath: string): void {
+    private buildNodePathMap(node: Node, parentPath: string): void {
         for (const [name, childNode] of node.children.entries()) {
             const path = name;
             this.nodePathMap.set(path, childNode);

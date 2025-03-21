@@ -1,13 +1,13 @@
 import { App, Modal, Notice, Plugin, TFile, ViewState, WorkspaceLeaf } from 'obsidian';
 import { FILE_TREE_VIEW_TYPE, PluginSettings, DEFAULT_SETTINGS, TREE_VIEW_ICON } from './types';
-import DendronTreeView from './views/DendronTreeView';
+import PluginMainPanel from './views/PluginMainPanel';
 import { t } from './i18n';
 
 export default class TreeMapperPlugin extends Plugin {
 	settings: PluginSettings;
 	private viewRegistered = false;
 	private isInitializing = false;
-	private dendronView: DendronTreeView | null = null;
+	private dendronView: PluginMainPanel | null = null;
 
 	async onload() {
 		await this.loadSettings();
@@ -23,7 +23,7 @@ export default class TreeMapperPlugin extends Plugin {
 		this.registerView(
 			FILE_TREE_VIEW_TYPE,
 			(leaf) => {
-				this.dendronView = new DendronTreeView(leaf, this.settings);
+				this.dendronView = new PluginMainPanel(leaf, this.settings);
 				return this.dendronView;
 			}
 		);
@@ -99,14 +99,10 @@ export default class TreeMapperPlugin extends Plugin {
 			}
 		});
 
-		// Use a timeout to ensure we don't initialize too early
-        // and create a new leaf before checking for existing leaves
-        // resulting in a race condition, with 2 leaves created in the end
-		setTimeout(() => {
-			this.app.workspace.onLayoutReady(() => {
-				this.checkAndInitializeView();
-			});
-		}, 500);
+		// Use Obsidian's workspace.onLayoutReady for proper initialization
+        this.app.workspace.onLayoutReady(() => {
+            this.activateView();
+        });
 	}
 
 	private async checkAndInitializeView() {
@@ -202,7 +198,7 @@ export default class TreeMapperPlugin extends Plugin {
 		const leaves = this.app.workspace.getLeavesOfType(FILE_TREE_VIEW_TYPE);
 		if (leaves.length === 0) return;
 		
-		const dendronView = leaves[0].view as DendronTreeView;
+		const dendronView = leaves[0].view as PluginMainPanel;
 		
 		// Trigger file highlighting
 		if (dendronView && typeof dendronView.highlightFile === 'function') {
@@ -219,7 +215,7 @@ export default class TreeMapperPlugin extends Plugin {
 		if (!activeFile) return;
 		
 		// Get the Dendron Tree View instance
-		const dendronView = leaf.view as DendronTreeView;
+		const dendronView = leaf.view as PluginMainPanel;
 		
 		// Trigger file highlighting
 		if (dendronView && typeof dendronView.highlightFile === 'function') {

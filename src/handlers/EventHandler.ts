@@ -1,5 +1,5 @@
 import { App, TFile } from 'obsidian';
-import { DendronNode } from '../types';
+import { Node } from '../types';
 
 export class DendronEventHandler {
     private app: App;
@@ -77,9 +77,9 @@ export class DendronEventHandler {
     tryIncrementalUpdate(
         changedPath: string,
         container: HTMLElement,
-        lastBuiltTree: DendronNode | null,
-        nodePathMap: Map<string, DendronNode>,
-        renderCallback: (node: DendronNode, container: HTMLElement) => void
+        lastBuiltTree: Node | null,
+        nodePathMap: Map<string, Node>,
+        renderCallback: (node: Node, container: HTMLElement) => void
     ): boolean {
         if (!container || !lastBuiltTree) return false;
         

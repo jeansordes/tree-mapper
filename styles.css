@@ -1,6 +1,9 @@
 .dendron-view-container {
     user-select: none;
     padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .dendron-view-container {
@@ -17,8 +20,7 @@
 
     .dendron-tree-list {
         list-style: none;
-        padding: 0.3rem 0;
-        margin: 0;
+        margin: 8px;
     }
 
     .tree-item-content {
@@ -54,14 +56,18 @@
         align-items: center;
         gap: 4px;
         margin-bottom: 4px;
-        padding-top: 0;
-        padding-bottom: 0;
+        padding: 0;
+        padding-left: 20px;
     }
 
     .tree-item-folder-icon svg {
         width: var(--button-icon-size);
         height: var(--button-icon-size);
         transform: translate(5px, 1px);
+    }
+
+    .tree-item-children {
+        margin-left: 1.5rem;
     }
 
     .tree-item.is-collapsed>.tree-item-children {
@@ -156,7 +162,7 @@
     /* Fixed header at the top */
     .dendron-tree-header {
         display: flex;
-        padding: 4px 8px;
+        padding: 8px;
         border-bottom: 1px solid var(--background-modifier-border);
         flex-shrink: 0;
         position: sticky;
