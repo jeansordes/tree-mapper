@@ -1,3 +1,12 @@
+## [1.0.5](https://github.com/jeansordes/tree-mapper/compare/1.0.4...1.0.5) (2025-03-21)
+
+
+### Bug Fixes
+
+* restore mobile support ([c52d7f3](https://github.com/jeansordes/tree-mapper/commit/c52d7f3c67ca02ea73d45b1112b370033c369336))
+
+
+
 ## [1.0.4](https://github.com/jeansordes/tree-mapper/compare/1.0.3...1.0.4) (2025-03-21)
 
 
