@@ -1,10 +1,10 @@
-import { App, ItemView, Notice, TFile, WorkspaceLeaf } from 'obsidian';
-import { Node, NodeType, FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON } from '../types';
-import { TreeBuilder } from '../utils/TreeBuilder';
-import { t } from '../i18n';
-import { TreeRenderer } from './TreeRenderer';
+import { ItemView, TFile, WorkspaceLeaf } from 'obsidian';
 import { DendronEventHandler } from '../handlers/EventHandler';
-import { DendronControls } from './DendronControls';
+import { t } from '../i18n';
+import { FILE_TREE_VIEW_TYPE, Node, PluginSettings, TREE_VIEW_ICON } from '../types';
+import { TreeBuilder } from '../utils/TreeBuilder';
+import { ExpandedNodesManager } from './ExpandedNodesManager';
+import { TreeRenderer } from './TreeRenderer';
 
 // Dendron Tree View class
 export default class PluginMainPanel extends ItemView {
@@ -19,7 +19,7 @@ export default class PluginMainPanel extends ItemView {
     // Component instances
     private nodeRenderer: TreeRenderer;
     private eventHandler: DendronEventHandler;
-    private controls: DendronControls;
+    private controls: ExpandedNodesManager;
 
     constructor(leaf: WorkspaceLeaf, settings: PluginSettings) {
         super(leaf);
@@ -67,7 +67,7 @@ export default class PluginMainPanel extends ItemView {
         this.container = treeContainer;
         
         // Initialize controls with the container
-        this.controls = new DendronControls(this.containerEl, this.expandedNodes);
+        this.controls = new ExpandedNodesManager(this.containerEl, this.expandedNodes);
         
         // Add control buttons to the header
         this.controls.addControlButtons(header);

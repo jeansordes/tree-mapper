@@ -1,7 +1,7 @@
 import { setIcon } from 'obsidian';
 import { t } from '../i18n';
 
-export class DendronControls {
+export class ExpandedNodesManager {
     private container: HTMLElement;
     private expandedNodes: Set<string>;
 

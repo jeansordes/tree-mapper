@@ -1,7 +1,7 @@
-import { App, Modal, Notice, Plugin, TFile, ViewState, WorkspaceLeaf } from 'obsidian';
-import { FILE_TREE_VIEW_TYPE, PluginSettings, DEFAULT_SETTINGS, TREE_VIEW_ICON } from './types';
-import PluginMainPanel from './views/PluginMainPanel';
+import { Notice, Plugin, TFile, ViewState, WorkspaceLeaf } from 'obsidian';
 import { t } from './i18n';
+import { DEFAULT_SETTINGS, FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON } from './types';
+import PluginMainPanel from './views/PluginMainPanel';
 
 export default class TreeMapperPlugin extends Plugin {
 	settings: PluginSettings;
