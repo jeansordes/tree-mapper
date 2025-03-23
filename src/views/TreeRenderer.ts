@@ -24,7 +24,7 @@ export class TreeRenderer {
             .forEach(([name, childNode]) => {
                 const isFolder = childNode.nodeType === TreeNodeType.FOLDER;
                 const isFile = childNode.nodeType === TreeNodeType.FILE;
-                const hasChildren = isFile ? false : childNode.children.size > 0;
+                const hasChildren = childNode.children.size > 0;
 
                 // Create tree item structure
                 const item = this.createElement('div', {
