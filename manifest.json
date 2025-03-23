@@ -1,7 +1,7 @@
 {
 	"id": "tree-mapper",
 	"name": "Tree Mapper",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"minAppVersion": "0.15.0",
 	"description": "A Dendron-like hierarchical note management system for your vault.",
 	"author": "jeansordes",

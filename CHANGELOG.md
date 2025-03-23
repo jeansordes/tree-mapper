@@ -1,3 +1,12 @@
+## [1.0.7](https://github.com/jeansordes/tree-mapper/compare/1.0.6...1.0.7) (2025-03-23)
+
+
+### Bug Fixes
+
+* repair collapse mechanism + increase ui sizes on mobile ([80cb097](https://github.com/jeansordes/tree-mapper/commit/80cb097dbb1e011bf30822ec40e9760fa813be11))
+
+
+
 ## [1.0.6](https://github.com/jeansordes/tree-mapper/compare/1.0.5...1.0.6) (2025-03-22)
 
 
