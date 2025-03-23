@@ -15,7 +15,7 @@
     --tm_button-size: calc(var(--tm_square-size));
     --tm_border-radius: 3px;
     --tm_gap: 4px;
-    --tm_font-size: var(--font-text-size);
+    --tm_font-size: var(--font-ui-small);
 }
 
 .tm_view {
@@ -144,10 +144,12 @@
 /* Mobile */
 .tm_view.tm_view-mobile {
     --tm_square-size: 2rem;
+    --tm_font-size: var(--font-text-size);
     flex-direction: column-reverse;
 
     .tm_view-header {
         border-top: 1px solid var(--tm_border-color);
         border-bottom: none;
+        flex-direction: row-reverse;
     }
 }

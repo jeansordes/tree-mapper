@@ -14,11 +14,6 @@ export class ExpandedNodesManager {
      * Add control buttons to the header
      */
     addControlButtons(header: HTMLElement): void {
-        // Add a spacer
-        const spacer = document.createElement('div');
-        spacer.className = 'tm_spacer';
-        header.appendChild(spacer);
-
         // Add a single toggle button for expand/collapse all (as a div instead of button)
         const toggleButton = document.createElement('div');
         toggleButton.className = 'tm_tree-toggle-button is-clickable';
