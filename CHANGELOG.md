@@ -1,3 +1,12 @@
+## [1.0.10](https://github.com/jeansordes/tree-mapper/compare/1.0.9...1.0.10) (2025-03-23)
+
+
+### Bug Fixes
+
+* **ui:** add space around collapse all button ([3e71c85](https://github.com/jeansordes/tree-mapper/commit/3e71c8583236b87f88c71ad59548b88518f3e7f3))
+
+
+
 ## [1.0.9](https://github.com/jeansordes/tree-mapper/compare/1.0.8...1.0.9) (2025-03-23)
 
 
