@@ -1,3 +1,12 @@
+## [1.0.8](https://github.com/jeansordes/tree-mapper/compare/1.0.7...1.0.8) (2025-03-23)
+
+
+### Bug Fixes
+
+* restore desktop ui style ([3f963f8](https://github.com/jeansordes/tree-mapper/commit/3f963f8e54487d0e267b83eecf6ee0a7223a22b4))
+
+
+
 ## [1.0.7](https://github.com/jeansordes/tree-mapper/compare/1.0.6...1.0.7) (2025-03-23)
 
 
