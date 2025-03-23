@@ -1,6 +1,6 @@
 {
 	"name": "tree-mapper",
-	"version": "1.0.8",
+	"version": "1.0.9",
 	"description": "A hierarchical note management system for your vault",
 	"main": "main.js",
 	"scripts": {
