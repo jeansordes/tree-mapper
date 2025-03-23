@@ -22,8 +22,9 @@ export class TreeRenderer {
         Array.from(node.children.entries())
             .sort(([aKey], [bKey]) => aKey.localeCompare(bKey))
             .forEach(([name, childNode]) => {
-                const hasChildren = childNode.children.size > 0;
                 const isFolder = childNode.nodeType === TreeNodeType.FOLDER;
+                const isFile = childNode.nodeType === TreeNodeType.FILE;
+                const hasChildren = isFile ? false : childNode.children.size > 0;
 
                 // Create tree item structure
                 const item = this.createElement('div', {
@@ -41,7 +42,9 @@ export class TreeRenderer {
                 item.appendChild(itemSelf);
 
                 // Add components to the tree item
-                this.addToggleButton(itemSelf, item, hasChildren, expandedNodes);
+                if (hasChildren) {
+                    this.addToggleButton(itemSelf, item, expandedNodes);
+                }
 
                 if (childNode.nodeType === TreeNodeType.FOLDER) {
                     const icon = this.createElement('div', {
@@ -94,7 +97,7 @@ export class TreeRenderer {
     /**
      * Add toggle button or spacer for tree items
      */
-    private addToggleButton(parent: HTMLElement, item: HTMLElement, hasChildren: boolean, expandedNodes: Set<string>): void {
+    private addToggleButton(parent: HTMLElement, item: HTMLElement, expandedNodes: Set<string>): void {
         const toggleBtn = this.createElement('div', {
             className: 'tm_button-icon'
         });

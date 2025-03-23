@@ -14,15 +14,15 @@ export class ExpandedNodesManager {
      * Add control buttons to the header
      */
     addControlButtons(header: HTMLElement): void {
-        // Create a container for the buttons
-        const buttonContainer = document.createElement('div');
-        buttonContainer.className = 'tm_tree-buttons';
-        header.appendChild(buttonContainer);
-        
+        // Add a spacer
+        const spacer = document.createElement('div');
+        spacer.className = 'tm_spacer';
+        header.appendChild(spacer);
+
         // Add a single toggle button for expand/collapse all (as a div instead of button)
         const toggleButton = document.createElement('div');
         toggleButton.className = 'tm_tree-toggle-button is-clickable';
-        buttonContainer.appendChild(toggleButton);
+        header.appendChild(toggleButton);
         
         // Create the icon container
         const iconContainer = document.createElement('div');
@@ -92,7 +92,7 @@ export class ExpandedNodesManager {
         this.expandedNodes.clear();
         
         // Add collapsed class to all tree items
-        const items = this.container.querySelectorAll('.tm_tree-item');
+        const items = this.container.querySelectorAll('.tm_tree-item-container');
         items.forEach(item => {
             item.addClass('is-collapsed');
         });
@@ -114,7 +114,7 @@ export class ExpandedNodesManager {
         if (!this.container) return;
         
         // Get all tree items
-        const items = this.container.querySelectorAll('.tm_tree-item');
+        const items = this.container.querySelectorAll('.tm_tree-item-container');
         
         // Remove collapsed class from all tree items
         items.forEach(item => {

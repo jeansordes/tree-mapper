@@ -1,43 +1,44 @@
 .tm_view {
-    /* Variables: Colors */
-    --bg2-5: hsla(0, 0%, calc(96% - 50%), 0.06);
-    --bg-clickable: var(--bg2-5);
-    --bg-hover: var(--bg3);
-    --accent-color: var(--ax3);
-    --color-text-clickable: var(--tx2);
-    --color-text-hover: var(--tx1);
+    /* Colors */
+    --tm_bg2-5: hsla(0, 0%, calc(96% - 50%), 0.06);
+    --tm_bg-clickable: var(--tm_bg2-5);
+    --tm_bg-hover: var(--bg3);
+    --tm_accent-color: var(--ax3);
+    --tm_text-on-accent: var(--text-on-accent);
+    --tm_color-text-clickable: var(--tx2);
+    --tm_color-text-hover: var(--tx1);
+    --tm_border-color: var(--background-modifier-border);
 
-    /* Variables: Sizes */
-    --line-height: 1.5rem;
-    --button-icon-size: 14px;
-    --button-size: calc(var(--line-height));
-    --border-radius: 3px;
-    --gap: 4px;
+    /* Sizes */
+    --tm_square-size: 1.5rem;
+    --tm_button-icon-size: 14px;
+    --tm_button-size: calc(var(--tm_square-size));
+    --tm_border-radius: 3px;
+    --tm_gap: 4px;
+    --tm_font-size: var(--font-text-size);
+}
 
-    /* General */
+.tm_view {
     user-select: none;
-    color: var(--color-text-clickable);
-    font-size: var(--nav-item-size);
+    color: var(--tm_color-text-clickable);
+    font-size: var(--tm_font-size);
     display: flex;
     flex-direction: column;
     height: 100%;
     padding: 0 !important;
-
-    /* Layout */
-    .tm_view {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        overflow: hidden;
-    }
+    overflow: hidden;
 
     .tm_view-header {
         display: flex;
-        border-bottom: 1px solid var(--background-modifier-border);
+        border-bottom: 1px solid var(--tm_border-color);
         flex-shrink: 0;
         position: sticky;
         top: 0;
         z-index: 10;
+    }
+
+    .tm_spacer {
+        flex-grow: 1;
     }
 
     .tm_view-body {
@@ -52,19 +53,19 @@
     .tm_tree-item-container {
         display: flex;
         flex-direction: column;
-        gap: var(--gap);
-        margin-bottom: var(--gap);
+        gap: var(--tm_gap);
+        margin-bottom: var(--tm_gap);
     }
 
     .tm_tree-item-self {
         display: flex;
         width: 100%;
-        gap: var(--gap);
+        gap: var(--tm_gap);
     }
 
     .tm_tree-item-title {
         flex: 1 1 auto;
-        line-height: 1.5rem;
+        line-height: var(--tm_button-size);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -77,9 +78,9 @@
 
     /* Children */
     .tm_tree-item-children {
-        padding-left: calc(var(--button-size) / 2);
-        margin-left: calc((var(--button-size) / 2) - 1px);
-        border-left: 1px solid var(--background-modifier-border);
+        padding-left: calc(var(--tm_button-size) / 2);
+        margin-left: calc((var(--tm_button-size) / 2) - 1px);
+        border-left: 1px solid var(--tm_border-color);
     }
 
     .tm_tree-item-container.is-collapsed>.tm_tree-item-children {
@@ -94,8 +95,8 @@
     }
 
     .tm_icon svg, .tm_button-icon svg {
-        width: var(--button-icon-size);
-        height: var(--button-icon-size);
+        width: var(--tm_button-icon-size);
+        height: var(--tm_button-icon-size);
     }
 
     svg.right-triangle {
@@ -119,22 +120,34 @@
     }
 
     .tm_button-icon, .is-clickable {
-        color: var(--color-text-clickable);
-        min-width: var(--button-size);
-        height: var(--button-size);
-        border-radius: var(--border-radius);
-        background-color: var(--bg-clickable);
+        color: var(--tm_color-text-clickable);
+        min-width: var(--tm_button-size);
+        height: var(--tm_button-size);
+        line-height: var(--tm_button-size);
+        border-radius: var(--tm_border-radius);
+        background-color: var(--tm_bg-clickable);
     }
 
     .tm_button-icon:hover, .is-clickable:hover {
-        background-color: var(--bg-hover);
-        color: var(--color-text-hover);
+        background-color: var(--tm_bg-hover);
+        color: var(--tm_color-text-hover);
     }
 
     /* Style for the currently active file */
-    .tm_tree-item-container.is-active,
-    .tm_tree-item-container.is-active:hover {
-        color: var(--text-on-accent);
-        background-color: var(--accent-color);
+    .tm_tree-item-title.is-active,
+    .tm_tree-item-title.is-active:hover {
+        color: var(--tm_text-on-accent);
+        background-color: var(--tm_accent-color);
+    }
+}
+
+/* Mobile */
+.tm_view.tm_view-mobile {
+    --tm_square-size: 2rem;
+    flex-direction: column-reverse;
+
+    .tm_view-header {
+        border-top: 1px solid var(--tm_border-color);
+        border-bottom: none;
     }
 }

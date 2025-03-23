@@ -1,4 +1,4 @@
-import { ItemView, TFile, WorkspaceLeaf } from 'obsidian';
+import { ItemView, Platform, TFile, WorkspaceLeaf } from 'obsidian';
 import { DendronEventHandler } from '../utils/EventHandler';
 import { t } from '../i18n';
 import { FILE_TREE_VIEW_TYPE, TreeNode, PluginSettings, TREE_VIEW_ICON } from '../types';
@@ -50,6 +50,10 @@ export default class PluginMainPanel extends ItemView {
         
         // Set the main container to be a flex container with column direction
         container.addClass('tm_view');
+        // If on mobile, add the mobile class
+        if (Platform.isMobile) {
+            container.addClass('tm_view-mobile');
+        }
 
         // Create a fixed header with controls
         const header = document.createElement('div');
@@ -112,7 +116,7 @@ export default class PluginMainPanel extends ItemView {
         if (!this.activeFile || !this.container) return;
 
         // Clear previous active file highlighting
-        const previousActive = this.container.querySelector('.tm_tree-item-self.is-active');
+        const previousActive = this.container.querySelector('.tm_tree-item-title.is-active');
         if (previousActive) {
             previousActive.removeClass('is-active');
         }
@@ -131,7 +135,7 @@ export default class PluginMainPanel extends ItemView {
             }, 50);
             
             // Ensure all parent folders are expanded
-            let parent = fileItem.closest('.tm_tree-item');
+            let parent = fileItem.closest('.tm_tree-item-container');
             while (parent) {
                 if (parent.hasClass('is-collapsed')) {
                     parent.removeClass('is-collapsed');
@@ -143,7 +147,7 @@ export default class PluginMainPanel extends ItemView {
                     }
                 }
                 const parentElement = parent.parentElement;
-                parent = parentElement ? parentElement.closest('.tm_tree-item') : null;
+                parent = parentElement ? parentElement.closest('.tm_tree-item-container') : null;
             }
         }
     }
@@ -154,7 +158,7 @@ export default class PluginMainPanel extends ItemView {
     private saveExpandedState(): void {
         this.expandedNodes.clear();
         if (this.container) {
-            const expandedItems = this.container.querySelectorAll('.tm_tree-item:not(.is-collapsed)');
+            const expandedItems = this.container.querySelectorAll('.tm_tree-item-container:not(.is-collapsed)');
             expandedItems.forEach(item => {
                 const path = item.getAttribute('data-path');
                 if (path) {
@@ -170,7 +174,7 @@ export default class PluginMainPanel extends ItemView {
     private restoreExpandedState(): void {
         if (this.container) {
             this.expandedNodes.forEach(path => {
-                const item = this.container?.querySelector(`.tm_tree-item[data-path="${path}"]`);
+                const item = this.container?.querySelector(`.tm_tree-item-container[data-path="${path}"]`);
                 if (item) {
                     item.removeClass('is-collapsed');
                     const triangle = item.querySelector('.right-triangle');
