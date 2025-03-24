@@ -229,7 +229,7 @@ export default class PluginMainPanel extends ItemView {
     async buildDendronTree(container: HTMLElement) {
         // Get all markdown files and folders
         const folders = this.app.vault.getAllFolders();
-        const files = this.app.vault.getMarkdownFiles();
+        const files = this.app.vault.getFiles();
         
         // Build the dendron structure
         const treeBuilder = new TreeBuilder(this.app);

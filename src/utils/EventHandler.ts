@@ -29,8 +29,8 @@ export class DendronEventHandler {
         });
 
         this.app.vault.on('modify', (file) => {
-            // Only refresh for markdown files
-            if (file instanceof TFile && file.extension === 'md') {
+            // Refresh for any file modification
+            if (file instanceof TFile) {
                 // Use incremental update for modifications
                 debouncedRefresh(file.path);
             }
@@ -85,7 +85,7 @@ export class DendronEventHandler {
         
         try {
             // Convert file path to dendron path format
-            const dendronPath = changedPath.replace(/\//g, '.').replace(/\.md$/, '');
+            const dendronPath = changedPath.replace(/\//g, '.').replace(/\.[^\.]]$/, '');
             
             // Find the parent path that needs updating
             const pathParts = dendronPath.split('.');

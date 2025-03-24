@@ -187,20 +187,20 @@ export class TreeBuilder {
             return result === '' ? '/' : result;
         }
 
-        // if it's not a FOLDER, then it's FILE or VIRTUAL
-        let result = path.replace(/(\/|^)[^\.\/]+.md$/, '');
-        result = result === '' ? '/' : result.replace(/\.[^\.]+\.md$/, '.md');
-        return result;
+        // For files, remove the filename and return the parent path
+        const result = path.replace(/[\/]?[^\/]+$/, '');
+        return result === '' ? '/' : result;
     }
 
     public getNewNotePath(path: string): string {
-        const newNoteName = t('untitledPath') + '.md';
+        const extension = path.split('.').pop() || 'md';
+        const newNoteName = t('untitledPath') + '.' + extension;
         const nodeType = this.nodeTypeByPath.get(path);
         if (nodeType === TreeNodeType.FOLDER) {
             return path + '/' + newNoteName;
         }
-        // Remove extension and add the new note name
-        return path.replace(/\.[^\.]+$/, '') + '.' + newNoteName;
+        // For files, replace the filename with the new note name
+        return path.replace(/[^\/]+$/, newNoteName);
     }
 
     public getNodeType(path: string): TreeNodeType {

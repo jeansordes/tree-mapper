@@ -14,7 +14,8 @@ export class FileUtils {
          * Get the path for a child note
          */
     public static getChildPath(path: string): string {
-        return path.replace(/\.md$/, '.' + t('untitledPath') + '.md');
+        const extension = path.split('.').pop() || 'md';
+        return path.replace(/\.[^\.]+$/, '.' + t('untitledPath') + '.' + extension);
     }
     
     /**
