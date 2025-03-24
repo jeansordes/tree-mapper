@@ -5,6 +5,7 @@ import { FileUtils } from '../utils/FileUtils';
 export class TreeRenderer {
     private fileItemsMap: Map<string, HTMLElement>;
     private app: App;
+    private expandedNodes: Set<string>;
 
     constructor(app: App, fileItemsMap: Map<string, HTMLElement>) {
         this.app = app;
@@ -15,6 +16,7 @@ export class TreeRenderer {
      * Render a node in the tree
      */
     public renderDendronNode(node: TreeNode, parentEl: HTMLElement, expandedNodes: Set<string>) {
+        this.expandedNodes = expandedNodes; // Store expandedNodes for use in event handler
         // Use DocumentFragment for batch DOM operations
         const fragment = document.createDocumentFragment();
 
@@ -43,7 +45,7 @@ export class TreeRenderer {
 
                 // Add components to the tree item
                 if (hasChildren) {
-                    this.addToggleButton(itemSelf, item, expandedNodes);
+                    this.addToggleButton(itemSelf, item);
                 }
 
                 if (childNode.nodeType === TreeNodeType.FOLDER) {
@@ -97,25 +99,16 @@ export class TreeRenderer {
     /**
      * Add toggle button or spacer for tree items
      */
-    private addToggleButton(parent: HTMLElement, item: HTMLElement, expandedNodes: Set<string>): void {
+    private addToggleButton(parent: HTMLElement, item: HTMLElement): void {
         const toggleBtn = this.createElement('div', {
-            className: 'tm_button-icon'
-        });
+            className: 'tm_button-icon',
+            attributes: {
+                'data-action': 'toggle',
+                'data-path': item.getAttribute('data-path') || ''
+            }
+        }); 
         parent.appendChild(toggleBtn);
         setIcon(toggleBtn, 'right-triangle');
-
-        this.addEventHandler(toggleBtn, 'click', (event) => {
-            event.stopPropagation();
-            const isCollapsed = item.classList.toggle('is-collapsed');
-            const path = item.getAttribute('data-path');
-
-            if (path) {
-                isCollapsed ? expandedNodes.delete(path) : expandedNodes.add(path);
-            }
-
-            const triangle = toggleBtn.querySelector('.right-triangle');
-            if (triangle) triangle.classList.toggle('is-collapsed');
-        });
     }
 
     /**
@@ -135,22 +128,18 @@ export class TreeRenderer {
         const nameEl = this.createElement('div', {
             className,
             textContent: this.getNodeName(node),
-            title: node.path
+            title: node.path,
+            attributes: {
+                'data-node-type': node.nodeType,
+                'data-path': node.path
+            }
         });
 
         parent.appendChild(nameEl);
 
-        // Add click handler and store reference for file items
-        if (isFile) {
-            this.addEventHandler(nameEl, 'click', async () => {
-                if (node.obsidianResource && node.obsidianResource instanceof TFile) {
-                    await FileUtils.openFile(this.app, node.obsidianResource);
-                }
-            });
-
-            if (node.obsidianResource && node.obsidianResource instanceof TFile) {
-                this.fileItemsMap.set(node.obsidianResource.path, nameEl);
-            }
+        // Store reference for file items
+        if (isFile && node.obsidianResource && node.obsidianResource instanceof TFile) {
+            this.fileItemsMap.set(node.obsidianResource.path, nameEl);
         }
     }
 
@@ -174,43 +163,104 @@ export class TreeRenderer {
     private addActionButtons(parent: HTMLElement, node: TreeNode, name: string): void {
         // Add "create note" button for virtual nodes
         if (node.nodeType === TreeNodeType.VIRTUAL) {
-            parent.appendChild(this.createActionButton({
+            const createNoteBtn = this.createActionButton({
                 icon: 'square-pen',
                 title: t('tooltipCreateNote', { path: node.path }),
-                onClick: () => FileUtils.createNote(this.app, node.path)
-            }));
+                attributes: {
+                    'data-action': 'create-note',
+                    'data-path': node.path
+                }
+            });
+            parent.appendChild(createNoteBtn);
         }
 
         // Add "create child note" button for all nodes
-        parent.appendChild(this.createActionButton({
+        const createChildBtn = this.createActionButton({
             icon: 'rotate-cw-square',
             title: t('tooltipCreateChildNote', { path: FileUtils.getChildPath(node.path) }),
             className: 'rotate-180deg',
-            onClick: () => FileUtils.createChildNote(this.app, node.path)
-        }));
+            attributes: {
+                'data-action': 'create-child',
+                'data-path': node.path
+            }
+        });
+        parent.appendChild(createChildBtn);
     }
 
     /**
-     * Create an action button with icon and click handler
+     * Create an action button with icon
      */
     private createActionButton(options: {
         icon: string,
         title: string,
         className?: string,
-        onClick: () => Promise<void> | void
+        attributes?: Record<string, string>
     }): HTMLElement {
         const btn = this.createElement('div', {
             className: `tm_button-icon ${options.className || ''}`,
-            title: options.title
+            title: options.title,
+            attributes: options.attributes || {}
         });
 
         setIcon(btn, options.icon);
-
-        this.addEventHandler(btn, 'click', (event) => {
-            event.stopPropagation();
-            options.onClick();
-        });
-
         return btn;
+    }
+
+    /**
+     * Add the main event handler to the tree container
+     */
+    public addTreeEventHandler(treeContainer: HTMLElement): void {
+        treeContainer.addEventListener('click', async (event) => {
+            // Find the closest clickable element
+            const target = event.target as HTMLElement;
+            const clickableElement = target.closest('.is-clickable, .tm_button-icon');
+            
+            if (!clickableElement) return;
+
+            // Handle toggle button clicks
+            if (clickableElement.classList.contains('tm_button-icon')) {
+                const action = clickableElement.getAttribute('data-action');
+                const path = clickableElement.getAttribute('data-path');
+                
+                if (!path) return;
+
+                event.stopPropagation();
+
+                switch (action) {
+                    case 'toggle':
+                        const item = clickableElement.closest('.tm_tree-item-container');
+                        if (item) {
+                            const isCollapsed = item.classList.toggle('is-collapsed');
+                            isCollapsed ? this.expandedNodes.delete(path) : this.expandedNodes.add(path);
+                            
+                            const triangle = clickableElement.querySelector('.right-triangle');
+                            if (triangle) triangle.classList.toggle('is-collapsed');
+                        }
+                        return;
+                    case 'create-note':
+                        await FileUtils.createNote(this.app, path);
+                        break;
+                    case 'create-child':
+                        await FileUtils.createChildNote(this.app, path);
+                        break;
+                }
+                return;
+            }
+
+            // Handle file clicks
+            if (clickableElement.classList.contains('tm_tree-item-title')) {
+                const nodeType = clickableElement.getAttribute('data-node-type');
+                const path = clickableElement.getAttribute('data-path');
+                
+                if (!path) return;
+
+                if (nodeType === TreeNodeType.FILE) {
+                    const file = this.app.vault.getAbstractFileByPath(path);
+                    if (file instanceof TFile) {
+                        await FileUtils.openFile(this.app, file);
+                    }
+                }
+            }
+        });
     }
 }

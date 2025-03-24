@@ -89,6 +89,9 @@ export default class PluginMainPanel extends ItemView {
         // Build the dendron tree
         await this.buildDendronTree(treeContainer);
 
+        // Add the main event handler to the tree container
+        this.nodeRenderer.addTreeEventHandler(treeContainer);
+
         // Get the active file when the view is first opened
         const activeFile = this.app.workspace.getActiveFile();
         if (activeFile) {
