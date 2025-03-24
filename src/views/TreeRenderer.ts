@@ -26,6 +26,7 @@ export class TreeRenderer {
             .forEach(([name, childNode]) => {
                 const isFolder = childNode.nodeType === TreeNodeType.FOLDER;
                 const isFile = childNode.nodeType === TreeNodeType.FILE;
+                const isMarkdownFile = childNode.path.endsWith('.md');
                 const hasChildren = childNode.children.size > 0;
 
                 // Create tree item structure
@@ -39,7 +40,7 @@ export class TreeRenderer {
                         'tm_tree-item-self',
                         hasChildren ? ' mod-collapsible' : '',
                         isFolder ? ' mod-folder' : ''
-                    ].filter(Boolean).join(' ')
+                    ].filter(Boolean).join(' '),
                 });
                 item.appendChild(itemSelf);
 
@@ -48,15 +49,29 @@ export class TreeRenderer {
                     this.addToggleButton(itemSelf, item);
                 }
 
-                if (childNode.nodeType === TreeNodeType.FOLDER) {
+                // Add icon to the tree item
+                if (!isMarkdownFile) {
+                    const iconName = this.getNodeIconName(childNode);
                     const icon = this.createElement('div', {
-                        className: `tm_icon`
+                        className: 'tm_icon',
+                        attributes: {
+                            'data-icon-name': iconName
+                        }
                     });
+                    setIcon(icon, iconName);
                     itemSelf.appendChild(icon);
-                    setIcon(icon, 'folder');
                 }
 
                 this.addNode(itemSelf, childNode);
+                // Add extension to the tree item
+                if (isFile && !isMarkdownFile) {
+                    const extension = childNode.path.split('.').pop() || '';
+                    const extensionEl = this.createElement('div', {
+                        className: 'tm_extension',
+                        textContent: extension
+                    });
+                    itemSelf.appendChild(extensionEl);
+                }
                 this.addActionButtons(itemSelf, childNode, name);
 
                 // Recursively render children
@@ -106,7 +121,7 @@ export class TreeRenderer {
                 'data-action': 'toggle',
                 'data-path': item.getAttribute('data-path') || ''
             }
-        }); 
+        });
         parent.appendChild(toggleBtn);
         setIcon(toggleBtn, 'right-triangle');
     }
@@ -131,7 +146,7 @@ export class TreeRenderer {
             title: node.path,
             attributes: {
                 'data-node-type': node.nodeType,
-                'data-path': node.path
+                'data-path': node.path,
             }
         });
 
@@ -148,6 +163,47 @@ export class TreeRenderer {
             return FileUtils.basename(node.path);
         }
         return FileUtils.basename(node.path).match(/([^.]+)\.[^.]+$/)?.[1] || FileUtils.basename(node.path);
+    }
+
+    private getNodeIconName(node: TreeNode): string {
+        if (node.nodeType === TreeNodeType.FOLDER) {
+            return 'folder';
+        }
+        const extension = node.path.split('.').pop() || '';
+        switch (extension) {
+            case 'md':
+                return 'file-markdown';
+            case 'canvas':
+                return 'layout-dashboard';
+            case 'pdf':
+                return 'file-scan';
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+            case 'webp':
+            case 'heic':
+            case 'heif':
+            case 'svg':
+                return 'file-image';
+            case 'mp3':
+            case 'm4a':
+            case 'wav':
+            case 'ogg':
+            case 'webm':
+                return 'file-audio';
+            case 'mp4':
+            case 'mov':
+            case 'avi':
+                return 'file-video';
+            case 'zip':
+            case 'rar':
+            case 'tar':
+            case 'gz':
+                return 'file-zip';
+            default:
+                return 'file-question';
+        }
     }
 
     /**
@@ -214,14 +270,14 @@ export class TreeRenderer {
             // Find the closest clickable element
             const target = event.target as HTMLElement;
             const clickableElement = target.closest('.is-clickable, .tm_button-icon');
-            
+
             if (!clickableElement) return;
 
             // Handle toggle button clicks
             if (clickableElement.classList.contains('tm_button-icon')) {
                 const action = clickableElement.getAttribute('data-action');
                 const path = clickableElement.getAttribute('data-path');
-                
+
                 if (!path) return;
 
                 event.stopPropagation();
@@ -232,7 +288,7 @@ export class TreeRenderer {
                         if (item) {
                             const isCollapsed = item.classList.toggle('is-collapsed');
                             isCollapsed ? this.expandedNodes.delete(path) : this.expandedNodes.add(path);
-                            
+
                             const triangle = clickableElement.querySelector('.right-triangle');
                             if (triangle) triangle.classList.toggle('is-collapsed');
                         }
@@ -251,7 +307,7 @@ export class TreeRenderer {
             if (clickableElement.classList.contains('tm_tree-item-title')) {
                 const nodeType = clickableElement.getAttribute('data-node-type');
                 const path = clickableElement.getAttribute('data-path');
-                
+
                 if (!path) return;
 
                 if (nodeType === TreeNodeType.FILE) {

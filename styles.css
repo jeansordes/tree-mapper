@@ -12,6 +12,7 @@
     --tm_color-text-clickable: var(--tx2);
     --tm_color-text-hover: var(--tx1);
     --tm_border-color: var(--background-modifier-border);
+    --tm_text-faint: var(--text-faint);
 
     /* Sizes */
     --tm_square-size: 1.5rem;
@@ -21,6 +22,7 @@
     --tm_gap: 4px;
     --tm_view-padding: 8px;
     --tm_font-size: var(--font-ui-small);
+    --tm_font-size-small: 0.6rem;
 }
 
 .tm_view {
@@ -77,8 +79,12 @@
         padding: 0 0.5rem;
     }
 
-    .mod-folder .tm_tree-item-title {
-        padding-left: 0;
+    .tm_extension {
+        line-height: var(--tm_button-size);
+        text-transform: uppercase;
+        color: var(--tm_text-faint);
+        font-size: var(--tm_font-size-small);
+        padding: 0 0.2rem;
     }
 
     /* Children */
@@ -117,6 +123,10 @@
 
     .rotate-180deg svg {
         transform: rotate(180deg);
+    }
+
+    .tm_icon[data-icon-name="folder"] {
+        margin-right: calc(var(--tm_view-padding) * -1);
     }
 
     /* Buttons */
