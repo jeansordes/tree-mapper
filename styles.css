@@ -1,4 +1,8 @@
 .tm_view {
+    /* DO NOT REMOVE THIS LINE */
+    --tm_css-is-loaded: true;
+    /* This is a hack to ensure the styles are loaded */
+
     /* Colors */
     --tm_bg2-5: hsla(0, 0%, calc(96% - 50%), 0.06);
     --tm_bg-clickable: var(--tm_bg2-5);

@@ -77,6 +77,9 @@ export default class PluginMainPanel extends ItemView {
         // Add control buttons to the header
         this.controls.addControlButtons(header);
 
+        // Wait for CSS to be loaded by checking if the styles are applied
+        await this.waitForCSSLoad();
+
         // Register file system events
         this.eventHandler.registerFileEvents();
 
@@ -101,6 +104,30 @@ export default class PluginMainPanel extends ItemView {
                 this.highlightActiveFile();
             }, 500);
         }
+    }
+
+    /**
+     * Wait for CSS to be loaded by checking if the styles are applied
+     */
+    private waitForCSSLoad(): Promise<void> {
+        return new Promise((resolve) => {
+            const checkCSS = () => {
+                if (!this.container) {
+                    setTimeout(checkCSS, 10);
+                    return;
+                }
+                
+                // Check if the styles are applied by looking for a specific CSS variable
+                const computedStyle = window.getComputedStyle(this.container);
+                if (computedStyle.getPropertyValue('--tm_css-is-loaded')) {
+                    resolve();
+                } else {
+                    // If styles are not loaded yet, check again in a short while
+                    setTimeout(checkCSS, 10);
+                }
+            };
+            checkCSS();
+        });
     }
 
     /**
