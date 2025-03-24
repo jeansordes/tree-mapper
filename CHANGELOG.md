@@ -1,3 +1,19 @@
+# [1.1.0](https://github.com/jeansordes/tree-mapper/compare/1.0.10...1.1.0) (2025-03-24)
+
+
+### Features
+
+* add icons + extension for non-markdown files ([2be3b86](https://github.com/jeansordes/tree-mapper/commit/2be3b86cb663cd2746cc1f55f6f52e1d0cfb3f65))
+* add support for any extension, not just markdown files ([87a425a](https://github.com/jeansordes/tree-mapper/commit/87a425a6717aa0b516461221e1a0d2b60dd7ecb1))
+
+
+### Performance Improvements
+
+* make sure the css is loaded before building the tree ([ff157dd](https://github.com/jeansordes/tree-mapper/commit/ff157dd53fcc747ec4895ccf53e9800fdf91f8db))
+* replace 1000s of event listeners by a single one 💪 ([e23a96f](https://github.com/jeansordes/tree-mapper/commit/e23a96f265012152b71557e9dd8b614cb7478009))
+
+
+
 ## [1.0.10](https://github.com/jeansordes/tree-mapper/compare/1.0.9...1.0.10) (2025-03-23)
 
 
