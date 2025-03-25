@@ -172,9 +172,10 @@ export class TreeBuilder {
         }
 
         // if it's not a FOLDER, then it's FILE or VIRTUAL
-        const extension = path.split('.').pop() ?? '';
-        let result = path.replace(RegExp('(\/|^)[^\.\/]+.' + extension + '$'), '');
-        result = result === '' ? '/' : result.replace(RegExp('\.[^\.]+\.' + extension + '$'), '.' + extension);
+        // remove the file name if not dots
+        let result = path.replace(/(\/|^)[^./]+\.[^\.]+$/, '');
+        // otherwise, remove the last part of the dendron path
+        result = result === '' ? '/' : result.replace(/\.[^\.]+(\.[^\.]+)$/, '$1');
         return result;
     }
 
