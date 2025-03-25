@@ -1,3 +1,12 @@
+## [1.1.1](https://github.com/jeansordes/tree-mapper/compare/1.1.0...1.1.1) (2025-03-25)
+
+
+### Bug Fixes
+
+* restore core mechanism that was broken in last release, when trying to support all types of file ([997c60c](https://github.com/jeansordes/tree-mapper/commit/997c60c9bcdb374610abd93b270ebf347a430bc8))
+
+
+
 # [1.1.0](https://github.com/jeansordes/tree-mapper/compare/1.0.10...1.1.0) (2025-03-24)
 
 
