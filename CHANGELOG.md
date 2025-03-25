@@ -1,3 +1,7 @@
+## [1.1.2-beta.0](https://github.com/jeansordes/tree-mapper/compare/1.1.1...1.1.2-beta.0) (2025-03-25)
+
+
+
 ## [1.1.1](https://github.com/jeansordes/tree-mapper/compare/1.1.0...1.1.1) (2025-03-25)
 
 

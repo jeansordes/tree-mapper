@@ -11,11 +11,15 @@ This tool brings hierarchical note management capabilities to your vault, inspir
 ## Features
 
 - Hierarchical note organization with a tree-like interface
-- Easy navigation between related notes
 - Create child notes directly from the hierarchy view
-- Collapsible note hierarchy for better organization
-- Seamless integration with existing features
-- Persistent expanded/collapsed state between sessions
+- Support all file types
+- Works on mobile as well as desktop
+
+## Installation
+
+Until the plugin is officially released, you can install it through BRAT (Beta Review and Testing)
+1. [Install the BRAT plugin](obsidian://show-plugin?id=obsidian42-brat) if you don't have it already
+2. [Install Tree Mapper using BRAT](obsidian://brat?plugin=jeansordes/tree-mapper)
 
 ## Usage
 
