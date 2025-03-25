@@ -5,8 +5,6 @@ import { FileUtils } from './utils/FileUtils';
 import PluginMainPanel from './views/PluginMainPanel';
 export default class TreeMapperPlugin extends Plugin {
     settings: PluginSettings;
-    private viewRegistered = false;
-    private isInitializing = false;
     private pluginMainPanel: PluginMainPanel | null = null;
 
     async onload() {
@@ -31,7 +29,6 @@ export default class TreeMapperPlugin extends Plugin {
                 return this.pluginMainPanel;
             }
         );
-        this.viewRegistered = true;
 
         this.addRibbonIcon(TREE_VIEW_ICON, t('ribbonTooltip'), (evt: MouseEvent) => {
             this.activateView();
@@ -114,25 +111,17 @@ export default class TreeMapperPlugin extends Plugin {
 
 
     async initLeaf(): Promise<WorkspaceLeaf | null> {
-        // Set flag to indicate we're initializing
-        this.isInitializing = true;
+        // Always create the view in the left panel
+        const leaf = this.app.workspace.getLeftLeaf(false);
+        if (!leaf) return null;
 
-        try {
-            // Always create the view in the left panel
-            const leaf = this.app.workspace.getLeftLeaf(false);
-            if (!leaf) return null;
+        // Set the view state
+        await leaf.setViewState({
+            type: FILE_TREE_VIEW_TYPE,
+            active: false // Set to false to avoid automatically focusing the view
+        } as ViewState);
 
-            // Set the view state
-            await leaf.setViewState({
-                type: FILE_TREE_VIEW_TYPE,
-                active: false // Set to false to avoid automatically focusing the view
-            } as ViewState);
-
-            return leaf;
-        } finally {
-            // Reset the flag
-            this.isInitializing = false;
-        }
+        return leaf;
     }
 
     async activateView() {

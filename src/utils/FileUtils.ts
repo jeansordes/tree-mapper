@@ -2,7 +2,6 @@ import { TFile } from "obsidian";
 
 import { App, Notice } from "obsidian";
 import { t } from "src/i18n";
-import { TreeNode } from "src/types";
 export class FileUtils {
     public static basename(path: string): string {
         const normalizedPath = path.replace(/\\/g, '/');
@@ -10,9 +9,6 @@ export class FileUtils {
         return parts[parts.length - 1] || '';
     }
     
-    /**
-         * Get the path for a child note
-         */
     public static getChildPath(path: string): string {
         const extension = path.split('.').pop() || 'md';
         return path.replace(/\.[^\.]+$/, '.' + t('untitledPath') + '.' + extension);
@@ -21,7 +17,7 @@ export class FileUtils {
     /**
      * Create and open a note at the specified path
      */
-    public static async createNote(app: App, path: string): Promise<void> {
+    public static async createAndOpenNote(app: App, path: string): Promise<void> {
         let note = app.vault.getAbstractFileByPath(path);
     
         if (!note) {
@@ -40,12 +36,9 @@ export class FileUtils {
     }
 
     public static async createChildNote(app: App, path: string): Promise<void> {
-        await this.createNote(app, this.getChildPath(path));
+        await this.createAndOpenNote(app, this.getChildPath(path));
     }
     
-    /**
-     * Open a file in a new leaf
-     */
     public static async openFile(app: App, file: TFile): Promise<void> {
         const leaf = app.workspace.getLeaf(false);
         if (leaf) {

@@ -1,11 +1,10 @@
 import { ItemView, Platform, TFile, WorkspaceLeaf } from 'obsidian';
-import { DendronEventHandler } from '../utils/EventHandler';
 import { t } from '../i18n';
-import { FILE_TREE_VIEW_TYPE, TreeNode, PluginSettings, TREE_VIEW_ICON } from '../types';
+import { FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON, TreeNode } from '../types';
+import { DendronEventHandler } from '../utils/EventHandler';
 import { TreeBuilder } from '../utils/TreeBuilder';
 import { ExpandedNodesManager } from './ExpandedNodesManager';
 import { TreeRenderer } from './TreeRenderer';
-import { FileUtils } from 'src/utils/FileUtils';
 
 // Dendron Tree View class
 export default class PluginMainPanel extends ItemView {

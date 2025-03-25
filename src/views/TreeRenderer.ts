@@ -1,4 +1,4 @@
-import { App, Notice, setIcon, TFile } from 'obsidian';
+import { App, setIcon, TFile } from 'obsidian';
 import { t } from '../i18n';
 import { TreeNode, TreeNodeType } from '../types';
 import { FileUtils } from '../utils/FileUtils';
@@ -294,7 +294,7 @@ export class TreeRenderer {
                         }
                         return;
                     case 'create-note':
-                        await FileUtils.createNote(this.app, path);
+                        await FileUtils.createAndOpenNote(this.app, path);
                         break;
                     case 'create-child':
                         await FileUtils.createChildNote(this.app, path);
