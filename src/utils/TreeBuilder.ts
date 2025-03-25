@@ -1,6 +1,5 @@
-import { App, TFile, TFolder } from 'obsidian';
+import { TFile, TFolder } from 'obsidian';
 import { TreeNode, TreeNodeType } from 'src/types';
-import { t } from 'src/i18n';
 import { FileUtils } from './FileUtils';
 
 export class TreeBuilder {
@@ -8,7 +7,6 @@ export class TreeBuilder {
     private nodeTypeByPath = new Map<string, TreeNodeType>();
     private childrenAmountByPath = new Map<string, number>();
 
-    constructor(private app: App) { }
     /**
      * Creates an empty DendronNode with default values
      */
@@ -19,20 +17,6 @@ export class TreeBuilder {
             nodeType: TreeNodeType.VIRTUAL,
             ...options
         };
-    }
-
-    private splitPathIntoSegments(path: string): string[] {
-        // Split the path by '/' to separate folders from filename
-        const parts = path.split('/');
-
-        // Get all folder parts and add trailing '/'
-        const folderParts = parts.slice(0, -1).map(part => part + '/');
-
-        // Get the filename (last part) and split by '.'
-        const filenameParts = parts[parts.length - 1].split('.');
-
-        // Combine folder parts and filename parts
-        return [...folderParts, ...filenameParts];
     }
 
     public buildDendronStructure(folders: TFolder[], files: TFile[]): TreeNode {
@@ -187,20 +171,11 @@ export class TreeBuilder {
             return result === '' ? '/' : result;
         }
 
-        // For files, remove the filename and return the parent path
-        const result = path.replace(/[\/]?[^\/]+$/, '');
-        return result === '' ? '/' : result;
-    }
-
-    public getNewNotePath(path: string): string {
-        const extension = path.split('.').pop() || 'md';
-        const newNoteName = t('untitledPath') + '.' + extension;
-        const nodeType = this.nodeTypeByPath.get(path);
-        if (nodeType === TreeNodeType.FOLDER) {
-            return path + '/' + newNoteName;
-        }
-        // For files, replace the filename with the new note name
-        return path.replace(/[^\/]+$/, newNoteName);
+        // if it's not a FOLDER, then it's FILE or VIRTUAL
+        const extension = path.split('.').pop() ?? '';
+        let result = path.replace(RegExp('(\/|^)[^\.\/]+.' + extension + '$'), '');
+        result = result === '' ? '/' : result.replace(RegExp('\.[^\.]+\.' + extension + '$'), '.' + extension);
+        return result;
     }
 
     public getNodeType(path: string): TreeNodeType {

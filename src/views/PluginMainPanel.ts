@@ -259,7 +259,7 @@ export default class PluginMainPanel extends ItemView {
         const files = this.app.vault.getFiles();
         
         // Build the dendron structure
-        const treeBuilder = new TreeBuilder(this.app);
+        const treeBuilder = new TreeBuilder();
         const rootNode = treeBuilder.buildDendronStructure(folders, files);
         this.lastBuiltTree = rootNode;
         
