@@ -60,14 +60,13 @@
     .tm_tree-item-container {
         display: flex;
         flex-direction: column;
-        gap: var(--tm_gap);
-        margin-bottom: var(--tm_gap);
     }
 
     .tm_tree-item-self {
         display: flex;
         width: 100%;
         gap: var(--tm_gap);
+        margin-bottom: var(--tm_gap);
     }
 
     .tm_tree-item-title {
