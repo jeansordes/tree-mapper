@@ -3,6 +3,7 @@ import { t } from '../i18n';
 import { FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON, TreeNode } from '../types';
 import { DendronEventHandler } from '../utils/EventHandler';
 import { TreeBuilder } from '../utils/TreeBuilder';
+import { StickyScrollManager } from '../utils/StickyScrollManager';
 import { ExpandedNodesManager } from './ExpandedNodesManager';
 import { TreeRenderer } from './TreeRenderer';
 
@@ -15,6 +16,7 @@ export default class PluginMainPanel extends ItemView {
     private nodePathMap: Map<string, TreeNode> = new Map();
     private expandedNodes: Set<string> = new Set();
     private settings: PluginSettings;
+    private stickyManager: StickyScrollManager;
     
     // Component instances
     private nodeRenderer: TreeRenderer;
@@ -24,6 +26,7 @@ export default class PluginMainPanel extends ItemView {
     constructor(leaf: WorkspaceLeaf, settings: PluginSettings) {
         super(leaf);
         this.settings = settings;
+        this.stickyManager = new StickyScrollManager();
         
         // Initialize components
         this.nodeRenderer = new TreeRenderer(this.app, this.fileItemsMap);
@@ -93,6 +96,9 @@ export default class PluginMainPanel extends ItemView {
 
         // Add the main event handler to the tree container
         this.nodeRenderer.addTreeEventHandler(treeContainer);
+
+        // Add scroll event handler
+        this.setupScrollHandler(scrollContainer);
 
         // Get the active file when the view is first opened
         const activeFile = this.app.workspace.getActiveFile();
@@ -328,5 +334,70 @@ export default class PluginMainPanel extends ItemView {
         this.lastBuiltTree = null;
         this.fileItemsMap.clear();
         this.activeFile = null;
+    }
+
+    /**
+     * Setup scroll event handler to track visible items
+     */
+    private setupScrollHandler(scrollContainer: HTMLElement): void {
+        const updateVisibleItems = () => {
+            if (!this.container) return;
+
+            // Get all tree items
+            const items = this.container.querySelectorAll('.tm_tree-item-title');
+            const containerRect = scrollContainer.getBoundingClientRect();
+            
+            const visibleItems = Array.from(items).map(item => {
+                // Check if the item is visible in the container
+                const rect = item.getBoundingClientRect();
+                const isVisible = rect.top <= containerRect.bottom && rect.bottom >= containerRect.top;
+                
+                // Get the path and level from the item's attributes
+                const path = item.getAttribute('data-path') || '';
+                const level = parseInt(item.getAttribute('data-depth') || '0', 10);
+                
+                // Skip items without a path (like the "Create new" button)
+                if (!path) return null;
+
+                // Check if all parent containers are expanded
+                let parent = item.closest('.tm_tree-item-container');
+                let isInExpandedSection = true;
+                
+                while (parent) {
+                    const parentPath = parent.getAttribute('data-path');
+                    if (parentPath && !this.expandedNodes.has(parentPath)) {
+                        isInExpandedSection = false;
+                        break;
+                    }
+                    const parentElement = parent.parentElement;
+                    parent = parentElement ? parentElement.closest('.tm_tree-item-container') : null;
+                }
+                
+                // Only include items that are both visible and in expanded sections
+                if (!isVisible || !isInExpandedSection) return null;
+                
+                return {
+                    path,
+                    level,
+                    isVisible,
+                    top: rect.top - containerRect.top // Relative to container
+                };
+            }).filter(item => item !== null); // Remove null items
+
+            // Update the sticky manager with visible items
+            this.stickyManager.updateVisibleItems(visibleItems);
+        };
+
+        // Add scroll event listener
+        scrollContainer.addEventListener('scroll', updateVisibleItems);
+        
+        // Also update on resize to handle window size changes
+        window.addEventListener('resize', updateVisibleItems);
+        
+        // Update when nodes are expanded/collapsed
+        this.controls.onStateChange = updateVisibleItems;
+        
+        // Initial update
+        updateVisibleItems();
     }
 } 

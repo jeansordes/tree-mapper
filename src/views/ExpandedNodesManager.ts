@@ -4,6 +4,7 @@ import { t } from '../i18n';
 export class ExpandedNodesManager {
     private container: HTMLElement;
     private expandedNodes: Set<string>;
+    public onStateChange?: () => void;
 
     constructor(container: HTMLElement, expandedNodes: Set<string>) {
         this.container = container;
@@ -40,6 +41,9 @@ export class ExpandedNodesManager {
             
             // Update the icon based on the new state
             this.updateToggleButtonIcon();
+            
+            // Notify of state change
+            this.onStateChange?.();
         });
         
         // Set initial icon and title based on state
@@ -100,6 +104,9 @@ export class ExpandedNodesManager {
         
         // Update the toggle button icon if it exists
         this.updateToggleButtonIcon();
+        
+        // Notify of state change
+        this.onStateChange?.();
     }
 
     /**
@@ -130,6 +137,9 @@ export class ExpandedNodesManager {
         
         // Update the toggle button icon if it exists
         this.updateToggleButtonIcon();
+        
+        // Notify of state change
+        this.onStateChange?.();
     }
     
     /**

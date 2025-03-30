@@ -7,6 +7,7 @@ export interface TreeItem {
 
 export class StickyScrollManager {
     private visibleItems: TreeItem[] = [];
+    private lastTopmostItem: TreeItem | null = null;
 
     /**
      * Updates which items are currently visible in the viewport
@@ -14,6 +15,25 @@ export class StickyScrollManager {
     updateVisibleItems(items: TreeItem[]) {
         // Store all items, not just visible ones
         this.visibleItems = items;
+        this.logElementCrossings();
+    }
+
+    /**
+     * Logs when we cross important elements during scrolling
+     */
+    private logElementCrossings() {
+        if (this.visibleItems.length === 0) return;
+
+        // Find the topmost visible item
+        const topmostItem = this.visibleItems
+            .filter(item => item.isVisible)
+            .reduce((top, current) => {
+                return (!top || current.top < top.top) ? current : top;
+            }, null as TreeItem | null);
+
+        if (!topmostItem) return;
+
+        this.lastTopmostItem = topmostItem;
     }
 
     /**
@@ -24,20 +44,16 @@ export class StickyScrollManager {
         if (this.visibleItems.length === 0) return [];
 
         // Find the topmost visible item
-        const topmostItem = this.visibleItems.reduce((top, current) => {
-            return (!top || current.top < top.top) ? current : top;
-        }, null as TreeItem | null);
+        const topmostItem = this.visibleItems
+            .filter(item => item.isVisible)
+            .reduce((top, current) => {
+                return (!top || current.top < top.top) ? current : top;
+            }, null as TreeItem | null);
 
         if (!topmostItem) return [];
 
         // Get ancestors of the topmost item (excluding the item itself)
-        const ancestors = this.getAncestorPaths(topmostItem.path);
-
-        // Filter out ancestors that are not visible
-        return ancestors.filter(path => {
-            const item = this.visibleItems.find(i => i.path === path);
-            return item && item.isVisible;
-        });
+        return this.getAncestorPaths(topmostItem.path);
     }
 
     /**
