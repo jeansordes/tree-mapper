@@ -6,6 +6,7 @@ import { TreeBuilder } from '../utils/TreeBuilder';
 import { StickyScrollManager } from '../utils/StickyScrollManager';
 import { ExpandedNodesManager } from './ExpandedNodesManager';
 import { TreeRenderer } from './TreeRenderer';
+import { StickyScrollView } from './StickyScrollView';
 
 // Dendron Tree View class
 export default class PluginMainPanel extends ItemView {
@@ -17,6 +18,7 @@ export default class PluginMainPanel extends ItemView {
     private expandedNodes: Set<string> = new Set();
     private settings: PluginSettings;
     private stickyManager: StickyScrollManager;
+    private stickyScrollView: StickyScrollView | null = null;
     
     // Component instances
     private nodeRenderer: TreeRenderer;
@@ -47,7 +49,7 @@ export default class PluginMainPanel extends ItemView {
     }
 
     async onOpen() {
-        const container = this.containerEl.children[1];
+        const container = this.containerEl.children[1] as HTMLElement;
         container.empty();
         
         // Set the main container to be a flex container with column direction
@@ -62,22 +64,29 @@ export default class PluginMainPanel extends ItemView {
         header.className = 'tm_view-header';
         container.appendChild(header);
         
+        // Initialize controls with the container
+        this.controls = new ExpandedNodesManager(this.containerEl, this.expandedNodes);
+        
+        // Add control buttons to the header
+        this.controls.addControlButtons(header);
+        
         // Create a scrollable container for the dendron tree
         const scrollContainer = document.createElement('div');
         scrollContainer.className = 'tm_view-body';
         container.appendChild(scrollContainer);
+        
+        // Initialize StickyScrollView and insert it in tm_view-body
+        this.stickyScrollView = new StickyScrollView(scrollContainer, this.controls);
+        scrollContainer.appendChild(this.stickyScrollView.getElement());
         
         // Create the actual tree container inside the scroll container
         const treeContainer = document.createElement('div');
         treeContainer.className = 'tm_view-tree';
         scrollContainer.appendChild(treeContainer);
         this.container = treeContainer;
-        
-        // Initialize controls with the container
-        this.controls = new ExpandedNodesManager(this.containerEl, this.expandedNodes);
-        
-        // Add control buttons to the header
-        this.controls.addControlButtons(header);
+
+        // Start scroll monitoring
+        this.stickyScrollView.startScrollMonitoring(scrollContainer);
 
         // Wait for CSS to be loaded by checking if the styles are applied
         await this.waitForCSSLoad();
@@ -326,13 +335,19 @@ export default class PluginMainPanel extends ItemView {
      * Clean up resources when the view is closed
      */
     async onClose() {
-        // Save expanded state before closing
+        // Save expanded state
         this.saveExpandedState();
         
-        // Clear references
-        this.container = null;
-        this.lastBuiltTree = null;
+        // Clear the sticky scroll view
+        this.stickyScrollView = null;
+        
+        // Clear the container and maps
+        if (this.container) {
+            this.container.empty();
+        }
         this.fileItemsMap.clear();
+        this.nodePathMap.clear();
+        this.lastBuiltTree = null;
         this.activeFile = null;
     }
 

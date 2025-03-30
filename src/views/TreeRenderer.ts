@@ -32,7 +32,7 @@ export class TreeRenderer {
                 // Create tree item structure
                 const item = this.createElement('div', {
                     className: `tm_tree-item-container${!expandedNodes.has(name) ? ' is-collapsed' : ''}`,
-                    attributes: { 'data-path': name }
+                    attributes: { 'data-path': childNode.path }
                 });
 
                 const itemSelf = this.createElement('div', {
@@ -41,6 +41,7 @@ export class TreeRenderer {
                         hasChildren ? ' mod-collapsible' : '',
                         isFolder ? ' mod-folder' : ''
                     ].filter(Boolean).join(' '),
+                    attributes: { 'data-path': childNode.path }
                 });
                 item.appendChild(itemSelf);
 

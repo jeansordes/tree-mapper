@@ -44,6 +44,17 @@
         z-index: 10;
     }
 
+    .tm_sticky-scroll-element {
+        display: flex;
+        width: 100%;
+        flex-shrink: 0;
+        position: fixed;
+        z-index: 10;
+        background-color: var(--background-primary);
+        border-bottom: 1px solid var(--tm_border-color);
+        z-index: 20;
+    }
+
     .tm_spacer {
         flex-grow: 1;
     }
@@ -66,7 +77,7 @@
         display: flex;
         width: 100%;
         gap: var(--tm_gap);
-        margin-bottom: var(--tm_gap);
+        padding-bottom: var(--tm_gap);
     }
 
     .tm_tree-item-title {
