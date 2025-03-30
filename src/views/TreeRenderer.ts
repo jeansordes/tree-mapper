@@ -147,6 +147,7 @@ export class TreeRenderer {
             attributes: {
                 'data-node-type': node.nodeType,
                 'data-path': node.path,
+                'data-depth': FileUtils.getPathDepth(node.path).toString()
             }
         });
 

@@ -45,4 +45,10 @@ export class FileUtils {
             await leaf.openFile(file);
         }
     }
+
+    public static getPathDepth(path: string): number {
+        const parts = path.split('/');
+        const filename = parts.pop() || '';
+        return (parts.length) + Math.max(0, filename.split('.').length - 2);
+    }
 }
