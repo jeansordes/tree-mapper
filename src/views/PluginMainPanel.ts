@@ -17,7 +17,6 @@ export default class PluginMainPanel extends ItemView {
     private nodePathMap: Map<string, TreeNode> = new Map();
     private expandedNodes: Set<string> = new Set();
     private settings: PluginSettings;
-    private stickyManager: StickyScrollManager;
     private stickyScrollView: StickyScrollView | null = null;
     
     // Component instances
@@ -28,7 +27,6 @@ export default class PluginMainPanel extends ItemView {
     constructor(leaf: WorkspaceLeaf, settings: PluginSettings) {
         super(leaf);
         this.settings = settings;
-        this.stickyManager = new StickyScrollManager();
         
         // Initialize components
         this.nodeRenderer = new TreeRenderer(this.app, this.fileItemsMap);
@@ -76,7 +74,7 @@ export default class PluginMainPanel extends ItemView {
         container.appendChild(scrollContainer);
         
         // Initialize StickyScrollView and insert it in tm_view-body
-        this.stickyScrollView = new StickyScrollView(scrollContainer, this.controls);
+        this.stickyScrollView = new StickyScrollView(scrollContainer, this.controls, this.app);
         scrollContainer.appendChild(this.stickyScrollView.getElement());
         
         // Create the actual tree container inside the scroll container
@@ -399,8 +397,10 @@ export default class PluginMainPanel extends ItemView {
                 };
             }).filter(item => item !== null); // Remove null items
 
-            // Update the sticky manager with visible items
-            this.stickyManager.updateVisibleItems(visibleItems);
+            // Update the sticky scroll view if it exists
+            if (this.stickyScrollView) {
+                this.stickyScrollView.logClosestVisibleElement();
+            }
         };
 
         // Add scroll event listener

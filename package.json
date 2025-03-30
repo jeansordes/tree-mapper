@@ -18,7 +18,8 @@
 		"release:minor": "npm run build && npm run bump:minor && npm run changelog && git add CHANGELOG.md && git add . && git commit -m \"chore(release): $(node -p \"require('./package.json').version\")\" && git tag \"$(node -p \"require('./package.json').version\")\" && git push origin master --tags",
 		"release:major": "npm run build && npm run bump:major && npm run changelog && git add CHANGELOG.md && git add . && git commit -m \"chore(release): $(node -p \"require('./package.json').version\")\" && git tag \"$(node -p \"require('./package.json').version\")\" && git push origin master --tags",
 		"release:beta": "npm run build && npm run bump:beta && npm run changelog && git add CHANGELOG.md beta-manifest.json && git add . && git commit -m \"chore(release): $(node -p \"require('./package.json').version\")\" && git tag \"$(node -p \"require('./package.json').version\")\" && git push origin master --tags",
-		"test": "jest"
+		"test": "jest",
+		"lint": "eslint . --ext .ts"
 	},
 	"config": {
 		"commitizen": {

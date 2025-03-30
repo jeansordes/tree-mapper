@@ -74,4 +74,9 @@ export class FileUtils {
 
         return ancestors;
     }
+
+    public static isFolder(app: App, path: string): boolean {
+        const allFolders = app.vault.getAllFolders();
+        return allFolders.some(folder => folder.path === path);
+    }
 }

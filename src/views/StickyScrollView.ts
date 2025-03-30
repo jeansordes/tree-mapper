@@ -1,28 +1,27 @@
 import { ExpandedNodesManager } from './ExpandedNodesManager';
 import { FileUtils } from '../utils/FileUtils';
+import { StickyScrollManager } from '../utils/StickyScrollManager';
+import { App, setIcon } from 'obsidian';
 
 export class StickyScrollView {
     private container: HTMLElement;
     private expandedNodesManager: ExpandedNodesManager;
-    private scrollThreshold: number;
-    private throttleInterval: number;
-    private lastExecutionTime: number = 0;
+    private scrollThreshold: number = 0;
     private stickyElement: HTMLElement;
     private lastScrollTop: number = 0;
     private isScrollingDown: boolean = true;
-    private scrollTimeout: number | null = null;
-    private readonly SCROLL_STOP_DELAY: number = 100; // ms to wait before considering scroll stopped
+    private app: App;
+    private lastUpdateTime: number = 0;
+    private readonly THROTTLE_INTERVAL: number = 16; // ~60fps
 
     constructor(
         container: HTMLElement,
         expandedNodesManager: ExpandedNodesManager,
-        scrollThreshold: number = 0,
-        throttleInterval: number = 100
+        app: App,
     ) {
         this.container = container;
         this.expandedNodesManager = expandedNodesManager;
-        this.scrollThreshold = scrollThreshold;
-        this.throttleInterval = throttleInterval;
+        this.app = app;
 
         // Create and setup the sticky element
         this.stickyElement = this.createStickyElement();
@@ -52,13 +51,6 @@ export class StickyScrollView {
     }
 
     /**
-     * Set a new throttle interval
-     */
-    setThrottleInterval(interval: number): void {
-        this.throttleInterval = interval;
-    }
-
-    /**
      * Detect scroll direction
      */
     private updateScrollDirection(scrollContainer: HTMLElement): void {
@@ -68,26 +60,40 @@ export class StickyScrollView {
     }
 
     /**
-     * Throttled logging function
+     * Throttled update function
      */
-    private throttledLog(scrollContainer: HTMLElement): void {
+    private throttledUpdate(scrollContainer: HTMLElement): void {
         const now = Date.now();
-        if (now - this.lastExecutionTime >= this.throttleInterval) {
+        if (now - this.lastUpdateTime >= this.THROTTLE_INTERVAL) {
             this.updateScrollDirection(scrollContainer);
             this.logClosestVisibleElement();
-            this.lastExecutionTime = now;
+            this.lastUpdateTime = now;
         }
     }
 
     /**
      * Find and log the closest visible element to the threshold
      */
-    private logClosestVisibleElement(): void {
+    public logClosestVisibleElement(): void {
         // Get all tree items that are expanded
         const expandedItems = Array.from(this.container.querySelectorAll('.tm_tree-item-container:not(.is-collapsed)'));
+        
+        // If there are no expanded items, return early
+        if (expandedItems.length === 0) {
+            return;
+        }
 
-        // Get the line height of a tree item
-        const lineHeight = expandedItems[0].querySelector('.tm_tree-item-self')?.getBoundingClientRect().height ?? 0;
+        // Get the line height of a tree item with a default value
+        const firstItem = expandedItems[0];
+        const itemSelf = firstItem.querySelector('.tm_tree-item-self');
+        const buttonIcon = firstItem.querySelector('.tm_button-icon');
+        
+        const lineHeight = itemSelf?.getBoundingClientRect().height ?? 24; // Default to 24px if not found
+        const buttonWidth = buttonIcon?.getBoundingClientRect().width ?? 24; // Default to 24px if not found
+        
+        // Get the padding of the tree view with a default value
+        const treeView = document.querySelector('.tm_view-tree') as HTMLElement;
+        const padding = treeView?.style.paddingLeft ?? '0';
 
         const closestElement = expandedItems.find(item => {
             if (!item) {
@@ -101,7 +107,7 @@ export class StickyScrollView {
 
             // When scrolling down, check if the TOP of the element is above the threshold
             // When scrolling up, check if the BOTTOM of the element is above the threshold
-            return relativeTop + (this.isScrollingDown ? 0 : lineHeight) >= this.scrollThreshold;
+            return relativeTop + (this.isScrollingDown ? 0 : lineHeight) + 1 >= this.scrollThreshold;
         });
 
         if (closestElement) {
@@ -119,19 +125,38 @@ export class StickyScrollView {
                 const containerRect = this.container.getBoundingClientRect();
                 this.scrollThreshold = stickyRect.bottom - containerRect.top;
 
-                // Create the breadcrumb stack, by getting parent path
-                const breadcrumbStack = closestElement.querySelector('.tm_breadcrumb-stack');
-                if (breadcrumbStack) {
-                    this.stickyElement.appendChild(breadcrumbStack);
-                }
+                // Clean the breadcrumb stack
+                this.stickyElement.innerHTML = '';
 
+                // Create the breadcrumb stack
+                const ancestorPaths = StickyScrollManager.getAncestorPaths(path);
+                // For each ancestor path, create a breadcrumb element
+                ancestorPaths.forEach(path => {
+                    const stickyHeaderContainer = document.createElement('div');
+                    stickyHeaderContainer.className = 'tm_sticky-header-container';
 
-                console.log('Closest visible element:', {
-                    path,
-                    element: closestElement,
-                    stackSize,
-                    threshold: this.scrollThreshold,
-                    isScrollingDown: this.isScrollingDown
+                    const leftSpacing = (FileUtils.getPathDepth(path) * buttonWidth);
+                    const spacer = document.createElement('div');
+                    spacer.style.display = 'inline-block';
+                    spacer.className = 'tm_sticky-spacer';
+                    spacer.style.width = `${leftSpacing}px`;
+
+                    const headerContent = document.createElement('span');
+                    headerContent.className = 'tm_sticky-header';
+                    headerContent.textContent = FileUtils.basename(path).match(/([^.]+)\.[^.]+$/)?.[1] || FileUtils.basename(path);
+                    
+                    stickyHeaderContainer.appendChild(spacer);
+                    // If the path is a folder, add a folder icon
+                    if (FileUtils.isFolder(this.app, path)) {
+                        const folderIcon = document.createElement('span');
+                        folderIcon.className = 'tm_icon tm_sticky-icon';
+                        folderIcon.style.width = '16px';
+                        folderIcon.setAttribute('data-icon-name', 'folder');
+                        setIcon(folderIcon, 'folder');
+                        stickyHeaderContainer.appendChild(folderIcon);
+                    }
+                    stickyHeaderContainer.appendChild(headerContent);
+                    this.stickyElement.appendChild(stickyHeaderContainer);
                 });
             }
         }
@@ -145,18 +170,7 @@ export class StickyScrollView {
         this.lastScrollTop = scrollContainer.scrollTop;
 
         scrollContainer.addEventListener('scroll', () => {
-            this.throttledLog(scrollContainer);
-
-            // Clear any existing timeout
-            if (this.scrollTimeout !== null) {
-                window.clearTimeout(this.scrollTimeout);
-            }
-
-            // Set a new timeout to detect when scrolling stops
-            this.scrollTimeout = window.setTimeout(() => {
-                this.logClosestVisibleElement();
-                this.scrollTimeout = null;
-            }, this.SCROLL_STOP_DELAY);
+            this.throttledUpdate(scrollContainer);
         });
     }
 }

@@ -46,6 +46,7 @@
 
     .tm_sticky-scroll-element {
         display: flex;
+        flex-direction: column;
         width: 100%;
         flex-shrink: 0;
         position: fixed;
@@ -53,6 +54,7 @@
         background-color: var(--background-primary);
         border-bottom: 1px solid var(--tm_border-color);
         z-index: 20;
+        padding: 0 var(--tm_view-padding);
     }
 
     .tm_spacer {
@@ -77,16 +79,25 @@
         display: flex;
         width: 100%;
         gap: var(--tm_gap);
-        padding-bottom: var(--tm_gap);
+        margin-bottom: var(--tm_gap);
     }
 
-    .tm_tree-item-title {
+    .tm_tree-item-title, .tm_sticky-header {
         flex: 1 1 auto;
         line-height: var(--tm_button-size);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         padding: 0 0.5rem;
+    }
+
+    .tm_sticky-header-container {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        gap: var(--tm_gap);
     }
 
     .tm_extension {
@@ -113,6 +124,10 @@
         display: flex;
         justify-content: center;
         align-items: center;
+    }
+
+    .tm_icon.tm_sticky-icon {
+        flex-shrink: 0;
     }
 
     .tm_icon svg, .tm_button-icon svg {
