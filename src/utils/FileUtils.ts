@@ -51,4 +51,27 @@ export class FileUtils {
         const filename = parts.pop() || '';
         return (parts.length) + Math.max(0, filename.split('.').length - 2);
     }
+
+    /**
+     * Get all ancestor paths for a given path
+     * Handles both folder-style paths (with /) and Dendron-style paths (with .)
+     */
+    public static getAncestorPaths(path: string): string[] {
+        const ancestors: string[] = [];
+        const parts = path.split(/[/.]/);
+        let currentPath = '';
+
+        // Skip the first part if it's empty (leading slash)
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            if (!part) continue;
+
+            currentPath = currentPath ? `${currentPath}${path.includes('/') ? '/' : '.'}${part}` : part;
+            if (i < parts.length - 1) { // Don't add the current item itself
+                ancestors.push(currentPath);
+            }
+        }
+
+        return ancestors;
+    }
 }
