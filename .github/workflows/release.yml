@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+' # Run workflow on version tags, e.g. 1.0.0
-      - '[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+' # Run workflow on beta tags, e.g. 1.0.1-beta.0
     branches:
       - master  # Add this to run on pushes to master branch
   workflow_dispatch:  # Add this to enable manual triggering
@@ -28,21 +27,10 @@ jobs:
         run: |
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-            # Check if this is a beta version
-            if [[ $GITHUB_REF =~ refs/tags/.*-beta\.[0-9]+$ ]]; then
-              echo "IS_BETA=true" >> $GITHUB_OUTPUT
-            else
-              echo "IS_BETA=false" >> $GITHUB_OUTPUT
-            fi
           else
             # For workflow_dispatch, use the version from package.json
             VERSION=$(node -p "require('./package.json').version")
             echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
-            if [[ $VERSION =~ .*-beta\.[0-9]+$ ]]; then
-              echo "IS_BETA=true" >> $GITHUB_OUTPUT
-            else
-              echo "IS_BETA=false" >> $GITHUB_OUTPUT
-            fi
           fi
 
       - name: Setup Node.js
@@ -94,7 +82,7 @@ jobs:
           body_path: release_notes.md
           files: |
             main.js
-            ${{ steps.get_version.outputs.IS_BETA == 'true' && 'beta-manifest.json' || 'manifest.json' }}
+            manifest.json
             styles.css
           draft: false
-          prerelease: ${{ steps.get_version.outputs.IS_BETA == 'true' }}
+          prerelease: false
