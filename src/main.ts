@@ -8,7 +8,7 @@ export default class TreeMapperPlugin extends Plugin {
     private pluginMainPanel: PluginMainPanel | null = null;
 
     async onload() {
-        console.log("[TreeMapper] Plugin loading, version 1.1");
+        console.log("[TreeMapper] Plugin loading");
         
         if (process.env.NODE_ENV === 'development') {
             console.clear();
