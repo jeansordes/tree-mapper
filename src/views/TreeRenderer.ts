@@ -2,6 +2,7 @@ import { App, setIcon, TFile } from 'obsidian';
 import { t } from '../i18n';
 import { TreeNode, TreeNodeType } from '../types';
 import { FileUtils } from '../utils/FileUtils';
+
 export class TreeRenderer {
     private fileItemsMap: Map<string, HTMLElement>;
     private app: App;
@@ -207,13 +208,6 @@ export class TreeRenderer {
     }
 
     /**
-     * Add event handler to an element
-     */
-    private addEventHandler(element: HTMLElement, event: string, handler: (event: Event) => void): void {
-        element.addEventListener(event, handler);
-    }
-
-    /**
      * Add action buttons to a node
      */
     private addActionButtons(parent: HTMLElement, node: TreeNode, name: string): void {
@@ -264,59 +258,72 @@ export class TreeRenderer {
 
     /**
      * Add the main event handler to the tree container
+     * Uses event delegation for better performance - one event listener for the entire tree
+     * instead of attaching individual listeners to each element.
+     * This significantly reduces memory usage and improves rendering performance.
      */
     public addTreeEventHandler(treeContainer: HTMLElement): void {
-        treeContainer.addEventListener('click', async (event) => {
-            // Find the closest clickable element
-            const target = event.target as HTMLElement;
-            const clickableElement = target.closest('.is-clickable, .tm_button-icon');
-
-            if (!clickableElement) return;
-
-            // Handle toggle button clicks
-            if (clickableElement.classList.contains('tm_button-icon')) {
-                const action = clickableElement.getAttribute('data-action');
-                const path = clickableElement.getAttribute('data-path');
-
-                if (!path) return;
-
-                event.stopPropagation();
-
-                switch (action) {
-                    case 'toggle':
-                        const item = clickableElement.closest('.tm_tree-item-container');
-                        if (item) {
-                            const isCollapsed = item.classList.toggle('is-collapsed');
-                            isCollapsed ? this.expandedNodes.delete(path) : this.expandedNodes.add(path);
-
-                            const triangle = clickableElement.querySelector('.right-triangle');
-                            if (triangle) triangle.classList.toggle('is-collapsed');
-                        }
-                        return;
-                    case 'create-note':
-                        await FileUtils.createAndOpenNote(this.app, path);
-                        break;
-                    case 'create-child':
-                        await FileUtils.createChildNote(this.app, path);
-                        break;
-                }
-                return;
-            }
-
-            // Handle file clicks
-            if (clickableElement.classList.contains('tm_tree-item-title')) {
-                const nodeType = clickableElement.getAttribute('data-node-type');
-                const path = clickableElement.getAttribute('data-path');
-
-                if (!path) return;
-
-                if (nodeType === TreeNodeType.FILE) {
-                    const file = this.app.vault.getAbstractFileByPath(path);
-                    if (file instanceof TFile) {
-                        await FileUtils.openFile(this.app, file);
-                    }
-                }
-            }
-        });
+        // First remove any existing click handlers to prevent duplicates
+        treeContainer.removeEventListener('click', this.handleTreeClick);
+        
+        // Then add our event handler
+        treeContainer.addEventListener('click', this.handleTreeClick);
     }
+    
+    /**
+     * The main click event handler for the tree
+     * Using a class method so we can easily remove it later
+     */
+    private handleTreeClick = async (event: MouseEvent) => {
+        // Find the closest clickable element
+        const target = event.target as HTMLElement;
+        const clickableElement = target.closest('.is-clickable, .tm_button-icon');
+
+        if (!clickableElement) return;
+        
+        // Handle toggle button clicks
+        if (clickableElement.classList.contains('tm_button-icon')) {
+            const action = clickableElement.getAttribute('data-action');
+            const path = clickableElement.getAttribute('data-path');
+
+            if (!path) return;
+            
+            event.stopPropagation();
+
+            switch (action) {
+                case 'toggle':
+                    const item = clickableElement.closest('.tm_tree-item-container');
+                    if (item) {
+                        const isCollapsed = item.classList.toggle('is-collapsed');
+                        isCollapsed ? this.expandedNodes.delete(path) : this.expandedNodes.add(path);
+
+                        const triangle = clickableElement.querySelector('.right-triangle');
+                        if (triangle) triangle.classList.toggle('is-collapsed');
+                    }
+                    return;
+                case 'create-note':
+                    await FileUtils.createAndOpenNote(this.app, path);
+                    break;
+                case 'create-child':
+                    await FileUtils.createChildNote(this.app, path);
+                    break;
+            }
+            return;
+        }
+
+        // Handle file clicks
+        if (clickableElement.classList.contains('tm_tree-item-title')) {
+            const nodeType = clickableElement.getAttribute('data-node-type');
+            const path = clickableElement.getAttribute('data-path');
+
+            if (!path) return;
+            
+            if (nodeType === TreeNodeType.FILE) {
+                const file = this.app.vault.getAbstractFileByPath(path);
+                if (file instanceof TFile) {
+                    await FileUtils.openFile(this.app, file);
+                }
+            }
+        }
+    };
 }

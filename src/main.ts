@@ -8,18 +8,23 @@ export default class TreeMapperPlugin extends Plugin {
     private pluginMainPanel: PluginMainPanel | null = null;
 
     async onload() {
+        console.log("[TreeMapper] Plugin loading, version 1.1");
+        
         if (process.env.NODE_ENV === 'development') {
             console.clear();
         }
 
-        await this.loadSettings();
-
-        // Always unregister the view type first to ensure clean registration
+        // Force Obsidian to detach our previous views which should clean up attached event handlers
+        console.log("[TreeMapper] Detaching any existing tree views");
         try {
+            // This ensures any existing views are properly closed, triggering onClose() for cleanup
             this.app.workspace.detachLeavesOfType(FILE_TREE_VIEW_TYPE);
         } catch (e) {
             // This is normal if it's the first load
+            console.log("[TreeMapper] No existing views to detach");
         }
+        
+        await this.loadSettings();
 
         // Register the file tree view
         this.registerView(
@@ -184,7 +189,18 @@ export default class TreeMapperPlugin extends Plugin {
     }
 
     onunload() {
+        console.log("[TreeMapper] Plugin unloading, cleaning up resources");
+        
         // Save settings before unloading
         this.saveSettings();
+        
+        // Detach any leaves of our type
+        this.app.workspace.detachLeavesOfType(FILE_TREE_VIEW_TYPE);
+        
+        // Clean up plugin panel resources
+        if (this.pluginMainPanel) {
+            console.log("[TreeMapper] Cleaning up pluginMainPanel resources");
+            this.pluginMainPanel = null;
+        }
     }
 }

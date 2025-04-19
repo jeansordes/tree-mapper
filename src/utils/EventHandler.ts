@@ -5,46 +5,76 @@ export class DendronEventHandler {
     private app: App;
     private refreshCallback: (path?: string, forceFullRefresh?: boolean) => void;
     private refreshDebounceTimeout: number | null = null;
+    // Default debounce time of 500ms for better performance
+    private debounceWaitTime = 500;
+    // Track paths and flags for debounced updates
+    private pendingChanges: Map<string, boolean> = new Map(); // path -> forceFullRefresh
 
-    constructor(app: App, refreshCallback: (path?: string, forceFullRefresh?: boolean) => void) {
+    constructor(app: App, refreshCallback: (path?: string, forceFullRefresh?: boolean) => void, debounceTime?: number) {
         this.app = app;
         this.refreshCallback = refreshCallback;
+        if (debounceTime !== undefined) {
+            this.debounceWaitTime = debounceTime;
+        }
     }
 
     /**
      * Register file system events
      */
     registerFileEvents(): void {
-        // Create a debounced refresh handler
-        const debouncedRefresh = (path?: string, forceFullRefresh: boolean = false) => {
-            this.debounceRefresh(() => {
-                this.refreshCallback(path, forceFullRefresh);
-            }, 300);
-        };
+        // Clear any existing event handlers to prevent duplicates
+        this.unregisterFileEvents();
         
-        // Register individual events to avoid type issues
-        this.app.vault.on('create', (file) => {
-            // Force full refresh for file creation
-            debouncedRefresh(undefined, true);
-        });
-
-        this.app.vault.on('modify', (file) => {
-            // Refresh for any file modification
-            if (file instanceof TFile) {
-                // Use incremental update for modifications
-                debouncedRefresh(file.path);
-            }
-        });
-
-        this.app.vault.on('delete', (file) => {
-            // Force full refresh for file deletion
-            debouncedRefresh(undefined, true);
-        });
-
-        this.app.vault.on('rename', (file, oldPath) => {
-            // Force full refresh for file renaming
-            debouncedRefresh(undefined, true);
-        });
+        // Register event handlers using bound methods to maintain 'this' context
+        this.app.vault.on('create', this.handleFileCreate);
+        this.app.vault.on('modify', this.handleFileModify);
+        this.app.vault.on('delete', this.handleFileDelete);
+        this.app.vault.on('rename', this.handleFileRename);
+    }
+    
+    /**
+     * Unregister all file system events to prevent duplicates
+     */
+    unregisterFileEvents(): void {
+        this.app.vault.off('create', this.handleFileCreate);
+        this.app.vault.off('modify', this.handleFileModify);
+        this.app.vault.off('delete', this.handleFileDelete);
+        this.app.vault.off('rename', this.handleFileRename);
+    }
+    
+    // Bound event handlers to ensure 'this' is preserved
+    private handleFileCreate = (file: any) => {
+        this.queueRefresh(undefined, true);
+    };
+    
+    private handleFileModify = (file: any) => {
+        if (!(file instanceof TFile)) return;
+        this.queueRefresh(file.path, false);
+    };
+    
+    private handleFileDelete = (file: any) => {
+        this.queueRefresh(undefined, true);
+    };
+    
+    private handleFileRename = (file: any, oldPath: string) => {
+        this.queueRefresh(undefined, true);
+    };
+    
+    /**
+     * Queue a refresh with debouncing, tracking all affected paths
+     */
+    private queueRefresh(path?: string, forceFullRefresh: boolean = false): void {
+        // If forceFullRefresh is true, it takes precedence
+        if (forceFullRefresh) {
+            this.pendingChanges.clear(); // Clear other pending changes
+            this.pendingChanges.set('', true); // Use empty string as key for full refresh
+        } else if (path && !this.pendingChanges.has('')) {
+            // Only add the path if we don't already have a full refresh pending
+            this.pendingChanges.set(path, false);
+        }
+        
+        // Debounce
+        this.debounceRefresh();
     }
 
     /**
@@ -60,15 +90,34 @@ export class DendronEventHandler {
 
     /**
      * Debounce refresh calls to prevent multiple refreshes in quick succession
+     * This improves performance by preventing rapid UI updates when multiple
+     * file events occur close together (e.g., during sync or bulk operations)
      */
-    private debounceRefresh(callback: Function, wait: number): void {
+    private debounceRefresh(): void {
         if (this.refreshDebounceTimeout) {
             window.clearTimeout(this.refreshDebounceTimeout);
         }
+        
         this.refreshDebounceTimeout = window.setTimeout(() => {
-            callback();
+            // Check if we have a full refresh pending
+            const hasFullRefresh = this.pendingChanges.has('') && this.pendingChanges.get('');
+            
+            if (hasFullRefresh) {
+                // Do a full refresh
+                this.refreshCallback(undefined, true);
+            } else if (this.pendingChanges.size === 1) {
+                // Do a single path refresh
+                const [path] = this.pendingChanges.keys();
+                this.refreshCallback(path, false);
+            } else if (this.pendingChanges.size > 1) {
+                // Multiple paths changed, do a full refresh
+                this.refreshCallback(undefined, true);
+            }
+            
+            // Reset state
+            this.pendingChanges.clear();
             this.refreshDebounceTimeout = null;
-        }, wait);
+        }, this.debounceWaitTime);
     }
 
     /**
@@ -84,8 +133,8 @@ export class DendronEventHandler {
         if (!container || !lastBuiltTree) return false;
         
         try {
-            // Convert file path to dendron path format
-            const dendronPath = changedPath.replace(/\//g, '.').replace(/\.[^\.]]$/, '');
+            // Convert file path to dendron path format - replace slashes with dots and keep the extension for proper lookup
+            const dendronPath = changedPath.replace(/\//g, '.');
             
             // Find the parent path that needs updating
             const pathParts = dendronPath.split('.');
@@ -105,7 +154,7 @@ export class DendronEventHandler {
             }
             
             // Find the DOM element for this path
-            const parentElement = container.querySelector(`.tm_tree-item[data-path="${parentPath}"]`) as HTMLElement;
+            const parentElement = container.querySelector(`.tm_tree-item-container[data-path="${parentPath}"]`) as HTMLElement;
             if (!parentElement) {
                 return false;
             }
@@ -134,4 +183,4 @@ export class DendronEventHandler {
             return false;
         }
     }
-} 
+}

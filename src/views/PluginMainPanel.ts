@@ -8,6 +8,8 @@ import { TreeRenderer } from './TreeRenderer';
 
 // Dendron Tree View class
 export default class PluginMainPanel extends ItemView {
+    private static instanceCounter = 0;
+    private instanceId: number;
     private lastBuiltTree: TreeNode | null = null;
     private container: HTMLElement | null = null;
     private activeFile: TFile | null = null;
@@ -23,11 +25,13 @@ export default class PluginMainPanel extends ItemView {
 
     constructor(leaf: WorkspaceLeaf, settings: PluginSettings) {
         super(leaf);
+        this.instanceId = ++PluginMainPanel.instanceCounter;
         this.settings = settings;
         
         // Initialize components
         this.nodeRenderer = new TreeRenderer(this.app, this.fileItemsMap);
-        this.eventHandler = new DendronEventHandler(this.app, this.refresh.bind(this));
+        // Use 500ms debounce time for better performance when files change
+        this.eventHandler = new DendronEventHandler(this.app, this.refresh.bind(this), 500);
         // Controls will be initialized in onOpen when container is available
     }
 
@@ -220,19 +224,21 @@ export default class PluginMainPanel extends ItemView {
             return;
         }
 
-        // For file creation, deletion, or renaming, we need a full rebuild
-        // The incremental update only works well for content modifications
-        // Try incremental update if a path is provided and it's not a create/delete operation
-        if (changedPath && !forceFullRefresh && 
-            this.eventHandler.tryIncrementalUpdate(
+        // Don't attempt incremental update if forceFullRefresh is true
+        if (changedPath && !forceFullRefresh) {
+            // Try incremental update
+            const incrementalSuccess = this.eventHandler.tryIncrementalUpdate(
                 changedPath, 
                 this.container, 
                 this.lastBuiltTree, 
                 this.nodePathMap,
                 (node, container) => this.nodeRenderer.renderDendronNode(node, container, this.expandedNodes)
-            )) {
-            this.highlightActiveFile();
-            return;
+            );
+            
+            if (incrementalSuccess) {
+                this.highlightActiveFile();
+                return;
+            }
         }
 
         // Save expanded state before refresh
@@ -322,6 +328,12 @@ export default class PluginMainPanel extends ItemView {
     async onClose() {
         // Save expanded state before closing
         this.saveExpandedState();
+        
+        // Remove all event listeners through the event handler
+        if (this.eventHandler) {
+            // The eventHandler will handle cleaning up its own event listeners
+            this.eventHandler.unregisterFileEvents();
+        }
         
         // Clear references
         this.container = null;
