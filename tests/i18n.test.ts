@@ -1,7 +1,7 @@
 import { moment } from 'obsidian';
-import { getCurrentLocale, t, addTranslation, translations } from '../i18n';
-import en from '../i18n/en';
-import fr from '../i18n/fr';
+import { getCurrentLocale, t, addTranslation, translations } from '../src/i18n';
+import en from '../src/i18n/en';
+import fr from '../src/i18n/fr';
 
 // Mock moment.locale()
 jest.mock('obsidian', () => ({
