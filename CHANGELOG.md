@@ -1,3 +1,17 @@
+# [1.2.0](https://github.com/jeansordes/tree-mapper/compare/1.1.2-beta.0...1.2.0) (2025-04-19)
+
+
+### Performance Improvements
+
+* **events:** improve event handling and performance optimizations ([68f8d4c](https://github.com/jeansordes/tree-mapper/commit/68f8d4c33c9fd5d660164876bd30c432f128a224)), closes [#1](https://github.com/jeansordes/tree-mapper/issues/1)
+
+
+### BREAKING CHANGES
+
+* **events:** EventHandler constructor now accepts a debounceTime parameter
+
+
+
 ## [1.1.2-beta.0](https://github.com/jeansordes/tree-mapper/compare/1.1.1...1.1.2-beta.0) (2025-03-25)
 
 
