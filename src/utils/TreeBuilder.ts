@@ -52,8 +52,15 @@ export class TreeBuilder {
                         (this.getNodeType(path) === TreeNodeType.FOLDER ? folders.find(f => f.path === path) : undefined)
                 });
 
-                // Add to parent's children
-                parentNode?.children.set(FileUtils.basename(path), node);
+                // Add to parent's children - use full path as key to avoid collisions
+                const basename = FileUtils.basename(path);
+                let uniqueKey = basename;
+                let counter = 1;
+                while (parentNode?.children.has(uniqueKey)) {
+                    counter++;
+                    uniqueKey = `${basename} (${counter})`;
+                }
+                parentNode?.children.set(uniqueKey, node);
 
                 // Add to our lookup map
                 nodesByPath.set(path, node);
