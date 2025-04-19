@@ -181,8 +181,8 @@ export class TreeBuilder {
         // if it's not a FOLDER, then it's FILE or VIRTUAL
         // remove the file name if not dots
         let result = path.replace(/(\/|^)[^./]+\.[^\.]+$/, '');
-        // otherwise, remove the last part of the dendron path
-        result = result === '' ? '/' : result.replace(/\.[^\.]+(\.[^\.]+)$/, '$1');
+        // otherwise, remove the last part of the dendron path and ensure .md extension for virtual nodes
+        result = result === '' ? '/' : result.replace(/\.[^\.]+(\.[^\.]+)$/, '.md');
         return result;
     }
 

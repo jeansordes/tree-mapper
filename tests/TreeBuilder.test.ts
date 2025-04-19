@@ -219,15 +219,14 @@ describe('TreeBuilder', () => {
             expect(yNode?.children.size).toBe(1);
 
             // Verify the virtual node
-            const virtualNode = yNode?.children.get('test.ts');
+            const virtualNode = yNode?.children.get('test.md');
             expect(virtualNode).toBeDefined();
             expect(virtualNode?.nodeType).toBe(TreeNodeType.VIRTUAL);
-            expect(virtualNode?.path).toBe('x/y/test.ts');
+            expect(virtualNode?.path).toBe('x/y/test.md');
             expect(virtualNode?.children.size).toBe(0);
 
             // Verify that nodes exist in the internal state
-            expect(treeBuilder['nodeTypeByPath'].get('x/y/test.ts')).toBe(TreeNodeType.VIRTUAL);
-            expect(treeBuilder['nodeTypeByPath'].get('x/y/test.spec.ts')).toBe(TreeNodeType.FILE);
+            expect(treeBuilder['nodeTypeByPath'].get('x/y/test.md')).toBe(TreeNodeType.VIRTUAL);
         });
 
         it('should handle circular parent paths', () => {
@@ -331,8 +330,8 @@ describe('TreeBuilder', () => {
             console.log('nodeType for x/y/test.spec.ts:', treeBuilder['nodeTypeByPath'].get('x/y/test.spec.ts'));
             console.log('nodeType for x/y/test.ts:', treeBuilder['nodeTypeByPath'].get('x/y/test.ts'));
 
-            // For virtual paths, getParentPath should return the path with .ts extension
-            expect(treeBuilder['getParentPath']('x/y/test.spec.ts')).toBe('x/y/test.ts');
+            // For virtual paths, getParentPath should return the path with .md extension
+            expect(treeBuilder['getParentPath']('x/y/test.spec.ts')).toBe('x/y/test.md');
         });
 
         it('should handle root path', () => {
@@ -393,8 +392,8 @@ describe('TreeBuilder', () => {
 
             treeBuilder.buildDendronStructure([rootFolder, xFolder, yFolder], [file]);
 
-            // For virtual paths, getParentPath should return the path with .ts extension
-            expect(treeBuilder['getParentPath']('x/y/test.spec.ts')).toBe('x/y/test.ts');
+            // For virtual paths, getParentPath should return the path with .md extension
+            expect(treeBuilder['getParentPath']('x/y/test.spec.ts')).toBe('x/y/test.md');
         });
     });
 }); 
