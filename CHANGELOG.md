@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/jeansordes/tree-mapper/compare/1.2.0...1.2.2) (2025-04-19)
+
+### Bug Fixes
+
+* **TreeBuilder, TreeRenderer:** enhance node handling to avoid key collisions and improve name formatting ([2515df1](https://github.com/jeansordes/tree-mapper/commit/2515df1415758f04631ef250479d38d849968974)), closes [#4](https://github.com/jeansordes/tree-mapper/issues/4)
+* **TreeBuilder:** ensure virtual nodes have .md extension in paths ([671cee8](https://github.com/jeansordes/tree-mapper/commit/671cee8aee52ee84efbabfaf58ffccd3e3d83e24)), closes [#2](https://github.com/jeansordes/tree-mapper/issues/2)
+
 ## [1.2.1](https://github.com/jeansordes/tree-mapper/compare/1.2.0...1.2.1) (2025-04-19)
 
 ### Bug Fixes
