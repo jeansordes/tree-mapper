@@ -160,10 +160,14 @@ export class TreeRenderer {
     }
 
     private getNodeName(node: TreeNode): string {
+        let name;
         if (node.nodeType === TreeNodeType.FOLDER) {
-            return FileUtils.basename(node.path);
+            name = FileUtils.basename(node.path);
+        } else {
+            name = FileUtils.basename(node.path).match(/([^.]+)\.[^.]+$/)?.[1] || FileUtils.basename(node.path);
         }
-        return FileUtils.basename(node.path).match(/([^.]+)\.[^.]+$/)?.[1] || FileUtils.basename(node.path);
+        // Strip out the counter suffix if present
+        return name.replace(/ \(\d+\)$/, '');
     }
 
     private getNodeIconName(node: TreeNode): string {
