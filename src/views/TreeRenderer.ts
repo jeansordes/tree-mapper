@@ -231,7 +231,7 @@ export class TreeRenderer {
         // Add "create child note" button for all nodes
         const createChildBtn = this.createActionButton({
             icon: 'rotate-cw-square',
-            title: t('tooltipCreateChildNote', { path: FileUtils.getChildPath(node.path) }),
+            title: t('tooltipCreateChildNote', { path: FileUtils.getChildPath(node.path, this.app) }),
             className: 'rotate-180deg',
             attributes: {
                 'data-action': 'create-child',
@@ -295,7 +295,7 @@ export class TreeRenderer {
             event.stopPropagation();
 
             switch (action) {
-                case 'toggle':
+                case 'toggle': {
                     const item = clickableElement.closest('.tm_tree-item-container');
                     if (item) {
                         const isCollapsed = item.classList.toggle('is-collapsed');
@@ -305,6 +305,7 @@ export class TreeRenderer {
                         if (triangle) triangle.classList.toggle('is-collapsed');
                     }
                     return;
+                }
                 case 'create-note':
                     await FileUtils.createAndOpenNote(this.app, path);
                     break;

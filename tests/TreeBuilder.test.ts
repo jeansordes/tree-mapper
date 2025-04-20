@@ -1,8 +1,7 @@
 import { TFile, TFolder } from 'obsidian';
 import { TreeBuilder } from '../src/utils/TreeBuilder';
-import { TreeNode, TreeNodeType } from '../src/types';
+import { TreeNodeType } from '../src/types';
 import { createMockFile, createMockFolder } from './setup';
-import { FileUtils } from '../src/utils/FileUtils';
 
 describe('TreeBuilder', () => {
     let treeBuilder: TreeBuilder;

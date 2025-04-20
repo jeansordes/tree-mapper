@@ -1,4 +1,4 @@
-import { App, TFile } from 'obsidian';
+import { App, TFile, TAbstractFile } from 'obsidian';
 import { TreeNode } from '../types';
 
 export class DendronEventHandler {
@@ -43,20 +43,20 @@ export class DendronEventHandler {
     }
     
     // Bound event handlers to ensure 'this' is preserved
-    private handleFileCreate = (file: any) => {
+    private handleFileCreate = (file: TAbstractFile) => {
         this.queueRefresh(undefined, true);
     };
     
-    private handleFileModify = (file: any) => {
+    private handleFileModify = (file: TAbstractFile) => {
         if (!(file instanceof TFile)) return;
         this.queueRefresh(file.path, false);
     };
     
-    private handleFileDelete = (file: any) => {
+    private handleFileDelete = (file: TAbstractFile) => {
         this.queueRefresh(undefined, true);
     };
     
-    private handleFileRename = (file: any, oldPath: string) => {
+    private handleFileRename = (file: TAbstractFile, oldPath: string) => {
         this.queueRefresh(undefined, true);
     };
     

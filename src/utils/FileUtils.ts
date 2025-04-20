@@ -9,9 +9,27 @@ export class FileUtils {
         return parts[parts.length - 1] || '';
     }
     
-    public static getChildPath(path: string): string {
+    public static getChildPath(path: string, app?: App): string {
         const extension = path.split('.').pop() || 'md';
-        return path.replace(/\.[^\.]+$/, '.' + t('untitledPath') + '.' + extension);
+        const basePath = path.replace(/\.[^.]+$/, '');
+        const untitledBase = t('untitledPath');
+        
+        if (!app) {
+            return `${basePath}.${untitledBase}.${extension}`;
+        }
+        
+        // Check if untitled file already exists and increment number
+        let suffix = '';
+        let index = 0;
+        let candidatePath = `${basePath}.${untitledBase}${suffix}.${extension}`;
+        
+        while (app.vault.getAbstractFileByPath(candidatePath)) {
+            index++;
+            suffix = `.${index}`;
+            candidatePath = `${basePath}.${untitledBase}${suffix}.${extension}`;
+        }
+        
+        return candidatePath;
     }
     
     /**
@@ -36,7 +54,7 @@ export class FileUtils {
     }
 
     public static async createChildNote(app: App, path: string): Promise<void> {
-        await this.createAndOpenNote(app, this.getChildPath(path));
+        await this.createAndOpenNote(app, this.getChildPath(path, app));
     }
     
     public static async openFile(app: App, file: TFile): Promise<void> {

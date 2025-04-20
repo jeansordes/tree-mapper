@@ -1,4 +1,4 @@
-import { App, Notice, TFile, WorkspaceLeaf } from 'obsidian';
+import { App, Notice, WorkspaceLeaf } from 'obsidian';
 import { FileUtils } from '../src/utils/FileUtils';
 import { createMockApp, createMockFile } from './setup';
 
@@ -59,6 +59,34 @@ describe('FileUtils', () => {
         it('should preserve directory structure', () => {
             expect(FileUtils.getChildPath('/path/to/test.md')).toBe('/path/to/test.untitled.md');
         });
+
+        it('should handle incremental naming when files exist', () => {
+            const app = createMockApp();
+            // Mock first untitled file exists
+            jest.spyOn(app.vault, 'getAbstractFileByPath')
+                .mockImplementation((path: string) => {
+                    if (path === 'test.untitled.md') {
+                        return createMockFile('test.untitled.md');
+                    }
+                    return null;
+                });
+
+            expect(FileUtils.getChildPath('test.md', app)).toBe('test.untitled.1.md');
+        });
+
+        it('should increment numbers until finding available name', () => {
+            const app = createMockApp();
+            // Mock first and second untitled files exist
+            jest.spyOn(app.vault, 'getAbstractFileByPath')
+                .mockImplementation((path: string) => {
+                    if (path === 'test.untitled.md' || path === 'test.untitled.1.md') {
+                        return createMockFile(path);
+                    }
+                    return null;
+                });
+
+            expect(FileUtils.getChildPath('test.md', app)).toBe('test.untitled.2.md');
+        });
     });
 
     describe('createAndOpenNote', () => {
@@ -107,9 +135,14 @@ describe('FileUtils', () => {
 
     describe('createChildNote', () => {
         it('should create a child note with the correct path', async () => {
-            const createAndOpenNoteSpy = jest.spyOn(FileUtils, 'createAndOpenNote');
-            await FileUtils.createChildNote(createMockApp(), 'parent.md');
-            expect(createAndOpenNoteSpy).toHaveBeenCalledWith(expect.any(App), 'parent.untitled.md');
+            const app = createMockApp();
+            const createAndOpenNoteSpy = jest.spyOn(FileUtils, 'createAndOpenNote').mockResolvedValue();
+            const getChildPathSpy = jest.spyOn(FileUtils, 'getChildPath');
+            
+            await FileUtils.createChildNote(app, 'parent.md');
+            
+            expect(getChildPathSpy).toHaveBeenCalledWith('parent.md', app);
+            expect(createAndOpenNoteSpy).toHaveBeenCalled();
         });
     });
 

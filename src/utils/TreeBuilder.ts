@@ -112,11 +112,10 @@ export class TreeBuilder {
                     !processedPaths.has(virtualPath)) {
 
                     processedPaths.add(virtualPath);
-                    const nodeType = this.getNodeType(virtualPath);
                     this.registerNode(virtualPath, virtualDepth, TreeNodeType.VIRTUAL);
 
                     // Get next parent
-                    let nextParent = this.getParentPath(virtualPath);
+                    const nextParent = this.getParentPath(virtualPath);
 
                     // Break if we're not making progress (safeguard)
                     if (nextParent === virtualPath) {
@@ -172,17 +171,17 @@ export class TreeBuilder {
     }
 
     public getParentPath(path: string): string {
-        const nodeType = this.nodeTypeByPath.get(path);
+        const nodeType = this.getNodeType(path);
         if (nodeType === TreeNodeType.FOLDER) {
-            const result = path.replace(/[\/]?[^\/]*$/, '');
+            const result = path.replace(/[/]?[^/]*$/, '');
             return result === '' ? '/' : result;
         }
 
         // if it's not a FOLDER, then it's FILE or VIRTUAL
         // remove the file name if not dots
-        let result = path.replace(/(\/|^)[^./]+\.[^\.]+$/, '');
+        let result = path.replace(/(\/|^)[^./]+\.[^.]+$/, '');
         // otherwise, remove the last part of the dendron path and ensure .md extension for virtual nodes
-        result = result === '' ? '/' : result.replace(/\.[^\.]+(\.[^\.]+)$/, '.md');
+        result = result === '' ? '/' : result.replace(/\.[^.]+(\.[^.]+)$/, '.md');
         return result;
     }
 
