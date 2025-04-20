@@ -1,3 +1,9 @@
+# [1.3.0](https://github.com/jeansordes/tree-mapper/compare/1.2.2...1.3.0) (2025-04-20)
+
+### Features
+
+* enhance child path generation ([c3f2ba3](https://github.com/jeansordes/tree-mapper/commit/c3f2ba34bd5ea327b3254b5ed445f3c0cec75206)), closes [#5](https://github.com/jeansordes/tree-mapper/issues/5)
+
 ## [1.2.2](https://github.com/jeansordes/tree-mapper/compare/1.2.0...1.2.2) (2025-04-19)
 
 ### Bug Fixes
