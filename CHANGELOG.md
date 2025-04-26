@@ -1,3 +1,9 @@
+## [1.3.1](https://github.com/jeansordes/tree-mapper/compare/1.3.0...1.3.1) (2025-04-26)
+
+### Bug Fixes
+
+* remove unnecessary detachment of leaves in TreeMapperPlugin cleanup ([7e6d389](https://github.com/jeansordes/tree-mapper/commit/7e6d389b79a5699be2de8f2ef87105de10f32b06))
+
 # [1.3.0](https://github.com/jeansordes/tree-mapper/compare/1.2.2...1.3.0) (2025-04-20)
 
 ### Features
