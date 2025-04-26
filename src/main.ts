@@ -193,9 +193,6 @@ export default class TreeMapperPlugin extends Plugin {
         // Save settings before unloading
         this.saveSettings();
         
-        // Detach any leaves of our type
-        this.app.workspace.detachLeavesOfType(FILE_TREE_VIEW_TYPE);
-        
         // Clean up plugin panel resources
         if (this.pluginMainPanel) {
             logger.log("[TreeMapper] Cleaning up pluginMainPanel resources");
