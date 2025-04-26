@@ -12,22 +12,11 @@ jest.mock('src/i18n', () => ({
     }
 }));
 
-// Mock Obsidian classes
-jest.mock('obsidian', () => {
-    const original = jest.requireActual('obsidian');
-    return {
-        ...original,
-        Notice: jest.fn().mockImplementation(() => ({
-            setMessage: jest.fn(),
-            hide: jest.fn()
-        })),
-        WorkspaceLeaf: jest.fn().mockImplementation(() => ({
-            openFile: jest.fn()
-        }))
-    };
-});
-
 describe('FileUtils', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
     describe('basename', () => {
         it('should handle Unix-style paths', () => {
             expect(FileUtils.basename('/path/to/file.txt')).toBe('file.txt');

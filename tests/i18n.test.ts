@@ -3,17 +3,14 @@ import { getCurrentLocale, t, addTranslation, translations } from '../src/i18n';
 import en from '../src/i18n/en';
 import fr from '../src/i18n/fr';
 
-// Mock moment.locale()
-jest.mock('obsidian', () => ({
-    moment: {
-        locale: jest.fn()
-    }
-}));
-
 describe('i18n', () => {
     beforeEach(() => {
-        // Reset moment.locale mock
-        (moment.locale as jest.Mock).mockReset();
+        // Clear all mocks
+        jest.clearAllMocks();
+        
+        // Mock moment.locale to return English by default
+        jest.spyOn(moment, 'locale').mockImplementation(() => 'en');
+        
         // Reset translations to original state
         Object.keys(translations).forEach(key => {
             if (key !== 'en' && key !== 'fr') {
@@ -24,43 +21,40 @@ describe('i18n', () => {
 
     describe('getCurrentLocale', () => {
         it('should return the current locale if supported', () => {
-            (moment.locale as jest.Mock).mockReturnValue('fr');
+            jest.spyOn(moment, 'locale').mockImplementation(() => 'fr');
             expect(getCurrentLocale()).toBe('fr');
         });
 
         it('should fall back to English for unsupported locales', () => {
-            (moment.locale as jest.Mock).mockReturnValue('de');
+            jest.spyOn(moment, 'locale').mockImplementation(() => 'de');
             expect(getCurrentLocale()).toBe('en');
         });
 
         it('should handle empty or invalid locales', () => {
-            (moment.locale as jest.Mock).mockReturnValue('');
-            expect(getCurrentLocale()).toBe('en');
-
-            (moment.locale as jest.Mock).mockReturnValue(undefined);
+            jest.spyOn(moment, 'locale').mockImplementation(() => '');
             expect(getCurrentLocale()).toBe('en');
         });
     });
 
     describe('t (translate)', () => {
         it('should translate keys in English', () => {
-            (moment.locale as jest.Mock).mockReturnValue('en');
+            jest.spyOn(moment, 'locale').mockImplementation(() => 'en');
             expect(t('untitledPath')).toBe(en.untitledPath);
         });
 
         it('should translate keys in French', () => {
-            (moment.locale as jest.Mock).mockReturnValue('fr');
+            jest.spyOn(moment, 'locale').mockImplementation(() => 'fr');
             expect(t('untitledPath')).toBe(fr.untitledPath);
         });
 
         it('should fall back to English for missing translations', () => {
-            (moment.locale as jest.Mock).mockReturnValue('fr');
+            jest.spyOn(moment, 'locale').mockImplementation(() => 'fr');
             const key = 'nonexistentKey';
             expect(t(key)).toBe(key);
         });
 
         it('should handle variable replacements', () => {
-            (moment.locale as jest.Mock).mockReturnValue('en');
+            jest.spyOn(moment, 'locale').mockImplementation(() => 'en');
             expect(t('noticeCreatedNote', { path: 'test.md' }))
                 .toBe(en.noticeCreatedNote.replace('{{path}}', 'test.md'));
         });
@@ -69,7 +63,7 @@ describe('i18n', () => {
             addTranslation('test', {
                 testKey: 'Hello {{name}}, welcome to {{place}}!'
             });
-            (moment.locale as jest.Mock).mockReturnValue('test');
+            jest.spyOn(moment, 'locale').mockImplementation(() => 'test');
             
             expect(t('testKey', { name: 'John', place: 'Paris' }))
                 .toBe('Hello John, welcome to Paris!');
@@ -79,7 +73,7 @@ describe('i18n', () => {
             addTranslation('test', {
                 testKey: 'Hello {{name}}!'
             });
-            (moment.locale as jest.Mock).mockReturnValue('test');
+            jest.spyOn(moment, 'locale').mockImplementation(() => 'test');
             
             expect(t('testKey')).toBe('Hello {{name}}!');
         });
@@ -93,7 +87,7 @@ describe('i18n', () => {
             };
             addTranslation('es', newTranslations);
 
-            (moment.locale as jest.Mock).mockReturnValue('es');
+            jest.spyOn(moment, 'locale').mockImplementation(() => 'es');
             expect(t('hello')).toBe('Hola');
             expect(t('goodbye')).toBe('Adiós');
         });
@@ -104,7 +98,7 @@ describe('i18n', () => {
             };
             addTranslation('fr', newTranslations);
 
-            (moment.locale as jest.Mock).mockReturnValue('fr');
+            jest.spyOn(moment, 'locale').mockImplementation(() => 'fr');
             expect(t('untitledPath')).toBe('sans-titre');
         });
     });

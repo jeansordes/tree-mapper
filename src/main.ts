@@ -1,27 +1,26 @@
-import { Plugin, TFile, ViewState, WorkspaceLeaf } from 'obsidian';
+import { Plugin, TFile, WorkspaceLeaf } from 'obsidian';
 import { t } from './i18n';
 import { DEFAULT_SETTINGS, FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON } from './types';
 import { FileUtils } from './utils/FileUtils';
 import PluginMainPanel from './views/PluginMainPanel';
+import { logger } from './utils/logger';
+
 export default class TreeMapperPlugin extends Plugin {
     settings: PluginSettings;
     private pluginMainPanel: PluginMainPanel | null = null;
 
     async onload() {
-        console.log("[TreeMapper] Plugin loading");
-        
-        if (process.env.NODE_ENV === 'development') {
-            console.clear();
-        }
+        logger.enable();
+        logger.log("[TreeMapper] Plugin loading");
 
         // Force Obsidian to detach our previous views which should clean up attached event handlers
-        console.log("[TreeMapper] Detaching any existing tree views");
+        logger.log("[TreeMapper] Detaching any existing tree views");
         try {
             // This ensures any existing views are properly closed, triggering onClose() for cleanup
             this.app.workspace.detachLeavesOfType(FILE_TREE_VIEW_TYPE);
-        } catch (e) {
+        } catch {
             // This is normal if it's the first load
-            console.log("[TreeMapper] No existing views to detach");
+            logger.log("[TreeMapper] No existing views to detach");
         }
         
         await this.loadSettings();
@@ -35,7 +34,7 @@ export default class TreeMapperPlugin extends Plugin {
             }
         );
 
-        this.addRibbonIcon(TREE_VIEW_ICON, t('ribbonTooltip'), (evt: MouseEvent) => {
+        this.addRibbonIcon(TREE_VIEW_ICON, t('ribbonTooltip'), (/* evt: MouseEvent */) => {
             this.activateView();
         });
 
@@ -124,7 +123,7 @@ export default class TreeMapperPlugin extends Plugin {
         await leaf.setViewState({
             type: FILE_TREE_VIEW_TYPE,
             active: false // Set to false to avoid automatically focusing the view
-        } as ViewState);
+        });
 
         return leaf;
     }
@@ -145,7 +144,7 @@ export default class TreeMapperPlugin extends Plugin {
                 await leaf.setViewState({
                     type: FILE_TREE_VIEW_TYPE,
                     active: true
-                } as ViewState);
+                });
                 this.app.workspace.revealLeaf(leaf);
             }
         });
@@ -162,10 +161,10 @@ export default class TreeMapperPlugin extends Plugin {
         const leaves = this.app.workspace.getLeavesOfType(FILE_TREE_VIEW_TYPE);
         if (leaves.length === 0) return;
 
-        const dendronView = leaves[0].view as PluginMainPanel;
-
-        // Trigger file highlighting
-        if (dendronView && typeof dendronView.highlightFile === 'function') {
+        const dendronView = leaves[0].view;
+        
+        // Check if the view is our PluginMainPanel type
+        if (dendronView instanceof PluginMainPanel && typeof dendronView.highlightFile === 'function') {
             dendronView.highlightFile(file);
         }
     }
@@ -189,7 +188,7 @@ export default class TreeMapperPlugin extends Plugin {
     }
 
     onunload() {
-        console.log("[TreeMapper] Plugin unloading, cleaning up resources");
+        logger.log("[TreeMapper] Plugin unloading, cleaning up resources");
         
         // Save settings before unloading
         this.saveSettings();
@@ -199,7 +198,7 @@ export default class TreeMapperPlugin extends Plugin {
         
         // Clean up plugin panel resources
         if (this.pluginMainPanel) {
-            console.log("[TreeMapper] Cleaning up pluginMainPanel resources");
+            logger.log("[TreeMapper] Cleaning up pluginMainPanel resources");
             this.pluginMainPanel = null;
         }
     }

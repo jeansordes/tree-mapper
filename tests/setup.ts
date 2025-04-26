@@ -1,5 +1,18 @@
 import { App, TFile, TFolder } from 'obsidian';
 
+// Mock Notice constructor
+jest.mock('obsidian', () => {
+    const original = jest.requireActual('obsidian');
+    return {
+        ...original,
+        Notice: jest.fn().mockImplementation(() => ({
+            setMessage: jest.fn(),
+            hide: jest.fn()
+        })),
+        // Add any other mock implementations here
+    };
+}, { virtual: true });
+
 // Create helper functions for tests
 export function createMockFile(path: string, name?: string, parent: TFolder | null = null): TFile {
     const file = new TFile();

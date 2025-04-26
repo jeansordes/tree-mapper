@@ -136,10 +136,12 @@ export class ExpandedNodesManager {
      * Update the toggle button icon based on the current state
      */
     private updateToggleButtonIcon(): void {
-        const toggleButton = this.container.querySelector('.tm_tree-toggle-button') as HTMLElement | null;
+        // Use type annotation instead of assertion for toggleButton
+        const toggleButton: HTMLElement | null = this.container.querySelector('.tm_tree-toggle-button');
         if (!toggleButton) return;
         
-        const iconContainer = toggleButton.querySelector('.tm_tree-toggle-icon') as HTMLElement | null;
+        // Use type annotation instead of assertion for iconContainer
+        const iconContainer: HTMLElement | null = toggleButton.querySelector('.tm_tree-toggle-icon');
         if (!iconContainer) return;
         
         const allNodesCollapsed = this.areAllNodesCollapsed();

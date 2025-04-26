@@ -73,7 +73,7 @@ export class TreeRenderer {
                     });
                     itemSelf.appendChild(extensionEl);
                 }
-                this.addActionButtons(itemSelf, childNode, name);
+                this.addActionButtons(itemSelf, childNode);
 
                 // Recursively render children
                 if (hasChildren) {
@@ -214,7 +214,7 @@ export class TreeRenderer {
     /**
      * Add action buttons to a node
      */
-    private addActionButtons(parent: HTMLElement, node: TreeNode, name: string): void {
+    private addActionButtons(parent: HTMLElement, node: TreeNode): void {
         // Add "create note" button for virtual nodes
         if (node.nodeType === TreeNodeType.VIRTUAL) {
             const createNoteBtn = this.createActionButton({
@@ -280,8 +280,8 @@ export class TreeRenderer {
      */
     private handleTreeClick = async (event: MouseEvent) => {
         // Find the closest clickable element
-        const target = event.target as HTMLElement;
-        const clickableElement = target.closest('.is-clickable, .tm_button-icon');
+        const target = event.target;
+        const clickableElement: HTMLElement | null = (target instanceof HTMLElement) ? target.closest('.is-clickable, .tm_button-icon') : null;
 
         if (!clickableElement) return;
         
@@ -299,7 +299,11 @@ export class TreeRenderer {
                     const item = clickableElement.closest('.tm_tree-item-container');
                     if (item) {
                         const isCollapsed = item.classList.toggle('is-collapsed');
-                        isCollapsed ? this.expandedNodes.delete(path) : this.expandedNodes.add(path);
+                        if (isCollapsed) {
+                            this.expandedNodes.delete(path);
+                        } else {
+                            this.expandedNodes.add(path);
+                        }
 
                         const triangle = clickableElement.querySelector('.right-triangle');
                         if (triangle) triangle.classList.toggle('is-collapsed');

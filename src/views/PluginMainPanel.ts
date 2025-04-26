@@ -270,7 +270,7 @@ export default class PluginMainPanel extends ItemView {
         
         // Build the node path map for quick lookups
         this.nodePathMap.clear();
-        this.buildNodePathMap(rootNode, '');
+        this.buildNodePathMap(rootNode);
 
         // Render the tree using the node renderer
         await this.nodeRenderer.renderDendronNode(rootNode, container, this.expandedNodes);
@@ -279,11 +279,11 @@ export default class PluginMainPanel extends ItemView {
     /**
      * Build a map of paths to nodes for quick lookups
      */
-    private buildNodePathMap(node: TreeNode, parentPath: string): void {
+    private buildNodePathMap(node: TreeNode): void {
         for (const [name, childNode] of node.children.entries()) {
             const path = name;
             this.nodePathMap.set(path, childNode);
-            this.buildNodePathMap(childNode, path);
+            this.buildNodePathMap(childNode);
         }
     }
 

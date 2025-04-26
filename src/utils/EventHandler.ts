@@ -43,7 +43,7 @@ export class DendronEventHandler {
     }
     
     // Bound event handlers to ensure 'this' is preserved
-    private handleFileCreate = (file: TAbstractFile) => {
+    private handleFileCreate = (_: TAbstractFile) => {
         this.queueRefresh(undefined, true);
     };
     
@@ -52,11 +52,11 @@ export class DendronEventHandler {
         this.queueRefresh(file.path, false);
     };
     
-    private handleFileDelete = (file: TAbstractFile) => {
+    private handleFileDelete = (_: TAbstractFile) => {
         this.queueRefresh(undefined, true);
     };
     
-    private handleFileRename = (file: TAbstractFile, oldPath: string) => {
+    private handleFileRename = (_: TAbstractFile, __: string) => {
         this.queueRefresh(undefined, true);
     };
     
@@ -154,13 +154,13 @@ export class DendronEventHandler {
             }
             
             // Find the DOM element for this path
-            const parentElement = container.querySelector(`.tm_tree-item-container[data-path="${parentPath}"]`) as HTMLElement;
+            const parentElement: HTMLElement | null = container.querySelector(`.tm_tree-item-container[data-path="${parentPath}"]`);
             if (!parentElement) {
                 return false;
             }
             
             // Find the children container
-            const childrenContainer = parentElement.querySelector('.tm_tree-item-children') as HTMLElement;
+            const childrenContainer: HTMLElement | null = parentElement.querySelector('.tm_tree-item-children');
             if (!childrenContainer) {
                 return false;
             }
@@ -178,7 +178,7 @@ export class DendronEventHandler {
             renderCallback(node, childrenContainer);
             
             return true;
-        } catch (error) {
+        } catch {
             // If any error occurs, fall back to full rebuild
             return false;
         }

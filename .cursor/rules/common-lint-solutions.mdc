@@ -1,0 +1,8 @@
+---
+description: When attempting to fix lint errors or warnings.
+globs: 
+alwaysApply: false
+---
+- When facing @typescript-eslint/consistent-type-assertions warnings, you should replace "const var = value as Type" with "const var:Type = value"
+- When using App in ".test.ts" files, you should look into "/tests/mocks" to find the appropriate mock file. Also, you should try to avoid using "App" and instead use "MockApp"
+- When facing a "no-console", and you are in "tests/" files, use the "logger.logToConsole" method. If you are in "src/", use the "logger.log" method instead

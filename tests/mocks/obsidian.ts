@@ -37,7 +37,7 @@ export class TFolder {
 }
 
 export class Notice {
-    constructor(message: string) {
+    constructor(/* message: string */) {
         // Mock implementation
     }
 }
@@ -68,7 +68,7 @@ export class Vault {
         return this.files.find(f => f.path === path) || this.folders.find(f => f.path === path) || null;
     }
 
-    async create(path: string, data: string): Promise<TFile> {
+    async create(path: string, __data: string): Promise<TFile> {
         const file = new TFile(path, path.split('/').pop() || '');
         this.files.push(file);
         return file;
@@ -88,7 +88,7 @@ export class Workspace {
     private leaves: WorkspaceLeaf[] = [];
     private activeLeaf: WorkspaceLeaf | null = null;
 
-    getLeaf(active: boolean): WorkspaceLeaf | null {
+    getLeaf(__active: boolean): WorkspaceLeaf | null {
         return this.activeLeaf;
     }
 
@@ -97,14 +97,14 @@ export class Workspace {
     }
 
     // Event handlers
-    on(event: string, callback: (file: TFile) => void): void {}
-    off(event: string, callback: (file: TFile) => void): void {}
+    on(/* event: string, callback: (file: TFile) => void */): void { /* no-op */ }
+    off(/* event: string, callback: (file: TFile) => void */): void { /* no-op */ }
 }
 
 export class WorkspaceLeaf {
     view: ItemView | null = null;
 
-    async openFile(file: TFile): Promise<void> {
+    async openFile(__file: TFile): Promise<void> {
         // Mock implementation
     }
 }
@@ -122,7 +122,7 @@ export class Platform {
     static isMobile: boolean = false;
 }
 
-export function setIcon(element: HTMLElement, icon: string): void {
+export function setIcon(__element: HTMLElement, __icon: string): void {
     // Mock implementation
 }
 

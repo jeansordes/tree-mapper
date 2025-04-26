@@ -42,7 +42,7 @@ export class FileUtils {
             try {
                 note = await app.vault.create(path, '');
                 new Notice(t('noticeCreatedNote', { path }));
-            } catch (error) {
+            } catch {
                 new Notice(t('noticeFailedCreateNote', { path }));
                 return;
             }
