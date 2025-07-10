@@ -281,7 +281,7 @@ export class TreeRenderer {
     private handleTreeClick = async (event: MouseEvent) => {
         // Find the closest clickable element
         const target = event.target;
-        const clickableElement: HTMLElement | null = (target instanceof HTMLElement) ? target.closest('.is-clickable, .tm_button-icon') : null;
+        const clickableElement: Element | null = (target instanceof Element) ? target.closest('.is-clickable, .tm_button-icon') : null;
 
         if (!clickableElement) return;
         
