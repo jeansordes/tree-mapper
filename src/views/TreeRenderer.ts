@@ -215,6 +215,12 @@ export class TreeRenderer {
      * Add action buttons to a node
      */
     private addActionButtons(parent: HTMLElement, node: TreeNode): void {
+        // Create a container for the action buttons
+        const actionButtonsContainer = this.createElement('div', {
+            className: 'tm_action-buttons-container'
+        });
+        parent.appendChild(actionButtonsContainer);
+
         // Add "create note" button for virtual nodes
         if (node.nodeType === TreeNodeType.VIRTUAL) {
             const createNoteBtn = this.createActionButton({
@@ -225,7 +231,7 @@ export class TreeRenderer {
                     'data-path': node.path
                 }
             });
-            parent.appendChild(createNoteBtn);
+            actionButtonsContainer.appendChild(createNoteBtn);
         }
 
         // Add "create child note" button for all nodes
@@ -238,7 +244,7 @@ export class TreeRenderer {
                 'data-path': node.path
             }
         });
-        parent.appendChild(createChildBtn);
+        actionButtonsContainer.appendChild(createChildBtn);
     }
 
     /**
