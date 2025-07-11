@@ -1,3 +1,9 @@
+## [1.4.1](https://github.com/jeansordes/tree-mapper/compare/1.4.0...1.4.1) (2025-07-11)
+
+### Bug Fixes
+
+* v1.3.3 crashes on mobile ([2f943fb](https://github.com/jeansordes/tree-mapper/commit/2f943fb1ff45ca3cb8f3e1de863522c1d43305fa)), closes [#10](https://github.com/jeansordes/tree-mapper/issues/10)
+
 # [1.4.0](https://github.com/jeansordes/tree-mapper/compare/1.3.3...1.4.0) (2025-07-11)
 
 ### Bug Fixes
