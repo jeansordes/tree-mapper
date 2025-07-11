@@ -2,30 +2,16 @@ import { writeFileSync, appendFileSync, existsSync, mkdirSync, readdirSync, unli
 import { join } from 'path';
 
 class Logger {
-    private logsDir: string;
     private enabled: boolean = false;
-    private activeLogFiles: Set<string> = new Set();
+    private memoryLogs: Map<string, string[]> = new Map();
+    private maxMemoryLogEntries = 100;
 
-    constructor(logsDir: string = __dirname + '/../../logs') {
-        this.logsDir = logsDir;
+    constructor() {
+        // No file system initialization needed
     }
 
     enable() {
         this.enabled = true;
-
-        // Create logs directory if it doesn't exist
-        if (!existsSync(this.logsDir)) {
-            mkdirSync(this.logsDir, { recursive: true });
-        } else {
-            // Clear all existing log files
-            const files = readdirSync(this.logsDir);
-            for (const file of files) {
-                unlinkSync(join(this.logsDir, file));
-            }
-            // eslint-disable-next-line no-console
-            console.clear();
-        }
-
         this.log('system', 'Logging started');
     }
 
@@ -36,67 +22,60 @@ class Logger {
         }
     }
 
-    private ensureLogFile(logName: string): string {
-        const logFile = join(this.logsDir, `${logName}.log`);
-
-        if (!this.activeLogFiles.has(logFile)) {
-            // Create the file if it doesn't exist
-            if (!existsSync(logFile)) {
-                writeFileSync(logFile, '');
-            }
-            this.activeLogFiles.add(logFile);
+    private addToMemoryLog(logName: string, message: string) {
+        if (!this.memoryLogs.has(logName)) {
+            this.memoryLogs.set(logName, []);
         }
-
-        return logFile;
+        
+        const logs = this.memoryLogs.get(logName)!;
+        logs.push(message);
+        
+        // Keep logs under the maximum size
+        if (logs.length > this.maxMemoryLogEntries) {
+            logs.shift();
+        }
     }
 
     logToConsole(...args: unknown[]) {
-        if (process.env.NODE_ENV === 'development') {
-            // eslint-disable-next-line no-console
-            console.log(...args);
-        }
+        // eslint-disable-next-line no-console
+        console.log(...args);
     }
 
     log(logName: string, ...args: unknown[]) {
         this.logToConsole(...args);
 
-        // If enabled, also log to file
+        // If enabled, also store in memory
         if (this.enabled) {
-            const logFile = this.ensureLogFile(logName);
             const timestamp = new Date().toISOString();
             const logMessage = `[${timestamp}] ${args.map(arg =>
                 typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
             ).join(' ')}`;
 
-            try {
-                appendFileSync(logFile, logMessage + '\n');
-            } catch (error) {
-                console.error('Failed to write to log file:', error);
-            }
+            this.addToMemoryLog(logName, logMessage);
         }
     }
 
     error(logName: string, ...args: unknown[]) {
-        this.logToConsole(...args);
+        // eslint-disable-next-line no-console
+        console.error(...args);
 
-        // If enabled, also log to file
+        // If enabled, also store in memory
         if (this.enabled) {
-            const logFile = this.ensureLogFile(logName);
             const timestamp = new Date().toISOString();
             const logMessage = `[${timestamp}] ERROR: ${args.map(arg =>
                 typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
             ).join(' ')}`;
 
-            try {
-                appendFileSync(logFile, logMessage + '\n');
-            } catch (error) {
-                console.error('Failed to write to log file:', error);
-            }
+            this.addToMemoryLog(logName, logMessage);
         }
     }
 
-    getLogsDir(): string {
-        return this.logsDir;
+    getMemoryLogs(logName: string): string[] {
+        return this.memoryLogs.get(logName) || [];
+    }
+
+    getAllLogNames(): string[] {
+        return Array.from(this.memoryLogs.keys());
     }
 
     isEnabled(): boolean {
