@@ -1,3 +1,13 @@
+# [1.4.0](https://github.com/jeansordes/tree-mapper/compare/1.3.3...1.4.0) (2025-07-11)
+
+### Bug Fixes
+
+* update type of clickableElement in TreeRenderer ([b9f1a80](https://github.com/jeansordes/tree-mapper/commit/b9f1a804fd057e5eb1f5be0748088cf652a5cef9))
+
+### Features
+
+* add a horizontal scroll [#8](https://github.com/jeansordes/tree-mapper/issues/8) ([b457574](https://github.com/jeansordes/tree-mapper/commit/b457574a6ea6f5e1cadc67723a0a2dc0a1713529))
+
 ## [1.3.3](https://github.com/jeansordes/tree-mapper/compare/1.3.2...1.3.3) (2025-04-27)
 
 ## [1.3.2](https://github.com/jeansordes/tree-mapper/compare/1.3.1...1.3.2) (2025-04-27)
