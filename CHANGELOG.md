@@ -1,3 +1,9 @@
+## [1.4.2](https://github.com/jeansordes/tree-mapper/compare/1.4.1...1.4.2) (2025-08-05)
+
+### Bug Fixes
+
+* improve toggle button state management in ExpandedNodesManager ([b92aca4](https://github.com/jeansordes/tree-mapper/commit/b92aca4fbccab9e1821cf5d27666a376a753b223)), closes [#13](https://github.com/jeansordes/tree-mapper/issues/13)
+
 ## [1.4.1](https://github.com/jeansordes/tree-mapper/compare/1.4.0...1.4.1) (2025-07-11)
 
 ### Bug Fixes
