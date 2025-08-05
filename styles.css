@@ -84,8 +84,6 @@
     .tm_tree-item-container {
         display: flex;
         flex-direction: column;
-        gap: var(--tm_gap);
-        margin-bottom: var(--tm_gap);
         position: relative; /* Create positioning context for descendants */
     }
 
@@ -95,6 +93,7 @@
         min-width: 100%; /* Ensure it's at least as wide as the parent */
         gap: var(--tm_gap);
         position: relative; /* For positioning the action buttons */
+        margin-bottom: var(--tm_gap);
     }
 
     .tm_tree-item-title {
