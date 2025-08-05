@@ -43,7 +43,10 @@ export class ExpandedNodesManager {
         });
         
         // Set initial icon and title based on state
-        this.updateToggleButtonIcon();
+        this.setToggleButtonState(false, iconContainer, toggleButton);
+        setTimeout(() => {
+            this.updateToggleButtonIcon();
+        }, 1000);
     }
 
     /**
@@ -57,7 +60,7 @@ export class ExpandedNodesManager {
      * Check if all nodes are collapsed
      */
     private areAllNodesCollapsed(): boolean {
-        if (!this.container) return true;
+        if (!this.container) return false;
         
         // If there are no expanded nodes, all nodes are collapsed
         return !this.hasExpandedNodes();
@@ -144,14 +147,14 @@ export class ExpandedNodesManager {
         const iconContainer: HTMLElement | null = toggleButton.querySelector('.tm_tree-toggle-icon');
         if (!iconContainer) return;
         
-        const allNodesCollapsed = this.areAllNodesCollapsed();
-        
-        if (allNodesCollapsed) {
-            // If all nodes are collapsed, show "expand all" icon
+        this.setToggleButtonState(this.areAllNodesCollapsed(), iconContainer, toggleButton);
+    }
+
+    private setToggleButtonState(showExpandAll: boolean, iconContainer: HTMLElement, toggleButton: HTMLElement): void {
+        if (showExpandAll) {
             setIcon(iconContainer, 'chevrons-up-down');
             toggleButton.setAttribute('title', t('tooltipExpandAll'));
         } else {
-            // Otherwise, show "collapse all" icon
             setIcon(iconContainer, 'chevrons-down-up');
             toggleButton.setAttribute('title', t('tooltipCollapseAll'));
         }
