@@ -1,5 +1,3 @@
-import { writeFileSync, appendFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from 'fs';
-import { join } from 'path';
 
 class Logger {
     private enabled: boolean = false;
