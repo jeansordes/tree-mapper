@@ -9,6 +9,10 @@
 ### Features
 
 * add virtual tree demo ([b9e7fa1](https://github.com/jeansordes/tree-mapper/commit/b9e7fa121492510848d7968272ec5277de7c311f))
+
+# [1.5.0](https://github.com/jeansordes/tree-mapper/compare/1.4.2...1.5.0) (2025-08-09)
+
+### Features
 * collapse parent via vertical bar ([f7331da](https://github.com/jeansordes/tree-mapper/commit/f7331da542fbc8ea60b230ebd61f8d690cd36a8f))
 * enhance tree item interaction with hover effects and toggle highlight ([f262f16](https://github.com/jeansordes/tree-mapper/commit/f262f167d881b797bbb63a17aaf6718fb2dfa359))
 
