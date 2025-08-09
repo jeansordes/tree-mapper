@@ -115,7 +115,43 @@
     .tm_tree-item-children {
         padding-left: calc(var(--tm_button-size) / 2);
         margin-left: calc((var(--tm_button-size) / 2) - 1px);
-        border-left: 1px solid var(--tm_border-color);
+        position: relative;
+    }
+
+    /* Create a shorter border line using a pseudo-element */
+    .tm_tree-item-children::after {
+        content: '';
+        position: absolute;
+        left: -1px;
+        top: var(--tm_gap);
+        bottom: var(--tm_gap);
+        width: 1px;
+        background-color: var(--tm_border-color);
+        transition: background-color 0.1s ease;
+    }
+
+    /* Hover effect for the vertical line (clickable area) */
+    .tm_tree-item-children::before {
+        content: '';
+        position: absolute;
+        left: -11px;
+        top: 0;
+        width: 20px;
+        height: 100%;
+        cursor: pointer;
+        z-index: 1;
+    }
+
+    /* Class to be applied via JavaScript when hovering the line */
+    .tm_tree-item-children.tm_line-hover::after {
+        background-color: var(--tm_accent-color);
+    }
+
+    /* Highlight for the last collapsed toggle arrow */
+    .tm_button-icon[data-action="toggle"].tm_last-collapsed {
+        border: 2px solid var(--tm_accent-color);
+        border-radius: var(--tm_border-radius);
+        transition: border-color 0.2s ease;
     }
 
     .tm_tree-item-container.is-collapsed>.tm_tree-item-children {
