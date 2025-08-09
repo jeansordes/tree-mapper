@@ -267,13 +267,17 @@
     }
 }
 /* Virtual tree demo styles */
-#tree-demo-container {
+#tree-demo-container,
+.vtree {
     position: relative;
     overflow-y: auto;
+    will-change: transform;
 }
+
 .spacer {
     position: relative;
 }
+
 .row {
     position: absolute;
     height: var(--row-h, 20px);
@@ -283,4 +287,18 @@
     text-overflow: ellipsis;
     overflow: hidden;
     contain: layout style paint;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.row:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.row[aria-expanded="true"]::before {
+    content: "▼ ";
+}
+
+.row[aria-expanded="false"]::before {
+    content: "▶ ";
 }

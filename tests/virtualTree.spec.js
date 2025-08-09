@@ -1,6 +1,11 @@
 /* eslint-env jest */
 /* global describe, test, expect */
 
+// NOTE: These functions are duplicated from src/flatten.js and src/utils.js
+// because Jest doesn't support ES modules out of the box in this project setup.
+// In a production environment, you would configure Jest for ES modules or
+// use a different test runner that supports them natively.
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
