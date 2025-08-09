@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/jeansordes/tree-mapper/compare/1.4.2...1.5.0) (2025-08-09)
+
+### Features
+
+* collapse parent via vertical bar ([f7331da](https://github.com/jeansordes/tree-mapper/commit/f7331da542fbc8ea60b230ebd61f8d690cd36a8f))
+* enhance tree item interaction with hover effects and toggle highlight ([f262f16](https://github.com/jeansordes/tree-mapper/commit/f262f167d881b797bbb63a17aaf6718fb2dfa359))
+
 ## [1.4.2](https://github.com/jeansordes/tree-mapper/compare/1.4.1...1.4.2) (2025-08-05)
 
 ### Bug Fixes
