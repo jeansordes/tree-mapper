@@ -273,21 +273,97 @@ export class TreeRenderer {
      * This significantly reduces memory usage and improves rendering performance.
      */
     public addTreeEventHandler(treeContainer: HTMLElement): void {
-        // First remove any existing click handlers to prevent duplicates
+        // First remove any existing handlers to prevent duplicates
         treeContainer.removeEventListener('click', this.handleTreeClick);
+        treeContainer.removeEventListener('mousemove', this.handleTreeMouseMove);
+        treeContainer.removeEventListener('mouseleave', this.handleTreeMouseLeave);
         
-        // Then add our event handler
+        // Then add our event handlers
         treeContainer.addEventListener('click', this.handleTreeClick);
+        treeContainer.addEventListener('mousemove', this.handleTreeMouseMove);
+        treeContainer.addEventListener('mouseleave', this.handleTreeMouseLeave);
     }
     
+    /**
+     * Handle mouse movement for vertical line hover effects
+     */
+    private handleTreeMouseMove = (event: MouseEvent) => {
+        const target = event.target;
+        
+        if (target instanceof HTMLElement && target.classList.contains('tm_tree-item-children')) {
+            const rect = target.getBoundingClientRect();
+            const isOverLine = event.clientX - rect.left <= 10;
+            
+            if (isOverLine) {
+                // Add hover class only to the specific element
+                target.classList.add('tm_line-hover');
+            } else {
+                // Remove hover class when not over the line
+                target.classList.remove('tm_line-hover');
+            }
+        }
+        
+        // Remove hover class from all other elements
+        const allChildren = document.querySelectorAll('.tm_tree-item-children.tm_line-hover');
+        allChildren.forEach(el => {
+            if (el !== target) {
+                el.classList.remove('tm_line-hover');
+            }
+        });
+    };
+
+    /**
+     * Handle mouse leave to clean up hover states
+     */
+    private handleTreeMouseLeave = () => {
+        // Remove all hover classes when mouse leaves the tree
+        const allChildren = document.querySelectorAll('.tm_tree-item-children.tm_line-hover');
+        allChildren.forEach(el => {
+            el.classList.remove('tm_line-hover');
+        });
+    };
+
     /**
      * The main click event handler for the tree
      * Using a class method so we can easily remove it later
      */
     private handleTreeClick = async (event: MouseEvent) => {
-        // Find the closest clickable element
         const target = event.target;
-        const clickableElement: Element | null = (target instanceof Element) ? target.closest('.is-clickable, .tm_button-icon') : null;
+
+        // Allow collapsing a parent by clicking its vertical bar
+        if (target instanceof HTMLElement && target.classList.contains('tm_tree-item-children')) {
+            const rect = target.getBoundingClientRect();
+            if (event.clientX - rect.left <= 10) {
+                const parent = target.parentElement;
+                if (parent?.classList.contains('tm_tree-item-container')) {
+                    const path = parent.getAttribute('data-path');
+                    const isCollapsed = parent.classList.toggle('is-collapsed');
+
+                    const toggleBtn = parent.querySelector('.tm_button-icon[data-action="toggle"]');
+                    const triangle = toggleBtn?.querySelector('.right-triangle');
+                    if (triangle) triangle.classList.toggle('is-collapsed');
+
+                    if (path) {
+                        if (isCollapsed) {
+                            this.expandedNodes.delete(path);
+                            // Find and highlight the toggle button for this element
+                            const toggleBtn = parent.querySelector('.tm_button-icon[data-action="toggle"]');
+                            if (toggleBtn) {
+                                this.highlightLastCollapsed(toggleBtn as HTMLElement);
+                            }
+                        } else {
+                            this.expandedNodes.add(path);
+                        }
+                    }
+
+                    event.stopPropagation();
+                }
+            }
+            return;
+        }
+
+        // Find the closest clickable element
+        const clickableElement: Element | null = target instanceof Element ? target.closest('.is-clickable, .tm_button-icon') : null;
 
         if (!clickableElement) return;
         
@@ -307,6 +383,8 @@ export class TreeRenderer {
                         const isCollapsed = item.classList.toggle('is-collapsed');
                         if (isCollapsed) {
                             this.expandedNodes.delete(path);
+                            // Highlight this toggle button as the last collapsed
+                            this.highlightLastCollapsed(clickableElement as HTMLElement);
                         } else {
                             this.expandedNodes.add(path);
                         }
@@ -341,4 +419,23 @@ export class TreeRenderer {
             }
         }
     };
+
+    /**
+     * Highlight the most recently collapsed toggle button
+     */
+    private highlightLastCollapsed(toggleButton: HTMLElement): void {
+        // Remove highlight from any previously highlighted toggle
+        const previousHighlighted = document.querySelector('.tm_button-icon[data-action="toggle"].tm_last-collapsed');
+        if (previousHighlighted) {
+            previousHighlighted.classList.remove('tm_last-collapsed');
+        }
+
+        // Add highlight to the current toggle button
+        toggleButton.classList.add('tm_last-collapsed');
+
+        // Remove the highlight after 3 seconds
+        setTimeout(() => {
+            toggleButton.classList.remove('tm_last-collapsed');
+        }, 10*1000);
+    }
 }
