@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Virtual Tree Demo</title>
+  <style>
+    #tree { position: relative; overflow-y: auto; height: 400px; width: 300px; border: 1px solid #ccc; }
+    .spacer { position: relative; }
+    .row {
+      position: absolute;
+      height: var(--row-h, 20px);
+      line-height: var(--row-h, 20px);
+      width: 100%;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      contain: layout style paint;
+    }
+  </style>
+</head>
+<body>
+  <div id="tree" role="tree"></div>
+  <script type="module">
+    import { VirtualTree } from '../src/virtualTree.js';
+
+    function buildSample(depth, breadth) {
+      let id = 0;
+      function make(level) {
+        const out = [];
+        for (let i = 0; i < breadth; i++) {
+          const node = { id: String(id++), name: `Node ${id}`, kind: level < depth - 1 ? 'folder' : 'file' };
+          if (node.kind === 'folder') {
+            node.children = make(level + 1);
+          }
+          out.push(node);
+        }
+        return out;
+      }
+      return make(0);
+    }
+
+    const data = buildSample(3, 10);
+    const container = document.getElementById('tree');
+    new VirtualTree({ container, data });
+  </script>
+</body>
+</html>

@@ -59,3 +59,16 @@ You can assign keyboard shortcuts to any of the commands above through the Hotke
   - [Obsidian Structure](https://github.com/dobrovolsky/obsidian-structure)
   - [Obsidian Dendron Tree](https://github.com/levirs565/obsidian-dendron-tree)
 
+
+## Virtual Tree Demo
+
+A small demo showcasing a high-performance virtualized tree is available in `demo/index.html`. Open it in a modern browser to view a generated tree of thousands of nodes rendered with DOM virtualization and row reuse.
+
+### Development
+
+The core implementation lives in `src/virtualTree.js` with helper utilities in `src/flatten.js` and `src/utils.js`. Basic unit tests for the flattening logic and window calculations can be run with:
+
+```bash
+npm test
+```
+
