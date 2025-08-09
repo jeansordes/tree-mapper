@@ -285,9 +285,37 @@ export class TreeRenderer {
      * Using a class method so we can easily remove it later
      */
     private handleTreeClick = async (event: MouseEvent) => {
-        // Find the closest clickable element
         const target = event.target;
-        const clickableElement: Element | null = (target instanceof Element) ? target.closest('.is-clickable, .tm_button-icon') : null;
+
+        // Allow collapsing a parent by clicking its vertical bar
+        if (target instanceof HTMLElement && target.classList.contains('tm_tree-item-children')) {
+            const rect = target.getBoundingClientRect();
+            if (event.clientX - rect.left <= 10) {
+                const parent = target.parentElement;
+                if (parent?.classList.contains('tm_tree-item-container')) {
+                    const path = parent.getAttribute('data-path');
+                    const isCollapsed = parent.classList.toggle('is-collapsed');
+
+                    const toggleBtn = parent.querySelector('.tm_button-icon[data-action="toggle"]');
+                    const triangle = toggleBtn?.querySelector('.right-triangle');
+                    if (triangle) triangle.classList.toggle('is-collapsed');
+
+                    if (path) {
+                        if (isCollapsed) {
+                            this.expandedNodes.delete(path);
+                        } else {
+                            this.expandedNodes.add(path);
+                        }
+                    }
+
+                    event.stopPropagation();
+                }
+            }
+            return;
+        }
+
+        // Find the closest clickable element
+        const clickableElement: Element | null = target instanceof Element ? target.closest('.is-clickable, .tm_button-icon') : null;
 
         if (!clickableElement) return;
         
