@@ -266,3 +266,21 @@
         opacity: 1;
     }
 }
+/* Virtual tree demo styles */
+#tree-demo-container {
+    position: relative;
+    overflow-y: auto;
+}
+.spacer {
+    position: relative;
+}
+.row {
+    position: absolute;
+    height: var(--row-h, 20px);
+    line-height: var(--row-h, 20px);
+    width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    contain: layout style paint;
+}
