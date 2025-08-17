@@ -113,8 +113,8 @@
 
     /* Children */
     .tm_tree-item-children {
-        padding-left: calc(var(--tm_button-size) / 2);
-        margin-left: calc((var(--tm_button-size) / 2) - 1px);
+        padding-left: calc(var(--tm_gap) + var(--tm_button-size) / 2);
+        margin-left: calc((var(--tm_button-size) / 2));
         position: relative;
     }
 
@@ -265,4 +265,40 @@
     .tm_view .tm_view-body:hover::-webkit-scrollbar {
         opacity: 1;
     }
+}
+/* Virtual tree demo styles */
+#tree-demo-container,
+.vtree {
+    position: relative;
+    overflow-y: auto;
+    will-change: transform;
+}
+
+.spacer {
+    position: relative;
+}
+
+.row {
+    position: absolute;
+    height: var(--row-h, 20px);
+    line-height: var(--row-h, 20px);
+    width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    contain: layout style paint;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.row:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.row[aria-expanded="true"]::before {
+    content: "▼ ";
+}
+
+.row[aria-expanded="false"]::before {
+    content: "▶ ";
 }
