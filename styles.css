@@ -113,8 +113,8 @@
 
     /* Children */
     .tm_tree-item-children {
-        padding-left: calc(var(--tm_button-size) / 2);
-        margin-left: calc((var(--tm_button-size) / 2) - 1px);
+        padding-left: calc(var(--tm_gap) + var(--tm_button-size) / 2);
+        margin-left: calc((var(--tm_button-size) / 2));
         position: relative;
     }
 
