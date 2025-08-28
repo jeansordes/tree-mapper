@@ -10,6 +10,8 @@ class Logger {
 
     enable() {
         this.enabled = true;
+        // clear console
+        console.clear();
         this.log('system', 'Logging started');
     }
 

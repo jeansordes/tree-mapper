@@ -54,6 +54,7 @@
         overflow-y: auto;
         overflow-x: auto; /* Allow horizontal scrolling */
         position: relative; /* Create positioning context for sticky elements */
+        scroll-behavior: smooth; /* smooth programmatic scrolls */
         
         /* Improve scrollbar behavior on macOS */
         -webkit-overflow-scrolling: touch;
@@ -98,9 +99,13 @@
 
     .tm_tree-item-title {
         flex: 1 1 auto;
+        min-width: 0; /* allow flex item to shrink and fill */
+        display: block;
+        height: var(--tm_button-size); /* constant row content height */
         line-height: var(--tm_button-size);
         white-space: nowrap;
         padding: 0 0.5rem;
+        margin-left: var(--tm_gap);
     }
 
     .tm_extension {
@@ -173,22 +178,11 @@
         right: var(--tm_view-padding);
         display: flex;
         gap: var(--tm_gap);
-        z-index: 5; /* Ensure buttons appear above text */
-        background-color: var(--bg2);
-        box-shadow: -4px 0 0 0 var(--bg2); /* Add a shadow to the left of the buttons */
+        z-index: 5; /* Keep above text, but let highlight extend underneath */
+        background-color: transparent;
+        box-shadow: none;
     }
-    
-    /* Add a pseudo-element to hide content that extends beyond the buttons */
-    .tm_action-buttons-container::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 100%;
-        height: 100%;
-        width: var(--tm_view-padding);
-        background-color: var(--bg2);
-        z-index: 4;
-    }
+    /* Remove the extra overlay that clipped highlight */
 
     .tm_icon svg, .tm_button-icon svg {
         width: var(--tm_button-icon-size);
@@ -206,12 +200,17 @@
         transform: rotate(-90deg);
     }
 
+    /* Also rotate when virtual list marks row as collapsed */
+    .tree-row.collapsed .right-triangle {
+        transform: rotate(-90deg);
+    }
+
     .rotate-180deg svg {
         transform: rotate(180deg);
     }
 
     .tm_icon[data-icon-name="folder"] {
-        margin-right: calc(var(--tm_view-padding) * -1);
+        margin-right: 0; /* keep icon from overlapping the toggle */
     }
 
     /* Buttons */
@@ -239,7 +238,7 @@
         color: var(--tm_text-on-accent);
         background-color: var(--tm_accent-color);
     }
-}
+} 
 
 /* Mobile */
 .tm_view.tm_view-mobile {
@@ -302,3 +301,39 @@
 .row[aria-expanded="false"]::before {
     content: "▶ ";
 }
+
+/* Indent guide styles for virtual tree rows */
+.tree-row {
+    position: absolute; /* ensured in code; keep for safety */
+}
+    .tree-row .tm_indent {
+        position: absolute;
+        /* Align guide columns centered under the toggle triangle, including the gap offset */
+        left: calc(8px + var(--tm_gap) + (var(--tm_button-size) / 2));
+        /* Extend slightly above and below to maintain continuous look between rows */
+        top: calc(-1 * var(--tm_gap) + 1px);
+        height: calc(var(--tm_button-size) + (var(--tm_gap) * 2) - 2px);
+        pointer-events: none;
+    }
+.tree-row .tm_indent-col {
+    position: relative;
+    display: inline-block;
+    width: 20px;
+    height: 100%;
+    box-sizing: border-box;
+    border-left: 1px solid var(--tm_border-color);
+}
+/* Space between triangle button and folder icon */
+.tree-row .tm_button-icon + .tm_icon {
+    margin-left: var(--tm_gap);
+}
+.tree-row .tm_indent-click {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 20px;
+    height: 100%;
+    pointer-events: auto;
+}
+/* Remove visual hover/click effect for indent bar */
+/* Intentionally left without hover styles; behavior remains clickable */

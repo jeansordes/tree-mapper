@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/jeansordes/tree-mapper/compare/1.4.2...2.0.0) (2025-08-28)
+
+### Bug Fixes
+
+* small ui tweak ([21a23b1](https://github.com/jeansordes/tree-mapper/commit/21a23b13831f4cde2cdfc92bda658def3bce8b31))
+
+### Features
+
+* add virtual tree demo ([b9e7fa1](https://github.com/jeansordes/tree-mapper/commit/b9e7fa121492510848d7968272ec5277de7c311f))
+* collapse parent via vertical bar ([f7331da](https://github.com/jeansordes/tree-mapper/commit/f7331da542fbc8ea60b230ebd61f8d690cd36a8f))
+* enhance tree item interaction with hover effects and toggle highlight ([f262f16](https://github.com/jeansordes/tree-mapper/commit/f262f167d881b797bbb63a17aaf6718fb2dfa359))
+
 ## [1.4.2](https://github.com/jeansordes/tree-mapper/compare/1.4.1...1.4.2) (2025-08-05)
 
 ### Bug Fixes
