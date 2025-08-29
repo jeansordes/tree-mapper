@@ -1,3 +1,9 @@
+# [1.7.0](https://github.com/jeansordes/tree-mapper/compare/1.6.0...1.7.0) (2025-08-29)
+
+### Features
+
+* add reveal active file button with tooltip support ([03cc406](https://github.com/jeansordes/tree-mapper/commit/03cc40693b841c9d9a37aea687df37157a63981a))
+
 # [1.6.0](https://github.com/jeansordes/tree-mapper/compare/1.5.0...1.6.0) (2025-08-29)
 
 ### Features
