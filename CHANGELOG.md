@@ -1,3 +1,9 @@
+# [1.6.0](https://github.com/jeansordes/tree-mapper/compare/1.5.0...1.6.0) (2025-08-29)
+
+### Features
+
+* add virtual tree demo ([#23](https://github.com/jeansordes/tree-mapper/issues/23)) ([d95deef](https://github.com/jeansordes/tree-mapper/commit/d95deef6a10fd64ce9422a1f8c912d5afee07612))
+
 # [1.5.0](https://github.com/jeansordes/tree-mapper/compare/1.4.2...1.5.0) (2025-08-09)
 
 ### Features
