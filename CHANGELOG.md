@@ -1,13 +1,3 @@
-# [2.0.0](https://github.com/jeansordes/tree-mapper/compare/1.4.2...2.0.0) (2025-08-28)
-
-### Bug Fixes
-
-* small ui tweak ([21a23b1](https://github.com/jeansordes/tree-mapper/commit/21a23b13831f4cde2cdfc92bda658def3bce8b31))
-
-### Features
-
-* add virtual tree demo ([b9e7fa1](https://github.com/jeansordes/tree-mapper/commit/b9e7fa121492510848d7968272ec5277de7c311f))
-
 # [1.5.0](https://github.com/jeansordes/tree-mapper/compare/1.4.2...1.5.0) (2025-08-09)
 
 ### Features
