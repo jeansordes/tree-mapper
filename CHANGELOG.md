@@ -1,3 +1,5 @@
+## [2.0.1](https://github.com/jeansordes/tree-mapper/compare/2.0.0...2.0.1) (2025-08-29)
+
 # [2.0.0](https://github.com/jeansordes/tree-mapper/compare/1.4.2...2.0.0) (2025-08-28)
 
 ### Bug Fixes
