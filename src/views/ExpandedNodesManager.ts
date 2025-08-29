@@ -16,7 +16,7 @@ export class ExpandedNodesManager {
     addControlButtons(header: HTMLElement): void {
         // Add a single toggle button for expand/collapse all (as a div instead of button)
         const toggleButton = document.createElement('div');
-        toggleButton.className = 'tm_tree-toggle-button is-clickable';
+        toggleButton.className = 'tm_tree-toggle-button';
         header.appendChild(toggleButton);
         
         // Create the icon container

@@ -38,6 +38,7 @@
 
     .tm_view-header {
         display: flex;
+        gap: var(--tm_gap);
         border-bottom: 1px solid var(--tm_border-color);
         flex-shrink: 0;
         position: sticky;

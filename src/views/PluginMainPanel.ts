@@ -83,6 +83,21 @@ export default class PluginMainPanel extends ItemView {
         // Add control buttons to the header
         this.controls.addControlButtons(header);
 
+        // Add a button to reveal the current/active file in the tree
+        const revealBtn = document.createElement('div');
+        revealBtn.className = 'tm_button-icon';
+        setIcon(revealBtn, 'locate-fixed');
+        revealBtn.setAttribute('title', t('tooltipRevealActiveFile'));
+        header.appendChild(revealBtn);
+        revealBtn.addEventListener('click', () => {
+            // Prefer the tracked activeFile, fallback to workspace active file
+            const file = this.activeFile ?? this.app.workspace.getActiveFile();
+            if (file) {
+                this.activeFile = file;
+                this.highlightActiveFile();
+            }
+        });
+
         // Wait for CSS to be loaded by checking if the styles are applied
         await this.waitForCSSLoad();
 

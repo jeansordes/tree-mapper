@@ -15,6 +15,7 @@ export default {
     buttonExpandAll: 'Tout développer',
     tooltipCollapseAll: 'Réduire tous les dossiers',
     tooltipExpandAll: 'Développer tous les dossiers',
+    tooltipRevealActiveFile: 'Afficher le fichier actif dans l’arborescence',
     tooltipFolder: 'Dossier',
     tooltipCreateNote: 'Créer une note : {{path}}',
     tooltipCreateChildNote: 'Créer une note enfant : {{path}}',

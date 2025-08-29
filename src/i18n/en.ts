@@ -15,6 +15,7 @@ export default {
     buttonExpandAll: 'Expand All',
     tooltipCollapseAll: 'Collapse all folders',
     tooltipExpandAll: 'Expand all folders',
+    tooltipRevealActiveFile: 'Reveal current file in tree',
     tooltipFolder: 'Folder',
     tooltipCreateNote: 'Create note: {{path}}',
     tooltipCreateChildNote: 'Create child note: {{path}}',
