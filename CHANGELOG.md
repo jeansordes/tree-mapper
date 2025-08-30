@@ -1,3 +1,9 @@
+## [1.7.1](https://github.com/jeansordes/tree-mapper/compare/1.7.0...1.7.1) (2025-08-30)
+
+### Bug Fixes
+
+* update tree-row indentation styling and clarify linting instructions ([cfed813](https://github.com/jeansordes/tree-mapper/commit/cfed8130cf25dc0007ef038a7bfcfe0a6d6a9f39))
+
 # [1.7.0](https://github.com/jeansordes/tree-mapper/compare/1.6.0...1.7.0) (2025-08-29)
 
 ### Features
