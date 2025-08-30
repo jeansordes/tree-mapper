@@ -125,48 +125,44 @@ export class ComplexVirtualTree extends VirtualTree {
     if (typeof options.gap === 'number' && options.gap >= 0) this._gap = options.gap;
     this._onExpansionChange = options.onExpansionChange;
 
-    // Use the scrollable view body inside the container
-    const viewBody = options.container.querySelector('.tm_view-body');
-    if (viewBody) {
-      // Move virtualizer to view body
-      try { 
-        options.container.removeChild(this.virtualTree.virtualizer); 
-      } catch (error) { 
-        logger.log('[TreeMapper] Error removing virtualizer:', error);
-      }
-      viewBody.appendChild(this.virtualTree.virtualizer);
+    const viewBody = options.container.querySelector('.tm_view-body') as HTMLElement | null;
+    if (viewBody) this._attachToViewBody(options.container, viewBody);
 
-      // Rebind scroll to view body
-      options.container.removeEventListener('scroll', this.virtualTree._onScroll);
-      this._boundScroll = () => requestAnimationFrame(() => this.virtualTree._onScroll());
-      viewBody.addEventListener('scroll', this._boundScroll);
-      // Store reference for later cleanup
-      this.virtualTree.scrollContainer = viewBody;
-    }
-    // First render with correct scroll container and pool sizing
-    try { 
-      this.virtualTree._render(); 
-    } catch (error) { 
-      logger.log('[TreeMapper] Error in first render:', error);
-    }
-    // Defer another render to ensure clientHeight is settled
-    requestAnimationFrame(() => { 
-      try { 
-        this.virtualTree._render(); 
-      } catch (error) { 
-        logger.log('[TreeMapper] Error in deferred render:', error);
-      } 
-    });
+    // Initial renders
+    this._safeRender('first render');
+    requestAnimationFrame(() => this._safeRender('deferred render'));
+
     // React to container resize so pool grows when the panel opens/resizes
-    if (viewBody && 'ResizeObserver' in window) {
-      this._resizeObs = new ResizeObserver(() => { 
-        try { 
-          this.virtualTree._render(); 
-        } catch (error) { 
-          logger.log('[TreeMapper] Error in resize observer render:', error);
-        } 
-      });
-      this._resizeObs.observe(viewBody);
+    if (viewBody && 'ResizeObserver' in window) this._observeResize(viewBody);
+  }
+
+  private _attachToViewBody(host: HTMLElement, viewBody: HTMLElement): void {
+    // Move virtualizer to view body
+    try {
+      host.removeChild(this.virtualTree.virtualizer);
+    } catch (error) {
+      logger.log('[TreeMapper] Error removing virtualizer:', error);
+    }
+    viewBody.appendChild(this.virtualTree.virtualizer);
+
+    // Rebind scroll to view body
+    host.removeEventListener('scroll', this.virtualTree._onScroll);
+    this._boundScroll = () => requestAnimationFrame(() => this.virtualTree._onScroll());
+    viewBody.addEventListener('scroll', this._boundScroll);
+    // Store reference for later cleanup
+    this.virtualTree.scrollContainer = viewBody;
+  }
+
+  private _observeResize(viewBody: HTMLElement): void {
+    this._resizeObs = new ResizeObserver(() => this._safeRender('resize observer render'));
+    this._resizeObs.observe(viewBody);
+  }
+
+  private _safeRender(context: string): void {
+    try {
+      this.virtualTree._render();
+    } catch (error) {
+      logger.log(`[TreeMapper] Error in ${context}:`, error);
     }
   }
 
@@ -283,8 +279,8 @@ export class ComplexVirtualTree extends VirtualTree {
       row.classList.remove('collapsed');
     }
 
-    row.innerHTML = ''; // Clear previous content
-    row.appendChild(this._createRowContent(item, isExpanded));
+    row.innerHTML = '';
+    row.appendChild(this._createRowContent(item));
 
     // Highlight selected file's title using is-active class for CSS styling
     const titleEl = row.querySelector('.tm_tree-item-title');
@@ -302,71 +298,77 @@ export class ComplexVirtualTree extends VirtualTree {
     if (hasChildren) row.setAttribute('aria-expanded', String(isExpanded));
   }
 
-  private _createRowContent(item: RowItem, _isExpanded: boolean): HTMLElement {
+  private _createRowContent(item: RowItem): HTMLElement {
     const rowContent = document.createElement('div');
     rowContent.style.display = 'flex';
     rowContent.style.alignItems = 'center';
-    
+
     const hasChildren: boolean = !!item.hasChildren;
-    
-    // Indent guides (visual hierarchy): one vertical line per level.
-    // The rightmost column has a clickable overlay that toggles the parent node.
-    if (item.level && item.level > 0) {
-      const indent = document.createElement('div');
-      indent.className = 'tm_indent';
-      indent.style.width = `${item.level * 20}px`;
-      
-      for (let i = 0; i < item.level; i++) {
-        const col = document.createElement('span');
-        col.className = 'tm_indent-col';
-        indent.appendChild(col);
-      }
-      rowContent.appendChild(indent);
-    }
-    
-    // Toggle button for any node that has children; spacer removed for leaf
-    if (hasChildren) {
-      const toggleBtn = document.createElement('div');
-      toggleBtn.className = 'tm_button-icon';
-      toggleBtn.setAttribute('data-action', 'toggle');
-      toggleBtn.title = 'Toggle';
-      setIcon(toggleBtn, 'right-triangle');
-      // Add right-triangle class to the SVG element for CSS styling
-      const svg = toggleBtn.querySelector('svg');
-      if (svg) svg.classList.add('right-triangle');
-      rowContent.appendChild(toggleBtn);
-    }
 
-    if (item.kind === 'folder') {
-      const icon = document.createElement('div');
-      icon.className = 'tm_icon';
-      icon.setAttribute('aria-hidden', 'true');
-      setIcon(icon, 'folder');
-      rowContent.appendChild(icon);
-    }
+    if (item.level && item.level > 0) rowContent.appendChild(this._createIndentGuides(item.level));
+    if (hasChildren) rowContent.appendChild(this._createToggleButton());
+    if (item.kind === 'folder') rowContent.appendChild(this._createFolderIcon());
 
-    const titleClass = item.kind === 'virtual' ? 'tm_tree-item-title mod-create-new' : 
-                      item.kind === 'file' ? 'tm_tree-item-title is-clickable' : 
-                      'tm_tree-item-title';
+    rowContent.appendChild(this._createTitleElement(item));
+    const extEl = this._maybeCreateExtension(item);
+    if (extEl) rowContent.appendChild(extEl);
+
+    rowContent.appendChild(this._createActionButtons(item));
+    return rowContent;
+  }
+
+  private _createIndentGuides(level: number): HTMLElement {
+    const indent = document.createElement('div');
+    indent.className = 'tm_indent';
+    indent.style.width = `${level * 20}px`;
+    for (let i = 0; i < level; i++) {
+      const col = document.createElement('span');
+      col.className = 'tm_indent-col';
+      indent.appendChild(col);
+    }
+    return indent;
+  }
+
+  private _createToggleButton(): HTMLElement {
+    const toggleBtn = document.createElement('div');
+    toggleBtn.className = 'tm_button-icon';
+    toggleBtn.setAttribute('data-action', 'toggle');
+    toggleBtn.title = 'Toggle';
+    setIcon(toggleBtn, 'right-triangle');
+    const svg = toggleBtn.querySelector('svg');
+    if (svg) svg.classList.add('right-triangle');
+    return toggleBtn;
+  }
+
+  private _createFolderIcon(): HTMLElement {
+    const icon = document.createElement('div');
+    icon.className = 'tm_icon';
+    icon.setAttribute('aria-hidden', 'true');
+    setIcon(icon, 'folder');
+    return icon;
+  }
+
+  private _createTitleElement(item: RowItem): HTMLElement {
+    const titleClass = item.kind === 'virtual'
+      ? 'tm_tree-item-title mod-create-new'
+      : item.kind === 'file'
+      ? 'tm_tree-item-title is-clickable'
+      : 'tm_tree-item-title';
     const title = document.createElement('div');
     title.className = titleClass;
     title.title = item.id;
     title.setAttribute('data-node-kind', item.kind);
     title.setAttribute('data-path', item.id);
     title.textContent = item.name;
-    rowContent.appendChild(title);
+    return title;
+  }
 
-    if (item.kind === 'file' && item.extension) {
-      const extension = document.createElement('span');
-      extension.className = 'tm_extension';
-      extension.textContent = item.extension;
-      rowContent.appendChild(extension);
-    }
-
-    const actionButtons = this._createActionButtons(item);
-    rowContent.appendChild(actionButtons);
-    
-    return rowContent;
+  private _maybeCreateExtension(item: RowItem): HTMLElement | null {
+    if (!(item.kind === 'file' && item.extension)) return null;
+    const extension = document.createElement('span');
+    extension.className = 'tm_extension';
+    extension.textContent = item.extension;
+    return extension;
   }
 
   private _createActionButtons(item: VItem): HTMLElement {
@@ -404,48 +406,52 @@ export class ComplexVirtualTree extends VirtualTree {
     const target = e.target as Element | null;
     const clickable = target ? target.closest('.tm_button-icon, .tm_tree-item-title') : null;
     if (!clickable) {
-      // Default behavior: only select files; do not toggle folders/virtuals
-      if (item.kind === 'file') {
-        this.virtualTree.selectedIndex = idx;
-        this._selectedId = id;
-      }
-      this.virtualTree._render();
+      this._handleRowDefaultClick(item, idx, id);
       return;
     }
 
     if (clickable.classList.contains('tm_button-icon')) {
       const action = clickable.getAttribute('data-action');
-      if (action === 'toggle') {
-        this.toggle(id);
-        this.virtualTree._render();
-        return;
-      } else if (action === 'create-note') {
-        // Only meaningful for virtual nodes
-        FileUtils.createAndOpenNote(this.app, id);
-        return;
-      } else if (action === 'create-child') {
-        FileUtils.createChildNote(this.app, id);
-        return;
-      }
+      this._handleActionButtonClick(action, id);
+      return;
     }
-
-    
 
     if (clickable.classList.contains('tm_tree-item-title')) {
       const kind = clickable.getAttribute('data-node-kind');
-      if (kind === 'file') {
-        const file = this.app.vault.getAbstractFileByPath(id);
-        if (file instanceof TFile) {
-          FileUtils.openFile(this.app, file);
-        }
-        this.virtualTree.selectedIndex = idx;
-        this._selectedId = id;
-      } else {
-        // Clicking a folder/virtual title should not toggle; just focus the row
-        this.virtualTree.focusedIndex = idx;
-      }
-      this.virtualTree._render();
+      this._handleTitleClick(kind, id, idx);
     }
+  }
+
+  private _handleRowDefaultClick(item: RowItem, idx: number, id: string): void {
+    if (item.kind === 'file') {
+      this.virtualTree.selectedIndex = idx;
+      this._selectedId = id;
+    }
+    this.virtualTree._render();
+  }
+
+  private _handleActionButtonClick(action: string | null, id: string): void {
+    if (!action) return;
+    if (action === 'toggle') {
+      this.toggle(id);
+      this.virtualTree._render();
+    } else if (action === 'create-note') {
+      FileUtils.createAndOpenNote(this.app, id);
+    } else if (action === 'create-child') {
+      FileUtils.createChildNote(this.app, id);
+    }
+  }
+
+  private _handleTitleClick(kind: string | null, id: string, idx: number): void {
+    if (kind === 'file') {
+      const file = this.app.vault.getAbstractFileByPath(id);
+      if (file instanceof TFile) FileUtils.openFile(this.app, file);
+      this.virtualTree.selectedIndex = idx;
+      this._selectedId = id;
+    } else {
+      this.virtualTree.focusedIndex = idx;
+    }
+    this.virtualTree._render();
   }
 
   // Forwarders that notify expansion changes so the header button stays in sync

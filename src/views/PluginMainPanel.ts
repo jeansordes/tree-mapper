@@ -51,77 +51,20 @@ export default class PluginMainPanel extends ItemView {
     }
 
     async onOpen() {
-        const container = this.containerEl.children[1];
-        container.empty();
-        
-        // Set the main container to be a flex container with column direction
-        container.addClass('tm_view');
-        // If on mobile, add the mobile class
-        if (Platform.isMobile) {
-            container.addClass('tm_view-mobile');
-        }
-
-        // Create a fixed header with controls
-        const header = document.createElement('div');
-        header.className = 'tm_view-header';
-        container.appendChild(header);
-        
-        // Create a scrollable container for the dendron tree
-        const scrollContainer = document.createElement('div');
-        scrollContainer.className = 'tm_view-body';
-        container.appendChild(scrollContainer);
-        
-        // Create the actual tree container inside the scroll container (kept for legacy rendering)
-        const treeContainer = document.createElement('div');
-        treeContainer.className = 'tm_view-tree';
-        scrollContainer.appendChild(treeContainer);
-        this.container = treeContainer;
-        
-        // Initialize controls with the container
-        this.controls = new ExpandedNodesManager(this.containerEl, this.expandedNodes);
-        
-        // Add control buttons to the header
-        this.controls.addControlButtons(header);
-
-        // Add a button to reveal the current/active file in the tree
-        const revealBtn = document.createElement('div');
-        revealBtn.className = 'tm_button-icon';
-        setIcon(revealBtn, 'locate-fixed');
-        revealBtn.setAttribute('title', t('tooltipRevealActiveFile'));
-        header.appendChild(revealBtn);
-        revealBtn.addEventListener('click', () => {
-            // Prefer the tracked activeFile, fallback to workspace active file
-            const file = this.activeFile ?? this.app.workspace.getActiveFile();
-            if (file) {
-                this.activeFile = file;
-                this.highlightActiveFile();
-            }
-        });
+        const viewRoot = this.containerEl.children[1] as HTMLElement;
+        this._setupViewContainers(viewRoot);
 
         // Wait for CSS to be loaded by checking if the styles are applied
         await this.waitForCSSLoad();
 
-        // Register file system events
-        this.eventHandler.registerFileEvents();
-
-        // Register event for active file change
-        this.eventHandler.registerActiveFileEvents((file) => {
-            this.activeFile = file;
-            this.highlightActiveFile();
-        });
+        // Register workspace + vault events
+        this._registerEventHandlers();
 
         // Build the dendron tree and initialize the virtualized view
-        await this.buildVirtualizedDendronTree(container as HTMLElement);
+        await this.buildVirtualizedDendronTree(viewRoot);
 
-        // Get the active file when the view is first opened
-        const activeFile = this.app.workspace.getActiveFile();
-        if (activeFile) {
-            this.activeFile = activeFile;
-            // Use a small timeout to ensure the tree is fully rendered
-            setTimeout(() => {
-                this.highlightActiveFile();
-            }, 500);
-        }
+        // Highlight current file once initial render is ready
+        this._highlightInitialActiveFile();
     }
 
     /**
@@ -149,6 +92,68 @@ export default class PluginMainPanel extends ItemView {
     }
 
     /**
+     * Prepare the header/body containers and baseline controls.
+     */
+    private _setupViewContainers(container: HTMLElement): void {
+        container.empty();
+
+        container.addClass('tm_view');
+        if (Platform.isMobile) container.addClass('tm_view-mobile');
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'tm_view-header';
+        container.appendChild(header);
+
+        // Scrollable body
+        const scrollContainer = document.createElement('div');
+        scrollContainer.className = 'tm_view-body';
+        container.appendChild(scrollContainer);
+
+        // Legacy tree container (DOM-based renderer)
+        const treeContainer = document.createElement('div');
+        treeContainer.className = 'tm_view-tree';
+        scrollContainer.appendChild(treeContainer);
+        this.container = treeContainer;
+
+        // Controls manager + buttons in header
+        this.controls = new ExpandedNodesManager(this.containerEl, this.expandedNodes);
+        this.controls.addControlButtons(header);
+
+        // Reveal active file button
+        this._addRevealActiveButton(header);
+    }
+
+    private _addRevealActiveButton(header: HTMLElement): void {
+        const revealBtn = document.createElement('div');
+        revealBtn.className = 'tm_button-icon';
+        setIcon(revealBtn, 'locate-fixed');
+        revealBtn.setAttribute('title', t('tooltipRevealActiveFile'));
+        header.appendChild(revealBtn);
+        revealBtn.addEventListener('click', () => {
+            const file = this.activeFile ?? this.app.workspace.getActiveFile();
+            if (!file) return;
+            this.activeFile = file;
+            this.highlightActiveFile();
+        });
+    }
+
+    private _registerEventHandlers(): void {
+        this.eventHandler.registerFileEvents();
+        this.eventHandler.registerActiveFileEvents((file) => {
+            this.activeFile = file;
+            this.highlightActiveFile();
+        });
+    }
+
+    private _highlightInitialActiveFile(): void {
+        const activeFile = this.app.workspace.getActiveFile();
+        if (!activeFile) return;
+        this.activeFile = activeFile;
+        setTimeout(() => this.highlightActiveFile(), 500);
+    }
+
+    /**
      * Public method to highlight a specific file in the tree view
      * This can be called from the main plugin
      */
@@ -169,42 +174,33 @@ export default class PluginMainPanel extends ItemView {
             return;
         }
 
-        if (!this.container) return;
+        this._highlightInLegacyTree();
+    }
 
-        // Clear previous active file highlighting
+    private _highlightInLegacyTree(): void {
+        if (!this.container || !this.activeFile) return;
+
+        // Clear previous
         const previousActive = this.container.querySelector('.tm_tree-item-title.is-active');
-        if (previousActive) {
-            previousActive.removeClass('is-active');
-        }
+        if (previousActive) previousActive.removeClass('is-active');
 
-        // Find the element for the active file
-        const filePath = this.activeFile.path;
-        const fileItem = this.fileItemsMap.get(filePath);
+        // Find and mark current
+        const fileItem = this.fileItemsMap.get(this.activeFile.path);
+        if (!fileItem) return;
 
-        if (fileItem) {
-            // Add active class
-            fileItem.addClass('is-active');
-            
-            // Scroll into view with a small delay to ensure DOM is updated
-            setTimeout(() => {
-                fileItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 50);
-            
-            // Ensure all parent folders are expanded
-            let parent = fileItem.closest('.tm_tree-item-container');
-            while (parent) {
-                if (parent.hasClass('is-collapsed')) {
-                    parent.removeClass('is-collapsed');
-                    
-                    // Update expanded nodes set
-                    const path = parent.getAttribute('data-path');
-                    if (path) {
-                        this.expandedNodes.add(path);
-                    }
-                }
-                const parentElement = parent.parentElement;
-                parent = parentElement ? parentElement.closest('.tm_tree-item-container') : null;
+        fileItem.addClass('is-active');
+        setTimeout(() => fileItem.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+
+        // Ensure all parent folders are expanded
+        let parent = fileItem.closest('.tm_tree-item-container');
+        while (parent) {
+            if (parent.hasClass('is-collapsed')) {
+                parent.removeClass('is-collapsed');
+                const path = parent.getAttribute('data-path');
+                if (path) this.expandedNodes.add(path);
             }
+            const parentElement = parent.parentElement;
+            parent = parentElement ? parentElement.closest('.tm_tree-item-container') : null;
         }
     }
 
@@ -248,44 +244,41 @@ export default class PluginMainPanel extends ItemView {
         }
 
         // If using virtualized tree, rebuild virtual data outright on changes
-        if (this.virtualTree) {
-            await this.buildVirtualizedDendronTree(this.containerEl.children[1] as HTMLElement);
-            if (this.activeFile) this.virtualTree.revealPath(this.activeFile.path);
-            return;
-        }
+        if (await this._rebuildVirtualIfActive()) return;
 
-        // Don't attempt incremental update if forceFullRefresh is true
-        if (changedPath && !forceFullRefresh) {
-            // Try incremental update
-            const incrementalSuccess = this.eventHandler.tryIncrementalUpdate(
-                changedPath, 
-                this.container, 
-                this.lastBuiltTree, 
-                this.nodePathMap,
-                (node, container) => this.nodeRenderer.renderDendronNode(node, container, this.expandedNodes)
-            );
-            
-            if (incrementalSuccess) {
-                this.highlightActiveFile();
-                return;
-            }
-        }
+        // Try incremental update first unless forced
+        if (changedPath && !forceFullRefresh && this._tryIncrementalRefresh(changedPath)) return;
 
-        // Save expanded state before refresh
-        this.saveExpandedState();
-        
-        // Clear the container and maps
-        this.container.empty();
-        this.fileItemsMap.clear();
-        
-        // Build the dendron tree
-        await this.buildDendronTree(this.container);
-        
-        // Restore expanded state
-        this.restoreExpandedState();
-        
-        // Highlight active file
+        // Fallback to full refresh
+        await this._fullRefresh();
         this.highlightActiveFile();
+    }
+
+    private async _rebuildVirtualIfActive(): Promise<boolean> {
+        if (!this.virtualTree) return false;
+        await this.buildVirtualizedDendronTree(this.containerEl.children[1] as HTMLElement);
+        if (this.activeFile) this.virtualTree.revealPath(this.activeFile.path);
+        return true;
+    }
+
+    private _tryIncrementalRefresh(changedPath: string): boolean {
+        const success = this.eventHandler.tryIncrementalUpdate(
+            changedPath,
+            this.container!,
+            this.lastBuiltTree,
+            this.nodePathMap,
+            (node, container) => this.nodeRenderer.renderDendronNode(node, container, this.expandedNodes)
+        );
+        if (success) this.highlightActiveFile();
+        return success;
+    }
+
+    private async _fullRefresh(): Promise<void> {
+        this.saveExpandedState();
+        this.container!.empty();
+        this.fileItemsMap.clear();
+        await this.buildDendronTree(this.container!);
+        this.restoreExpandedState();
     }
 
     async buildDendronTree(container: HTMLElement) {

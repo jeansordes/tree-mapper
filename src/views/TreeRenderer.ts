@@ -17,75 +17,70 @@ export class TreeRenderer {
      * Render a node in the tree
      */
     public renderDendronNode(node: TreeNode, parentEl: HTMLElement, expandedNodes: Set<string>) {
-        this.expandedNodes = expandedNodes; // Store expandedNodes for use in event handler
-        // Use DocumentFragment for batch DOM operations
+        this.expandedNodes = expandedNodes;
         const fragment = document.createDocumentFragment();
 
-        // Sort children by name and render each one
         Array.from(node.children.entries())
             .sort(([aKey], [bKey]) => aKey.localeCompare(bKey))
             .forEach(([name, childNode]) => {
-                const isFolder = childNode.nodeType === TreeNodeType.FOLDER;
-                const isFile = childNode.nodeType === TreeNodeType.FILE;
-                const isMarkdownFile = childNode.path.endsWith('.md');
-                const hasChildren = childNode.children.size > 0;
-
-                // Create tree item structure
-                const item = this.createElement('div', {
-                    className: `tm_tree-item-container${!expandedNodes.has(name) ? ' is-collapsed' : ''}`,
-                    attributes: { 'data-path': name }
-                });
-
-                const itemSelf = this.createElement('div', {
-                    className: [
-                        'tm_tree-item-self',
-                        hasChildren ? ' mod-collapsible' : '',
-                        isFolder ? ' mod-folder' : ''
-                    ].filter(Boolean).join(' '),
-                });
-                item.appendChild(itemSelf);
-
-                // Add components to the tree item
-                if (hasChildren) {
-                    this.addToggleButton(itemSelf, item);
-                }
-
-                // Add icon to the tree item
-                if (!isMarkdownFile) {
-                    const iconName = this.getNodeIconName(childNode);
-                    const icon = this.createElement('div', {
-                        className: 'tm_icon',
-                        attributes: {
-                            'data-icon-name': iconName
-                        }
-                    });
-                    setIcon(icon, iconName);
-                    itemSelf.appendChild(icon);
-                }
-
-                this.addNode(itemSelf, childNode);
-                // Add extension to the tree item
-                if (isFile && !isMarkdownFile) {
-                    const extension = childNode.path.split('.').pop() || '';
-                    const extensionEl = this.createElement('div', {
-                        className: 'tm_extension',
-                        textContent: extension
-                    });
-                    itemSelf.appendChild(extensionEl);
-                }
-                this.addActionButtons(itemSelf, childNode);
-
-                // Recursively render children
-                if (hasChildren) {
-                    const childrenContainer = this.createElement('div', { className: 'tm_tree-item-children' });
-                    item.appendChild(childrenContainer);
-                    this.renderDendronNode(childNode, childrenContainer, expandedNodes);
-                }
-
-                fragment.appendChild(item);
+                const el = this.renderChildNode(name, childNode, expandedNodes);
+                fragment.appendChild(el);
             });
 
         parentEl.appendChild(fragment);
+    }
+
+    private renderChildNode(name: string, childNode: TreeNode, expandedNodes: Set<string>): HTMLElement {
+        const isFolder = childNode.nodeType === TreeNodeType.FOLDER;
+        const isFile = childNode.nodeType === TreeNodeType.FILE;
+        const isMarkdownFile = childNode.path.endsWith('.md');
+        const hasChildren = childNode.children.size > 0;
+
+        const item = this.createElement('div', {
+            className: `tm_tree-item-container${!expandedNodes.has(name) ? ' is-collapsed' : ''}`,
+            attributes: { 'data-path': name }
+        });
+
+        const itemSelf = this.createElement('div', {
+            className: [
+                'tm_tree-item-self',
+                hasChildren ? ' mod-collapsible' : '',
+                isFolder ? ' mod-folder' : ''
+            ].filter(Boolean).join(' '),
+        });
+        item.appendChild(itemSelf);
+
+        if (hasChildren) this.addToggleButton(itemSelf, item);
+
+        if (!isMarkdownFile) {
+            const iconName = this.getNodeIconName(childNode);
+            const icon = this.createElement('div', {
+                className: 'tm_icon',
+                attributes: { 'data-icon-name': iconName }
+            });
+            setIcon(icon, iconName);
+            itemSelf.appendChild(icon);
+        }
+
+        this.addNode(itemSelf, childNode);
+
+        if (isFile && !isMarkdownFile) {
+            const extension = childNode.path.split('.').pop() || '';
+            const extensionEl = this.createElement('div', {
+                className: 'tm_extension',
+                textContent: extension
+            });
+            itemSelf.appendChild(extensionEl);
+        }
+        this.addActionButtons(itemSelf, childNode);
+
+        if (hasChildren) {
+            const childrenContainer = this.createElement('div', { className: 'tm_tree-item-children' });
+            item.appendChild(childrenContainer);
+            this.renderDendronNode(childNode, childrenContainer, expandedNodes);
+        }
+
+        return item;
     }
 
     /**
@@ -330,95 +325,88 @@ export class TreeRenderer {
     private handleTreeClick = async (event: MouseEvent) => {
         const target = event.target;
 
-        // Allow collapsing a parent by clicking its vertical bar
         if (target instanceof HTMLElement && target.classList.contains('tm_tree-item-children')) {
-            const rect = target.getBoundingClientRect();
-            if (event.clientX - rect.left <= 10) {
-                const parent = target.parentElement;
-                if (parent?.classList.contains('tm_tree-item-container')) {
-                    const path = parent.getAttribute('data-path');
-                    const isCollapsed = parent.classList.toggle('is-collapsed');
-
-                    const toggleBtn = parent.querySelector('.tm_button-icon[data-action="toggle"]');
-                    const triangle = toggleBtn?.querySelector('.right-triangle');
-                    if (triangle) triangle.classList.toggle('is-collapsed');
-
-                    if (path) {
-                        if (isCollapsed) {
-                            this.expandedNodes.delete(path);
-                            // Find and highlight the toggle button for this element
-                            const toggleBtn = parent.querySelector('.tm_button-icon[data-action="toggle"]');
-                            if (toggleBtn) {
-                                this.highlightLastCollapsed(toggleBtn as HTMLElement);
-                            }
-                        } else {
-                            this.expandedNodes.add(path);
-                        }
-                    }
-
-                    event.stopPropagation();
-                }
-            }
-            return;
+            if (this.handleCollapseViaGuideClick(event, target)) return;
         }
 
-        // Find the closest clickable element
         const clickableElement: Element | null = target instanceof Element ? target.closest('.is-clickable, .tm_button-icon') : null;
-
         if (!clickableElement) return;
-        
-        // Handle toggle button clicks
+
         if (clickableElement.classList.contains('tm_button-icon')) {
-            const action = clickableElement.getAttribute('data-action');
-            const path = clickableElement.getAttribute('data-path');
-
-            if (!path) return;
-            
-            event.stopPropagation();
-
-            switch (action) {
-                case 'toggle': {
-                    const item = clickableElement.closest('.tm_tree-item-container');
-                    if (item) {
-                        const isCollapsed = item.classList.toggle('is-collapsed');
-                        if (isCollapsed) {
-                            this.expandedNodes.delete(path);
-                            // Highlight this toggle button as the last collapsed
-                            this.highlightLastCollapsed(clickableElement as HTMLElement);
-                        } else {
-                            this.expandedNodes.add(path);
-                        }
-
-                        const triangle = clickableElement.querySelector('.right-triangle');
-                        if (triangle) triangle.classList.toggle('is-collapsed');
-                    }
-                    return;
-                }
-                case 'create-note':
-                    await FileUtils.createAndOpenNote(this.app, path);
-                    break;
-                case 'create-child':
-                    await FileUtils.createChildNote(this.app, path);
-                    break;
-            }
+            await this.handleActionButtonClick(event, clickableElement as HTMLElement);
             return;
         }
 
-        // Handle file clicks
         if (clickableElement.classList.contains('tm_tree-item-title')) {
-            const nodeType = clickableElement.getAttribute('data-node-type');
-            const path = clickableElement.getAttribute('data-path');
-
-            if (!path) return;
-            
-            if (nodeType === TreeNodeType.FILE) {
-                const file = this.app.vault.getAbstractFileByPath(path);
-                if (file instanceof TFile) {
-                    await FileUtils.openFile(this.app, file);
-                }
-            }
+            await this.handleTitleClick(clickableElement as HTMLElement);
         }
     };
+
+    private handleCollapseViaGuideClick(event: MouseEvent, target: HTMLElement): boolean {
+        const rect = target.getBoundingClientRect();
+        if (event.clientX - rect.left > 10) return false;
+        const parent = target.parentElement;
+        if (!parent?.classList.contains('tm_tree-item-container')) return false;
+
+        const path = parent.getAttribute('data-path');
+        const isCollapsed = parent.classList.toggle('is-collapsed');
+
+        const toggleBtn = parent.querySelector('.tm_button-icon[data-action="toggle"]');
+        const triangle = toggleBtn?.querySelector('.right-triangle');
+        if (triangle) triangle.classList.toggle('is-collapsed');
+
+        if (path) {
+            if (isCollapsed) {
+                this.expandedNodes.delete(path);
+                const btn = parent.querySelector('.tm_button-icon[data-action="toggle"]');
+                if (btn) this.highlightLastCollapsed(btn as HTMLElement);
+            } else {
+                this.expandedNodes.add(path);
+            }
+        }
+        event.stopPropagation();
+        return true;
+    }
+
+    private async handleActionButtonClick(event: MouseEvent, btn: HTMLElement): Promise<void> {
+        const action = btn.getAttribute('data-action');
+        const path = btn.getAttribute('data-path');
+        if (!path) return;
+        event.stopPropagation();
+        switch (action) {
+            case 'toggle': {
+                const item = btn.closest('.tm_tree-item-container');
+                if (item) {
+                    const isCollapsed = item.classList.toggle('is-collapsed');
+                    if (isCollapsed) {
+                        this.expandedNodes.delete(path);
+                        this.highlightLastCollapsed(btn);
+                    } else {
+                        this.expandedNodes.add(path);
+                    }
+                    const triangle = btn.querySelector('.right-triangle');
+                    if (triangle) triangle.classList.toggle('is-collapsed');
+                }
+                return;
+            }
+            case 'create-note':
+                await FileUtils.createAndOpenNote(this.app, path);
+                return;
+            case 'create-child':
+                await FileUtils.createChildNote(this.app, path);
+                return;
+        }
+    }
+
+    private async handleTitleClick(el: HTMLElement): Promise<void> {
+        const nodeType = el.getAttribute('data-node-type');
+        const path = el.getAttribute('data-path');
+        if (!path) return;
+        if (nodeType === TreeNodeType.FILE) {
+            const file = this.app.vault.getAbstractFileByPath(path);
+            if (file instanceof TFile) await FileUtils.openFile(this.app, file);
+        }
+    }
 
     /**
      * Highlight the most recently collapsed toggle button
