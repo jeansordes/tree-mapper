@@ -123,15 +123,15 @@ export class ComplexVirtualTree extends VirtualTree {
 
   constructor(options: { container: HTMLElement; data: VItem[]; rowHeight?: number; buffer?: number; app: App; gap?: number; onExpansionChange?: () => void }) {
     // VirtualTree constructor expects specific parameters, we need to cast to satisfy TypeScript
-    const constructorOptions = { 
-      container: options.container, 
-      data: options.data, 
-      rowHeight: options.rowHeight ?? 32, 
+    const constructorOptions = {
+      container: options.container,
+      data: options.data,
+      rowHeight: options.rowHeight ?? 32,
       buffer: options.buffer ?? 10,
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      onOpen: () => {},
+      onOpen: () => { },
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      onSelect: () => {}
+      onSelect: () => { }
     };
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     super(constructorOptions as any);
@@ -292,6 +292,19 @@ export class ComplexVirtualTree extends VirtualTree {
     row.style.setProperty('padding-bottom', 'var(--tm_gap)');
     // Add an extra gap between the rightmost guide and the node content
     row.style.paddingLeft = `calc(${item.level * 20 + 8}px + var(--tm_gap))`;
+    
+    // Calculate the full content width to ensure rows stretch across the entire scrollable area
+    const container = this.virtualTree.container;
+    const viewBody = container.closest('.tm_view-body');
+    
+    // Get the actual width of .tm_view-tree
+    let contentWidth = viewBody?.clientWidth ?? 0;
+    
+    // Ensure minimum width for proper display and add buffer for content
+    contentWidth = Math.max(contentWidth, 800);
+    
+    row.style.width = `${contentWidth}px`;
+    
     row.className = 'tree-row';
 
     // Track collapsed for CSS (triangle rotation) when item has children
@@ -302,7 +315,7 @@ export class ComplexVirtualTree extends VirtualTree {
     }
 
     row.innerHTML = '';
-    row.appendChild(this._createRowContent(item));
+    this._createRowContent(item, row);
 
     // Highlight selected file's title using is-active class for CSS styling
     const titleEl = row.querySelector('.tm_tree-item-title');
@@ -320,23 +333,19 @@ export class ComplexVirtualTree extends VirtualTree {
     if (hasChildren) row.setAttribute('aria-expanded', String(isExpanded));
   }
 
-  private _createRowContent(item: RowItem): HTMLElement {
-    const rowContent = document.createElement('div');
-    rowContent.style.display = 'flex';
-    rowContent.style.alignItems = 'center';
-
+  private _createRowContent(item: RowItem, rowEl: HTMLElement): HTMLElement {
     const hasChildren: boolean = !!item.hasChildren;
 
-    if (item.level && item.level > 0) rowContent.appendChild(this._createIndentGuides(item.level));
-    if (hasChildren) rowContent.appendChild(this._createToggleButton());
-    if (item.kind === 'folder') rowContent.appendChild(this._createFolderIcon());
+    if (item.level && item.level > 0) rowEl.appendChild(this._createIndentGuides(item.level));
+    if (hasChildren) rowEl.appendChild(this._createToggleButton());
+    if (item.kind === 'folder') rowEl.appendChild(this._createFolderIcon());
 
-    rowContent.appendChild(this._createTitleElement(item));
+    rowEl.appendChild(this._createTitleElement(item));
     const extEl = this._maybeCreateExtension(item);
-    if (extEl) rowContent.appendChild(extEl);
+    if (extEl) rowEl.appendChild(extEl);
 
-    rowContent.appendChild(this._createActionButtons(item));
-    return rowContent;
+    rowEl.appendChild(this._createActionButtons(item));
+    return rowEl;
   }
 
   private _createIndentGuides(level: number): HTMLElement {
@@ -523,10 +532,10 @@ export class ComplexVirtualTree extends VirtualTree {
           row.className = 'tree-row';
           row.dataset.poolIndex = String(i);
           row.addEventListener('click', (ev) => {
-          if (ev instanceof MouseEvent) {
-            this._onRowClick(ev, row);
-          }
-        });
+            if (ev instanceof MouseEvent) {
+              this._onRowClick(ev, row);
+            }
+          });
           virtualizer.appendChild(row);
           pool.push(row);
         }

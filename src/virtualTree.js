@@ -21,7 +21,7 @@ export class VirtualTree {
     this.container.style.outline = 'none';
     
     // Create a wrapper div to contain all virtualizer content
-    this.virtualizer = document.createElement('div');
+    this.virtualizer = document.querySelector('.tm_view-tree');
     this.virtualizer.style.position = 'relative';
     this.virtualizer.style.height = '0px'; // Will be updated based on content
     this.container.appendChild(this.virtualizer);

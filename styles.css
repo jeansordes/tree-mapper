@@ -316,18 +316,22 @@
 
 /* Indent guide styles for virtual tree rows */
 .tree-row {
-    position: absolute; /* ensured in code; keep for safety */
-    /* Width is set dynamically in JavaScript to match content width */
+    position: absolute;
+    display: flex;
+    align-items: center;
+    width: 100%;
 }
-    .tree-row .tm_indent {
-        position: absolute;
-        /* Align guide columns centered under the toggle triangle, including the gap offset */
-        left: calc(var(--tm_view-padding) + var(--tm_gap) + (var(--tm_button-size) / 2));
-        /* Extend slightly above and below to maintain continuous look between rows */
-        top: calc(-1 * var(--tm_gap) + 1px);
-        height: calc(var(--tm_button-size) + (var(--tm_gap) * 2) - 2px);
-        pointer-events: none;
-    }
+
+.tree-row .tm_indent {
+    position: absolute;
+    /* Align guide columns centered under the toggle triangle, including the gap offset */
+    left: calc(var(--tm_view-padding) + var(--tm_gap) + (var(--tm_button-size) / 2));
+    /* Extend slightly above and below to maintain continuous look between rows */
+    top: calc(-1 * var(--tm_gap) + 1px);
+    height: calc(var(--tm_button-size) + (var(--tm_gap) * 2) - 2px);
+    pointer-events: none;
+}
+
 .tree-row .tm_indent-col {
     position: relative;
     display: inline-block;
