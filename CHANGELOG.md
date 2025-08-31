@@ -1,3 +1,9 @@
+# [1.8.0](https://github.com/jeansordes/tree-mapper/compare/1.7.2...1.8.0) (2025-08-31)
+
+### Bug Fixes
+
+* improve type safety and logging practices in various components ([b6659c0](https://github.com/jeansordes/tree-mapper/commit/b6659c0235fe77e9ed70306463e0f0a59baf10cb))
+
 ## [1.7.2](https://github.com/jeansordes/tree-mapper/compare/1.7.1...1.7.2) (2025-08-30)
 
 ## [1.7.1](https://github.com/jeansordes/tree-mapper/compare/1.7.0...1.7.1) (2025-08-30)
