@@ -272,23 +272,23 @@ export class TreeRenderer {
         treeContainer.removeEventListener('click', this.handleTreeClick);
         treeContainer.removeEventListener('mousemove', this.handleTreeMouseMove);
         treeContainer.removeEventListener('mouseleave', this.handleTreeMouseLeave);
-        
+
         // Then add our event handlers
         treeContainer.addEventListener('click', this.handleTreeClick);
         treeContainer.addEventListener('mousemove', this.handleTreeMouseMove);
         treeContainer.addEventListener('mouseleave', this.handleTreeMouseLeave);
     }
-    
+
     /**
      * Handle mouse movement for vertical line hover effects
      */
     private handleTreeMouseMove = (event: MouseEvent) => {
         const target = event.target;
-        
+
         if (target instanceof HTMLElement && target.classList.contains('tm_tree-item-children')) {
             const rect = target.getBoundingClientRect();
             const isOverLine = event.clientX - rect.left <= 10;
-            
+
             if (isOverLine) {
                 // Add hover class only to the specific element
                 target.classList.add('tm_line-hover');
@@ -297,7 +297,7 @@ export class TreeRenderer {
                 target.classList.remove('tm_line-hover');
             }
         }
-        
+
         // Remove hover class from all other elements
         const allChildren = document.querySelectorAll('.tm_tree-item-children.tm_line-hover');
         allChildren.forEach(el => {
@@ -332,13 +332,14 @@ export class TreeRenderer {
         const clickableElement: Element | null = target instanceof Element ? target.closest('.is-clickable, .tm_button-icon') : null;
         if (!clickableElement) return;
 
-        if (clickableElement.classList.contains('tm_button-icon')) {
-            await this.handleActionButtonClick(event, clickableElement as HTMLElement);
+        if (clickableElement.classList.contains('tm_button-icon') && clickableElement instanceof HTMLElement) {
+            await this.handleActionButtonClick(event, clickableElement);
             return;
         }
-
-        if (clickableElement.classList.contains('tm_tree-item-title')) {
-            await this.handleTitleClick(clickableElement as HTMLElement);
+        
+        if (clickableElement.classList.contains('tm_tree-item-title') && clickableElement instanceof HTMLElement) {
+            await this.handleTitleClick(clickableElement);
+            return;
         }
     };
 
@@ -359,7 +360,7 @@ export class TreeRenderer {
             if (isCollapsed) {
                 this.expandedNodes.delete(path);
                 const btn = parent.querySelector('.tm_button-icon[data-action="toggle"]');
-                if (btn) this.highlightLastCollapsed(btn as HTMLElement);
+                if (btn instanceof HTMLElement) this.highlightLastCollapsed(btn);
             } else {
                 this.expandedNodes.add(path);
             }
@@ -376,7 +377,7 @@ export class TreeRenderer {
         switch (action) {
             case 'toggle': {
                 const item = btn.closest('.tm_tree-item-container');
-                if (item) {
+                if (item instanceof HTMLElement) {
                     const isCollapsed = item.classList.toggle('is-collapsed');
                     if (isCollapsed) {
                         this.expandedNodes.delete(path);
@@ -424,6 +425,6 @@ export class TreeRenderer {
         // Remove the highlight after 3 seconds
         setTimeout(() => {
             toggleButton.classList.remove('tm_last-collapsed');
-        }, 10*1000);
+        }, 10 * 1000);
     }
 }

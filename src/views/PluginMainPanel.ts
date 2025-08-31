@@ -19,7 +19,7 @@ export default class PluginMainPanel extends ItemView {
     private nodePathMap: Map<string, TreeNode> = new Map();
     private expandedNodes: Set<string> = new Set();
     private settings: PluginSettings;
-    
+
     // Component instances
     private nodeRenderer: TreeRenderer;
     private virtualTree: ComplexVirtualTree | null = null;
@@ -30,7 +30,7 @@ export default class PluginMainPanel extends ItemView {
         super(leaf);
         this.instanceId = ++PluginMainPanel.instanceCounter;
         this.settings = settings;
-        
+
         // Initialize components
         this.nodeRenderer = new TreeRenderer(this.app, this.fileItemsMap);
         // Use 500ms debounce time for better performance when files change
@@ -51,20 +51,22 @@ export default class PluginMainPanel extends ItemView {
     }
 
     async onOpen() {
-        const viewRoot = this.containerEl.children[1] as HTMLElement;
-        this._setupViewContainers(viewRoot);
+        const viewRoot = this.containerEl.children[1];
+        if (viewRoot instanceof HTMLElement) {
+            this._setupViewContainers(viewRoot);
 
-        // Wait for CSS to be loaded by checking if the styles are applied
-        await this.waitForCSSLoad();
+            // Wait for CSS to be loaded by checking if the styles are applied
+            await this.waitForCSSLoad();
 
-        // Register workspace + vault events
-        this._registerEventHandlers();
+            // Register workspace + vault events
+            this._registerEventHandlers();
 
-        // Build the dendron tree and initialize the virtualized view
-        await this.buildVirtualizedDendronTree(viewRoot);
+            // Build the dendron tree and initialize the virtualized view
+            await this.buildVirtualizedDendronTree(viewRoot);
 
-        // Highlight current file once initial render is ready
-        this._highlightInitialActiveFile();
+            // Highlight current file once initial render is ready
+            this._highlightInitialActiveFile();
+        }
     }
 
     /**
@@ -77,7 +79,7 @@ export default class PluginMainPanel extends ItemView {
                     setTimeout(checkCSS, 10);
                     return;
                 }
-                
+
                 // Check if the styles are applied by looking for a specific CSS variable
                 const computedStyle = window.getComputedStyle(this.container);
                 if (computedStyle.getPropertyValue('--tm_css-is-loaded')) {
@@ -237,7 +239,7 @@ export default class PluginMainPanel extends ItemView {
             });
         }
     }
-    
+
     async refresh(changedPath?: string, forceFullRefresh: boolean = false) {
         if (!this.container) {
             return;
@@ -256,9 +258,13 @@ export default class PluginMainPanel extends ItemView {
 
     private async _rebuildVirtualIfActive(): Promise<boolean> {
         if (!this.virtualTree) return false;
-        await this.buildVirtualizedDendronTree(this.containerEl.children[1] as HTMLElement);
-        if (this.activeFile) this.virtualTree.revealPath(this.activeFile.path);
-        return true;
+        const rootContainer = this.containerEl.children[1];
+        if (rootContainer instanceof HTMLElement) {
+            await this.buildVirtualizedDendronTree(rootContainer);
+            if (this.activeFile) this.virtualTree.revealPath(this.activeFile.path);
+            return true;
+        }
+        return false;
     }
 
     private _tryIncrementalRefresh(changedPath: string): boolean {
@@ -285,12 +291,12 @@ export default class PluginMainPanel extends ItemView {
         // Get all markdown files and folders
         const folders = this.app.vault.getAllFolders();
         const files = this.app.vault.getFiles();
-        
+
         // Build the dendron structure
         const treeBuilder = new TreeBuilder();
         const rootNode = treeBuilder.buildDendronStructure(folders, files);
         this.lastBuiltTree = rootNode;
-        
+
         // Build the node path map for quick lookups
         this.nodePathMap.clear();
         this.buildNodePathMap(rootNode);
@@ -317,7 +323,7 @@ export default class PluginMainPanel extends ItemView {
         if (this.virtualTree) {
             this.virtualTree.destroy();
             this.virtualTree = null;
-        } 
+        }
 
         // Determine row height from current CSS so spacing matches visuals
         const gap = this.computeGap(rootContainer) ?? 4;
@@ -357,44 +363,48 @@ export default class PluginMainPanel extends ItemView {
         // Replace the existing element to remove any previous listeners from ExpandedNodesManager.
         const existingToggle: HTMLElement | null = rootContainer.querySelector('.tm_tree-toggle-button');
         if (existingToggle) {
-            const replacement = existingToggle.cloneNode(true) as HTMLElement;
-            existingToggle.replaceWith(replacement);
-            replacement.addEventListener('click', () => {
-                const expandedCount = this.virtualTree?.getExpandedPaths().length ?? 0;
-                if (expandedCount === 0) this.virtualTree?.expandAll();
-                else this.virtualTree?.collapseAll();
+            const replacement = existingToggle.cloneNode(true);
+            if (replacement instanceof HTMLElement) {
+                existingToggle.replaceWith(replacement);
+                replacement.addEventListener('click', () => {
+                    const expandedCount = this.virtualTree?.getExpandedPaths().length ?? 0;
+                    if (expandedCount === 0) this.virtualTree?.expandAll();
+                    else this.virtualTree?.collapseAll();
+                    this.updateHeaderToggleIcon();
+                });
+                // Ensure icon/title reflect current expansion state after build
                 this.updateHeaderToggleIcon();
-            });
-            // Ensure icon/title reflect current expansion state after build
-            this.updateHeaderToggleIcon();
-            // Override any late icon updates coming from legacy manager
-            setTimeout(() => this.updateHeaderToggleIcon(), 1200);
+                // Override any late icon updates coming from legacy manager
+                setTimeout(() => this.updateHeaderToggleIcon(), 1200);
+            }
         }
     }
 
     private updateHeaderToggleIcon(): void {
-        const rootContainer = this.containerEl.children[1] as HTMLElement;
-        const toggleButton: HTMLElement | null = rootContainer.querySelector('.tm_tree-toggle-button');
-        const iconContainer: HTMLElement | null = toggleButton?.querySelector('.tm_tree-toggle-icon') || null;
-        if (!toggleButton || !iconContainer) return;
-        const expandedCount = this.virtualTree?.getExpandedPaths().length ?? 0;
-        const anyExpanded = expandedCount > 0;
-        // Mirror ExpandedNodesManager behavior
-        if (!anyExpanded) {
-            // All collapsed -> show expand all icon
-            try { 
-                setIcon(iconContainer, 'chevrons-up-down'); 
-            } catch (error) {
-                logger.log('[TreeMapper] Error setting expand icon:', error);
+        const rootContainer = this.containerEl.children[1];
+        if (rootContainer instanceof HTMLElement) {
+            const toggleButton: HTMLElement | null = rootContainer.querySelector('.tm_tree-toggle-button');
+            const iconContainer: HTMLElement | null = toggleButton?.querySelector('.tm_tree-toggle-icon') || null;
+            if (!toggleButton || !iconContainer) return;
+            const expandedCount = this.virtualTree?.getExpandedPaths().length ?? 0;
+            const anyExpanded = expandedCount > 0;
+            // Mirror ExpandedNodesManager behavior
+            if (!anyExpanded) {
+                // All collapsed -> show expand all icon
+                try {
+                    setIcon(iconContainer, 'chevrons-up-down');
+                } catch (error) {
+                    logger.log('[TreeMapper] Error setting expand icon:', error);
+                }
+                toggleButton.setAttribute('title', t('tooltipExpandAll'));
+            } else {
+                try {
+                    setIcon(iconContainer, 'chevrons-down-up');
+                } catch (error) {
+                    logger.log('[TreeMapper] Error setting collapse icon:', error);
+                }
+                toggleButton.setAttribute('title', t('tooltipCollapseAll'));
             }
-            toggleButton.setAttribute('title', t('tooltipExpandAll'));
-        } else {
-            try { 
-                setIcon(iconContainer, 'chevrons-down-up'); 
-            } catch (error) {
-                logger.log('[TreeMapper] Error setting collapse icon:', error);
-            }
-            toggleButton.setAttribute('title', t('tooltipCollapseAll'));
         }
     }
 
@@ -451,7 +461,7 @@ export default class PluginMainPanel extends ItemView {
         }
         return null;
     }
-    
+
     /**
      * Build a map of paths to nodes for quick lookups
      */
@@ -506,13 +516,13 @@ export default class PluginMainPanel extends ItemView {
     async onClose() {
         // Save expanded state before closing
         this.saveExpandedState();
-        
+
         // Remove all event listeners through the event handler
         if (this.eventHandler) {
             // The eventHandler will handle cleaning up its own event listeners
             this.eventHandler.unregisterFileEvents();
         }
-        
+
         // Clear references
         this.container = null;
         this.lastBuiltTree = null;

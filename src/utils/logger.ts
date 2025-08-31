@@ -10,7 +10,7 @@ class Logger {
 
     enable() {
         this.enabled = true;
-        // clear console
+        // eslint-disable-next-line no-console
         console.clear();
         this.log('system', 'Logging started');
     }

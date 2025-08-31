@@ -116,24 +116,42 @@ export class ComplexVirtualTree extends VirtualTree {
 
   // Cast this to access VirtualTree properties with proper typing
   private get virtualTree(): VirtualTreeInterface {
+    // We need to cast to access VirtualTree properties
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return this as unknown as VirtualTreeInterface;
   }
 
   constructor(options: { container: HTMLElement; data: VItem[]; rowHeight?: number; buffer?: number; app: App; gap?: number; onExpansionChange?: () => void }) {
-    super({ container: options.container, data: options.data as any, rowHeight: options.rowHeight ?? 32, buffer: options.buffer ?? 10 } as any);
+    // VirtualTree constructor expects specific parameters, we need to cast to satisfy TypeScript
+    const constructorOptions = { 
+      container: options.container, 
+      data: options.data, 
+      rowHeight: options.rowHeight ?? 32, 
+      buffer: options.buffer ?? 10,
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      onOpen: () => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      onSelect: () => {}
+    };
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    super(constructorOptions as any);
     this.app = options.app;
     if (typeof options.gap === 'number' && options.gap >= 0) this._gap = options.gap;
     this._onExpansionChange = options.onExpansionChange;
 
-    const viewBody = options.container.querySelector('.tm_view-body') as HTMLElement | null;
-    if (viewBody) this._attachToViewBody(options.container, viewBody);
+    const viewBody = options.container.querySelector('.tm_view-body');
+    if (viewBody instanceof HTMLElement) {
+      if (viewBody) this._attachToViewBody(options.container, viewBody);
 
-    // Initial renders
-    this._safeRender('first render');
-    requestAnimationFrame(() => this._safeRender('deferred render'));
+      // Initial renders
+      this._safeRender('first render');
+      requestAnimationFrame(() => this._safeRender('deferred render'));
 
-    // React to container resize so pool grows when the panel opens/resizes
-    if (viewBody && 'ResizeObserver' in window) this._observeResize(viewBody);
+      // React to container resize so pool grows when the panel opens/resizes
+      if (viewBody && 'ResizeObserver' in window) this._observeResize(viewBody);
+    } else {
+      logger.log('[TreeMapper] Error attaching to view body:', viewBody);
+    }
   }
 
   private _attachToViewBody(host: HTMLElement, viewBody: HTMLElement): void {
@@ -238,18 +256,22 @@ export class ComplexVirtualTree extends VirtualTree {
 
   // Ensure correct container gets scrolled when jumping to an index
   public scrollToIndex(index: number): void {
-    const sc: HTMLElement = (this.virtualTree.scrollContainer as HTMLElement) || (this.virtualTree.container as HTMLElement);
-    const total: number = this.virtualTree.total;
-    if (index < 0 || index >= total) return;
-    const rowHeight: number = this.virtualTree.rowHeight;
-    const offsetRows = 3; // keep 3 rows above when scrolling into view
-    const maxScrollTop = Math.max(0, total * rowHeight - sc.clientHeight);
-    let targetScrollTop = Math.max(0, (index - offsetRows) * rowHeight);
-    targetScrollTop = Math.min(targetScrollTop, maxScrollTop);
-    try {
-      sc.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-    } catch {
-      sc.scrollTop = targetScrollTop;
+    const sc1 = this.virtualTree.scrollContainer;
+    const sc2 = this.virtualTree.container;
+    if (sc1 instanceof HTMLElement || sc2 instanceof HTMLElement) {
+      const sc = sc1 || sc2;
+      const total: number = this.virtualTree.total;
+      if (index < 0 || index >= total) return;
+      const rowHeight: number = this.virtualTree.rowHeight;
+      const offsetRows = 3; // keep 3 rows above when scrolling into view
+      const maxScrollTop = Math.max(0, total * rowHeight - sc.clientHeight);
+      let targetScrollTop = Math.max(0, (index - offsetRows) * rowHeight);
+      targetScrollTop = Math.min(targetScrollTop, maxScrollTop);
+      try {
+        sc.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+      } catch {
+        sc.scrollTop = targetScrollTop;
+      }
     }
   }
 
@@ -352,8 +374,8 @@ export class ComplexVirtualTree extends VirtualTree {
     const titleClass = item.kind === 'virtual'
       ? 'tm_tree-item-title mod-create-new'
       : item.kind === 'file'
-      ? 'tm_tree-item-title is-clickable'
-      : 'tm_tree-item-title';
+        ? 'tm_tree-item-title is-clickable'
+        : 'tm_tree-item-title';
     const title = document.createElement('div');
     title.className = titleClass;
     title.title = item.id;
@@ -374,7 +396,7 @@ export class ComplexVirtualTree extends VirtualTree {
   private _createActionButtons(item: VItem): HTMLElement {
     const container = document.createElement('div');
     container.className = 'tm_action-buttons-container';
-    
+
     if (item.kind === 'virtual') {
       const createNoteBtn = document.createElement('div');
       createNoteBtn.className = 'tm_button-icon';
@@ -383,14 +405,14 @@ export class ComplexVirtualTree extends VirtualTree {
       setIcon(createNoteBtn, 'square-pen');
       container.appendChild(createNoteBtn);
     }
-    
+
     const createChildBtn = document.createElement('div');
-    createChildBtn.className = 'tm_button-icon';
+    createChildBtn.className = 'tm_button-icon rotate-180deg';
     createChildBtn.title = 'Create child';
     createChildBtn.setAttribute('data-action', 'create-child');
     setIcon(createChildBtn, 'rotate-cw-square');
     container.appendChild(createChildBtn);
-    
+
     return container;
   }
 
@@ -403,22 +425,26 @@ export class ComplexVirtualTree extends VirtualTree {
     this.virtualTree.focusedIndex = idx;
     this.virtualTree.container.focus();
 
-    const target = e.target as Element | null;
-    const clickable = target ? target.closest('.tm_button-icon, .tm_tree-item-title') : null;
-    if (!clickable) {
-      this._handleRowDefaultClick(item, idx, id);
-      return;
-    }
+    const target = e.target;
+    if (target instanceof Element) {
+      const clickable = target.closest('.tm_button-icon, .tm_tree-item-title');
+      if (!clickable) {
+        this._handleRowDefaultClick(item, idx, id);
+        return;
+      }
 
-    if (clickable.classList.contains('tm_button-icon')) {
-      const action = clickable.getAttribute('data-action');
-      this._handleActionButtonClick(action, id);
-      return;
-    }
+      if (clickable.classList.contains('tm_button-icon')) {
+        const action = clickable.getAttribute('data-action');
+        if (action) this._handleActionButtonClick(action, id);
+        return;
+      }
 
-    if (clickable.classList.contains('tm_tree-item-title')) {
-      const kind = clickable.getAttribute('data-node-kind');
-      this._handleTitleClick(kind, id, idx);
+      if (clickable.classList.contains('tm_tree-item-title')) {
+        const kind = clickable.getAttribute('data-node-kind');
+        if (kind) this._handleTitleClick(kind, id, idx);
+      }
+    } else {
+      logger.log('[TreeMapper] Error handling row click:', e);
     }
   }
 
@@ -456,24 +482,32 @@ export class ComplexVirtualTree extends VirtualTree {
 
   // Forwarders that notify expansion changes so the header button stays in sync
   public toggle(id: string): void {
-    (VirtualTree as any).prototype.toggle.call(this, id);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const virtualTreePrototype = VirtualTree.prototype as any;
+    virtualTreePrototype.toggle.call(this, id);
     this._reapplySelection();
     this._onExpansionChange?.();
   }
   public expand(id: string): void {
-    (VirtualTree as any).prototype.expand.call(this, id);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const virtualTreePrototype = VirtualTree.prototype as any;
+    virtualTreePrototype.expand.call(this, id);
     this._reapplySelection();
     this._onExpansionChange?.();
   }
   public collapse(id: string): void {
-    (VirtualTree as any).prototype.collapse.call(this, id);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const virtualTreePrototype = VirtualTree.prototype as any;
+    virtualTreePrototype.collapse.call(this, id);
     this._reapplySelection();
     this._onExpansionChange?.();
   }
 
   // Ensure we have enough pooled rows to fill the viewport plus buffer
   private _ensurePoolCapacity(): void {
-    const sc: HTMLElement = (this.virtualTree.scrollContainer as HTMLElement) || (this.virtualTree.container as HTMLElement);
+    const scrollContainer = this.virtualTree.scrollContainer;
+    const container = this.virtualTree.container;
+    const sc = scrollContainer instanceof HTMLElement ? scrollContainer : container;
     const rowHeight: number = this.virtualTree.rowHeight;
     const buffer: number = this.virtualTree.buffer;
     const pool: HTMLElement[] = this.virtualTree.pool;
@@ -482,23 +516,31 @@ export class ComplexVirtualTree extends VirtualTree {
     const visibleCount = Math.max(1, Math.ceil(sc.clientHeight / rowHeight));
     const desired = visibleCount + buffer * 2;
     if (desired > poolSize) {
-      const virt: HTMLElement = this.virtualTree.virtualizer as HTMLElement;
-      for (let i = poolSize; i < desired; i++) {
-        const row = document.createElement('div');
-        row.className = 'tree-row';
-        row.dataset.poolIndex = String(i);
-        row.addEventListener('click', (ev) => this._onRowClick(ev as MouseEvent, row));
-        virt.appendChild(row);
-        pool.push(row);
+      const virtualizer = this.virtualTree.virtualizer;
+      if (virtualizer instanceof HTMLElement) {
+        for (let i = poolSize; i < desired; i++) {
+          const row = document.createElement('div');
+          row.className = 'tree-row';
+          row.dataset.poolIndex = String(i);
+          row.addEventListener('click', (ev) => {
+          if (ev instanceof MouseEvent) {
+            this._onRowClick(ev, row);
+          }
+        });
+          virtualizer.appendChild(row);
+          pool.push(row);
+        }
+        this.virtualTree.poolSize = desired;
       }
-      this.virtualTree.poolSize = desired;
     }
   }
 
   // Override render to use the correct scroll container and windowing math
   public _render(): void {
     this._ensurePoolCapacity();
-    const sc: HTMLElement = (this.virtualTree.scrollContainer as HTMLElement) || (this.virtualTree.container as HTMLElement);
+    const scrollContainer = this.virtualTree.scrollContainer;
+    const container = this.virtualTree.container;
+    const sc = scrollContainer instanceof HTMLElement ? scrollContainer : container;
     const scrollTop = sc.scrollTop;
     const rowHeight: number = this.virtualTree.rowHeight;
     const buffer: number = this.virtualTree.buffer;
@@ -532,14 +574,16 @@ export class ComplexVirtualTree extends VirtualTree {
   public ensureSelectedVisible(): void { /* intentionally empty */ }
 
   public destroy(): void {
-    const sc: HTMLElement | undefined = this.virtualTree.scrollContainer as HTMLElement;
-    if (sc && this._boundScroll) sc.removeEventListener('scroll', this._boundScroll);
-    if (this._resizeObs) { 
-      try { 
-        this._resizeObs.disconnect(); 
-      } catch { 
+    const scrollContainer = this.virtualTree.scrollContainer;
+    if (scrollContainer instanceof HTMLElement && this._boundScroll) {
+      scrollContainer.removeEventListener('scroll', this._boundScroll);
+    }
+    if (this._resizeObs) {
+      try {
+        this._resizeObs.disconnect();
+      } catch {
         // Ignore disconnect errors
-      } 
+      }
     }
     super.destroy();
   }
