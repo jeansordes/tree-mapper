@@ -7,6 +7,7 @@
     --tm_bg2-5: hsla(0, 0%, calc(96% - 50%), 0.06);
     --tm_bg-clickable: var(--tm_bg2-5);
     --tm_bg-hover: var(--bg3);
+    --tm_bg: var(--bg2);
     --tm_accent-color: var(--ax3);
     --tm_text-on-accent: var(--text-on-accent);
     --tm_color-text-clickable: var(--tx2);
@@ -218,19 +219,25 @@
     /* Buttons */
     .tm_button-icon, .is-clickable {
         cursor: pointer;
-    }
-
-    .tm_button-icon, .is-clickable {
         color: var(--tm_color-text-clickable);
         min-width: var(--tm_button-size);
         height: var(--tm_button-size);
         line-height: var(--tm_button-size);
         border-radius: var(--tm_border-radius);
-        background-color: var(--bg1);
+        background-color: var(--tm_bg-hover);
+    }
+
+    .tm_action-buttons-container > .tm_button-icon::before {
+        content: "";
+        background-color: var(--tm_bg);
+        width: calc(var(--tm_button-size) + var(--tm_gap) + var(--tm_view-padding));
+        height: 100%;
+        position: absolute;
+        left: calc(-1 * var(--tm_gap));
+        z-index: -1;
     }
 
     .tm_button-icon:hover, .is-clickable:hover {
-        background-color: var(--bg2);
         color: var(--tm_color-text-hover);
     }
 
@@ -246,6 +253,9 @@
 .tm_view.tm_view-mobile {
     --tm_square-size: 2rem;
     --tm_font-size: var(--font-text-size);
+    --tm_bg-hover: var(--bg2);
+    --tm_bg: var(--bg1);
+
     flex-direction: column-reverse;
 
     .tm_view-header {
@@ -307,6 +317,7 @@
 /* Indent guide styles for virtual tree rows */
 .tree-row {
     position: absolute; /* ensured in code; keep for safety */
+    /* Width is set dynamically in JavaScript to match content width */
 }
     .tree-row .tm_indent {
         position: absolute;
