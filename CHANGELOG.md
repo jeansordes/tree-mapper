@@ -1,3 +1,9 @@
+## [1.8.2](https://github.com/jeansordes/tree-mapper/compare/1.8.1...1.8.2) (2025-09-02)
+
+### Bug Fixes
+
+* update virtualizer initialization to create a new element ([6b09bce](https://github.com/jeansordes/tree-mapper/commit/6b09bce4024d44bac8fe3fd87e262387e465547e))
+
 ## [1.8.1](https://github.com/jeansordes/tree-mapper/compare/1.8.0...1.8.1) (2025-08-31)
 
 # [1.8.0](https://github.com/jeansordes/tree-mapper/compare/1.7.2...1.8.0) (2025-08-31)
