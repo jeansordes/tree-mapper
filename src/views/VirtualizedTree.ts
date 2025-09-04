@@ -1,5 +1,5 @@
 import { App, TFile, setIcon } from 'obsidian';
-import { VirtualTree } from '../virtualTree.js';
+import { VirtualTree } from '../virtualTree';
 import { FileUtils } from '../utils/FileUtils';
 import { TreeNode, TreeNodeType } from '../types';
 import { logger } from '../utils/logger';

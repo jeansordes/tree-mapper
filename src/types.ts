@@ -26,3 +26,29 @@ export interface TreeNode {
     obsidianResource?: TFile | TFolder;
     children: Map<string, TreeNode>;
 }
+
+// Types for the virtual tree component
+export interface VirtualTreeItem {
+    id: string;
+    name: string;
+    kind: 'file' | 'folder';
+    level: number;
+    hasChildren?: boolean;
+    children?: VirtualTreeItem[];
+    expanded?: boolean;
+}
+
+export interface VirtualTreeOptions {
+    container: HTMLElement;
+    data?: VirtualTreeItem[];
+    rowHeight?: number;
+    buffer?: number;
+    onOpen?: (item: VirtualTreeItem) => void;
+    onSelect?: (item: VirtualTreeItem) => void;
+}
+
+export interface WindowResult {
+    startIndex: number;
+    endIndex: number;
+    poolSize: number;
+}

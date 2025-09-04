@@ -1,15 +1,34 @@
 /* eslint-env browser */
 /* global document, requestAnimationFrame */
-import { flattenTree } from './flatten.js';
-import { computeWindow } from './utils.js';
+import { flattenTree } from './flatten';
+import { computeWindow } from './utils';
+import { VirtualTreeItem, VirtualTreeOptions } from './types';
 
 export class VirtualTree {
-  constructor({ container, data = [], rowHeight = 20, buffer = 10, onOpen, onSelect }) {
+  private container: HTMLElement;
+  private rowHeight: number;
+  private buffer: number;
+  private onOpen: (item: VirtualTreeItem) => void;
+  private onSelect: (item: VirtualTreeItem) => void;
+  private expanded: Map<string, boolean>;
+  private focusedIndex: number;
+  private selectedIndex: number;
+  private virtualizer: HTMLElement;
+  private pool: HTMLElement[];
+  private visibleCount: number;
+  private poolSize: number;
+  private data: VirtualTreeItem[];
+  private visible: VirtualTreeItem[];
+  private total: number;
+  private _onScroll: () => void;
+  private _onKeyDown: (e: KeyboardEvent) => void;
+
+  constructor({ container, data = [], rowHeight = 20, buffer = 10, onOpen, onSelect }: VirtualTreeOptions) {
     this.container = container;
     this.rowHeight = rowHeight;
     this.buffer = buffer;
-    this.onOpen = onOpen || (() => {});
-    this.onSelect = onSelect || (() => {});
+    this.onOpen = onOpen || (() => { /* no-op */ });
+    this.onSelect = onSelect || (() => { /* no-op */ });
 
     this.expanded = new Map();
     this.focusedIndex = 0;
@@ -40,13 +59,13 @@ export class VirtualTree {
     }
 
     this.setData(data);
-    this._onScroll = this._onScroll.bind(this);
-    this._onKeyDown = this._onKeyDown.bind(this);
+    this._onScroll = () => this._render();
+    this._onKeyDown = (e: KeyboardEvent) => this._handleKeyDown(e);
     this.container.addEventListener('scroll', () => requestAnimationFrame(this._onScroll));
     this.container.addEventListener('keydown', this._onKeyDown);
   }
 
-  setData(data) {
+  setData(data: VirtualTreeItem[]): void {
     this.data = data || [];
     this._recomputeVisible();
     // Reset scroll position when setting new data
@@ -56,7 +75,7 @@ export class VirtualTree {
     this._render();
   }
 
-  toggle(id) { 
+  toggle(id: string): void { 
     const wasExpanded = this.expanded.get(id);
     
     // Save scroll state before toggling
@@ -70,20 +89,30 @@ export class VirtualTree {
     this._maintainScrollPosition(oldVisible, oldScrollTop);
     this._render(); 
   }
-  expand(id) { this.expanded.set(id, true); this._recomputeVisible(); this._render(); }
-  collapse(id) { this.expanded.set(id, false); this._recomputeVisible(); this._render(); }
 
-  scrollToIndex(index) {
+  expand(id: string): void { 
+    this.expanded.set(id, true); 
+    this._recomputeVisible(); 
+    this._render(); 
+  }
+
+  collapse(id: string): void { 
+    this.expanded.set(id, false); 
+    this._recomputeVisible(); 
+    this._render(); 
+  }
+
+  scrollToIndex(index: number): void {
     if (index < 0 || index >= this.total) return;
     const targetScrollTop = index * this.rowHeight;
     this.container.scrollTop = targetScrollTop;
   }
 
-  _clampFocus() {
+  private _clampFocus(): void {
     this.focusedIndex = Math.max(0, Math.min(this.focusedIndex, this.total - 1));
   }
 
-  _maintainScrollPosition(oldVisible, oldScrollTop) {
+  private _maintainScrollPosition(oldVisible: VirtualTreeItem[], oldScrollTop: number): void {
     if (oldVisible.length === 0 || this.visible.length === 0) return;
     
     // Find a reference item that's likely to still be visible
@@ -103,16 +132,15 @@ export class VirtualTree {
     }
   }
 
-  _recomputeVisible() {
+  private _recomputeVisible(): void {
     this.visible = flattenTree(this.data, this.expanded);
     this.total = this.visible.length;
     // Set the virtualizer height to create scrollable area
     this.virtualizer.style.height = `${this.total * this.rowHeight}px`;
   }
 
-  _onScroll() { this._render(); }
 
-  _onKeyDown(e) {
+  private _handleKeyDown(e: KeyboardEvent): void {
     if (this.total === 0) return;
     
     let handled = true;
@@ -184,7 +212,7 @@ export class VirtualTree {
     }
   }
 
-  _ensureFocusVisible() {
+  private _ensureFocusVisible(): void {
     const focusTop = this.focusedIndex * this.rowHeight;
     const focusBottom = focusTop + this.rowHeight;
     const viewTop = this.container.scrollTop;
@@ -197,7 +225,7 @@ export class VirtualTree {
     }
   }
 
-  _render() {
+  private _render(): void {
     const { scrollTop, clientHeight } = this.container;
     const { startIndex, endIndex } = computeWindow(scrollTop, this.rowHeight, this.buffer, clientHeight, this.total, this.poolSize);
 
@@ -248,9 +276,10 @@ export class VirtualTree {
     }
   }
 
-  _onRowClick(e, row) {
+  private _onRowClick(e: MouseEvent, row: HTMLElement): void {
     const id = row.dataset.id;
     const idx = Number(row.dataset.index);
+    if (!id || isNaN(idx)) return;
     const item = this.visible[idx];
     
     // Update focus to clicked item
@@ -268,8 +297,8 @@ export class VirtualTree {
     this._render();
   }
 
-  destroy() {
-    this.container.removeEventListener('scroll', this._onScroll);
+  destroy(): void {
+    this.container.removeEventListener('scroll', () => requestAnimationFrame(this._onScroll));
     this.container.removeEventListener('keydown', this._onKeyDown);
     this.container.innerHTML = '';
   }

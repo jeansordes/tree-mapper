@@ -1,16 +1,25 @@
 /* eslint-env jest */
 /* global describe, test, expect */
 
-// NOTE: These functions are duplicated from src/flatten.js and src/utils.js
+// NOTE: These functions are duplicated from src/flatten.ts and src/utils.ts
 // because Jest doesn't support ES modules out of the box in this project setup.
 // In a production environment, you would configure Jest for ES modules or
 // use a different test runner that supports them natively.
 
-function clamp(value, min, max) {
+import { VirtualTreeItem, WindowResult } from '../src/types';
+
+function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
-function computeWindow(scrollTop, rowHeight, buffer, clientHeight, total, poolSize) {
+function computeWindow(
+  scrollTop: number, 
+  rowHeight: number, 
+  buffer: number, 
+  clientHeight: number, 
+  total: number, 
+  poolSize?: number
+): WindowResult {
   const visibleCount = Math.ceil(clientHeight / rowHeight);
   const effectivePool = poolSize ?? visibleCount + buffer * 2;
   const startIndex = clamp(Math.floor(scrollTop / rowHeight) - buffer, 0, Math.max(total - 1, 0));
@@ -18,7 +27,12 @@ function computeWindow(scrollTop, rowHeight, buffer, clientHeight, total, poolSi
   return { startIndex, endIndex, poolSize: effectivePool };
 }
 
-function flattenTree(nodes, expandedMap = new Map(), level = 0, out = []) {
+function flattenTree(
+  nodes: VirtualTreeItem[], 
+  expandedMap: Map<string, boolean> = new Map(), 
+  level: number = 0, 
+  out: VirtualTreeItem[] = []
+): VirtualTreeItem[] {
   for (const n of nodes) {
     out.push({ id: n.id, name: n.name, kind: n.kind, level });
     const isFolder = n.kind === 'folder';
@@ -34,15 +48,16 @@ function flattenTree(nodes, expandedMap = new Map(), level = 0, out = []) {
 
 describe('flattenTree', () => {
   test('respects expanded map and levels', () => {
-    const tree = [
+    const tree: VirtualTreeItem[] = [
       {
         id: 'a',
         name: 'A',
         kind: 'folder',
+        level: 0,
         children: [
-          { id: 'a1', name: 'A1', kind: 'file' },
-          { id: 'a2', name: 'A2', kind: 'folder', children: [
-            { id: 'a2i', name: 'A2i', kind: 'file' }
+          { id: 'a1', name: 'A1', kind: 'file', level: 1 },
+          { id: 'a2', name: 'A2', kind: 'folder', level: 1, children: [
+            { id: 'a2i', name: 'A2i', kind: 'file', level: 2 }
           ] }
         ]
       }
