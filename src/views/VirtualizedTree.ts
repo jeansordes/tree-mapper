@@ -299,10 +299,6 @@ export class ComplexVirtualTree extends VirtualTree {
   public renamePath(oldPath: string, newPath: string): boolean {
     if (!oldPath || !newPath || oldPath === newPath) return true;
 
-    const dirname = (p: string) => p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : '';
-    const sameParent = dirname(oldPath) === dirname(newPath);
-    if (!sameParent) return false; // moving across parents is more complex; let caller rebuild
-
     const vt = this.virtualTree;
     const scrollContainer = vt.scrollContainer;
     const host = (scrollContainer instanceof HTMLElement ? scrollContainer : vt.container) as HTMLElement;
@@ -324,6 +320,13 @@ export class ComplexVirtualTree extends VirtualTree {
     const loc = findIn(vt.data, oldPath);
     if (!loc) return false;
 
+    // Determine Dendron-aware parents (virtual hierarchy), not just filesystem dirname
+    const node = loc.list[loc.index];
+    const oldParentId = this.parentMap.get(oldPath) ?? this._computeDendronParentId(oldPath, node.kind);
+    const newParentId = this._computeDendronParentId(newPath, node.kind);
+
+    const sameDendronParent = oldParentId === newParentId;
+
     // Update expanded set by prefix replacement
     const newExpanded = new Map<string, boolean>();
     vt.expanded.forEach((v, k) => {
@@ -338,25 +341,59 @@ export class ComplexVirtualTree extends VirtualTree {
     vt.expanded = newExpanded;
 
     // Update item id/name and descendants' ids
-    const updateIds = (node: VItem) => {
-      if (node.id === oldPath) {
-        node.id = newPath;
+    const updateIds = (n: VItem) => {
+      if (n.id === oldPath) {
+        n.id = newPath;
         const base = FileUtils.basename(newPath);
-        if (node.kind === 'folder') node.name = base.replace(/ \(\d+\)$/, '');
+        if (n.kind === 'folder') n.name = base.replace(/ \(\d+\)$/, '');
         else {
           const matched = base.match(/([^.]+)\.[^.]+$/);
-          node.name = (matched ? matched[1] : base).replace(/ \(\d+\)$/, '');
+          n.name = (matched ? matched[1] : base).replace(/ \(\d+\)$/, '');
         }
-      } else if (node.id.startsWith(oldPath + '/')) {
-        node.id = newPath + node.id.slice(oldPath.length);
+      } else if (n.id.startsWith(oldPath + '/')) {
+        n.id = newPath + n.id.slice(oldPath.length);
       }
       // Names of descendants do not change on path rename
-      if (node.children) node.children.forEach(updateIds);
+      if (n.children) n.children.forEach(updateIds);
     };
-    updateIds(loc.list[loc.index]);
 
-    // Re-sort siblings by name (localeCompare) to keep ordering consistent
-    loc.list.sort((a, b) => a.name.localeCompare(b.name));
+    if (sameDendronParent) {
+      // Simple in-place rename
+      updateIds(node);
+      // Re-sort siblings by name (localeCompare) to keep ordering consistent
+      loc.list.sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      // Move across virtual/Dendron parents
+      // Find destination list first; if not present (e.g., new virtual parent not built), bail to full rebuild
+      const findNode = (arr: VItem[], target: string): VItem | null => {
+        for (const it of arr) {
+          if (it.id === target) return it;
+          if (it.children && it.children.length) {
+            const found = findNode(it.children, target);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      const getDestList = (parentId: string): VItem[] | null => {
+        if (!parentId || parentId === '/') return vt.data;
+        const parentNode = findNode(vt.data, parentId);
+        if (!parentNode) return null;
+        if (!Array.isArray(parentNode.children)) parentNode.children = [];
+        return parentNode.children!;
+      };
+
+      const destList = getDestList(newParentId);
+      if (!destList) return false; // let caller rebuild full data (parent chain likely missing)
+
+      // Remove from old list and insert into destination list
+      const [movingNode] = loc.list.splice(loc.index, 1);
+      // Update ids/names before inserting
+      updateIds(movingNode);
+      destList.push(movingNode);
+      // Keep alphabetical order at destination
+      destList.sort((a, b) => a.name.localeCompare(b.name));
+    }
 
     // Rebuild parent map from current data
     const newParentMap = new Map<string, string | undefined>();
@@ -383,6 +420,30 @@ export class ComplexVirtualTree extends VirtualTree {
     host.scrollTop = prevScrollTop;
     this._onExpansionChange?.();
     return true;
+  }
+
+  // Compute the Dendron-style parent id for a given path.
+  // For files with dotted names (a.b.md), parent is a.md (under same folder).
+  // For single-segment files (a.md), parent is the containing folder.
+  // For folders, parent is the filesystem parent folder (or '/' for root).
+  private _computeDendronParentId(path: string, kind: 'folder' | 'file' | 'virtual'): string {
+    // Folder parent is just the dirname
+    const lastSlash = path.lastIndexOf('/');
+    const folderPath = lastSlash >= 0 ? path.slice(0, lastSlash) : '';
+    const rootOrFolder = folderPath === '' ? '/' : folderPath;
+    if (kind === 'folder') return rootOrFolder;
+
+    // Files/virtual nodes: compute based on dotted basename
+    const base = FileUtils.basename(path);
+    // Strip extension
+    const lastDot = base.lastIndexOf('.');
+    const nameNoExt = lastDot >= 0 ? base.slice(0, lastDot) : base;
+    const dotIdx = nameNoExt.lastIndexOf('.');
+    if (dotIdx > -1) {
+      const parentName = nameNoExt.slice(0, dotIdx) + '.md';
+      return (folderPath ? folderPath + '/' : '') + parentName;
+    }
+    return rootOrFolder;
   }
 
   public expandAll(): void {
