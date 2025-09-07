@@ -26,7 +26,7 @@ export class VirtualTree {
   private _scrollHandler?: () => void;
   private _onKeyDown: (e: KeyboardEvent) => void;
 
-  constructor({ container, data = [], rowHeight = 20, buffer = 10, onOpen, onSelect }: VirtualTreeOptions) {
+  constructor({ container, data = [], rowHeight = 20, buffer = 100, onOpen, onSelect }: VirtualTreeOptions) {
     this.container = container;
     this.rowHeight = rowHeight;
     this.buffer = buffer;

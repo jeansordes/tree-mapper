@@ -11,7 +11,7 @@ import { logger } from '../utils/logger';
 export default class PluginMainPanel extends ItemView {
     private static instanceCounter = 0;
     private instanceId: number;
-    private container: HTMLElement | null = null;
+    // DOM is managed by ViewLayout and ComplexVirtualTree; no direct container tracking
     private activeFile: TFile | null = null;
     private settings: PluginSettings;
 
@@ -20,8 +20,12 @@ export default class PluginMainPanel extends ItemView {
     private eventHandler: DendronEventHandler;
     private layout: ViewLayout | null = null;
     private vtManager: VirtualTreeManager | null = null;
+    // Debounced saver for expanded state persistence
+    private _saveTimer: number | null = null;
+    // Snapshot of last known expanded paths to survive VT teardown
+    private _lastExpandedSnapshot: string[] = [];
 
-    // Internal state for tracking initialization
+    // Track initialization to avoid duplicate onOpen work
     private _onOpenCalled: boolean = false;
 
     constructor(leaf: WorkspaceLeaf, settings: PluginSettings) {
@@ -74,7 +78,6 @@ export default class PluginMainPanel extends ItemView {
         // Set up the view containers via layout helper
         this.layout = new ViewLayout(viewRoot);
         const { tree } = this.layout.init();
-        this.container = tree;
 
         // Wait for CSS to be loaded by checking if the styles are applied
         await this.waitForCSSLoad();
@@ -83,7 +86,10 @@ export default class PluginMainPanel extends ItemView {
         this._registerEventHandlers();
 
         // Initialize virtualized tree
-        this.vtManager = new VirtualTreeManager(this.app, () => this._syncHeaderToggle());
+        this.vtManager = new VirtualTreeManager(this.app, () => {
+            this._syncHeaderToggle();
+            this._persistExpandedNodesDebounced();
+        });
         this.vtManager.init(viewRoot, this.settings?.expandedNodes);
         // Access internal instance for highlight calls
         this.virtualTree = (this.vtManager as unknown as { vt?: ComplexVirtualTree }).vt ?? null;
@@ -109,6 +115,37 @@ export default class PluginMainPanel extends ItemView {
     }
 
     /**
+     * Debounced persistence of expanded node paths to plugin settings
+     */
+    private _persistExpandedNodesDebounced(): void {
+        if (this._saveTimer) {
+            window.clearTimeout(this._saveTimer);
+            this._saveTimer = null;
+        }
+        // Persist after a short idle to coalesce rapid toggles
+        this._saveTimer = window.setTimeout(() => {
+            this._saveTimer = null;
+            this._persistExpandedNodesImmediate();
+        }, 250);
+    }
+
+    private _persistExpandedNodesImmediate(): void {
+        try {
+            const expanded = this.getExpandedNodesForSettings();
+            this.settings.expandedNodes = expanded;
+            this._lastExpandedSnapshot = Array.isArray(expanded) ? [...expanded] : [];
+            // Save through the plugin instance if available
+            const plugin: any = (this.app as any)?.plugins?.getPlugin?.('tree-mapper');
+            if (plugin && typeof plugin.saveSettings === 'function') {
+                // Fire and forget; Obsidian handles persistence
+                void plugin.saveSettings();
+            }
+        } catch (e) {
+            logger.error('[TreeMapper] Failed to persist expanded nodes', e);
+        }
+    }
+
+    /**
      * Wait for the container to be properly initialized
      */
     private waitForContainerReady(): Promise<void> {
@@ -126,36 +163,6 @@ export default class PluginMainPanel extends ItemView {
             checkContainer();
         });
     }
-
-    /**
-     * No longer needed - we've unified the tree building approach
-     * and don't need to watch for container changes
-     */
-    private _setupContainerWatcher(): void { /* no-op */ }
-
-    /**
-     * No longer needed - we've unified the tree building approach
-     * and don't need to restore the view
-     */
-    private async _restoreViewIfNeeded(): Promise<void> { /* no-op */ }
-
-    /**
-     * No longer needed - we've unified the tree building approach
-     * and don't need restoration tracking
-     */
-    private _resetRestorationTracking(): void { /* no-op */ }
-
-    /**
-     * No longer needed - we've unified the tree building approach
-     * and don't need stability checks
-     */
-    private _setupStabilityCheck(): void { /* no-op */ }
-
-    /**
-     * No longer needed - we've unified the tree building approach
-     * and don't need stability check timers
-     */
-    private _clearStabilityCheckTimers(): void { /* no-op */ }
 
     /**
      * Wait for CSS to be loaded by checking if the styles are applied
@@ -179,33 +186,7 @@ export default class PluginMainPanel extends ItemView {
         });
     }
 
-    /**
-     * Prepare the header/body containers and baseline controls.
-     */
-    /**
-     * Ensures the view structure exists in the container.
-     * This is a helper method that can be called before any operation that requires
-     * the view structure to be in place.
-     */
-    private _ensureViewStructureExists(container: HTMLElement): void {
-        // Just use the standard setup method - simpler and more reliable
-        this._setupViewContainers(container);
-    }
-
-    private _setupViewContainers(container: HTMLElement): void {
-        // Minimal compatibility: ensure a tree container exists
-        const existingBody = container.querySelector('.tm_view-body');
-        const body = existingBody instanceof HTMLElement ? existingBody : container;
-        const existingTree = body.querySelector('.tm_view-tree');
-        if (existingTree instanceof HTMLElement) {
-            this.container = existingTree;
-            return;
-        }
-        const tree = document.createElement('div');
-        tree.className = 'tm_view-tree';
-        body.appendChild(tree);
-        this.container = tree;
-    }
+    // Header/body containers are handled by ViewLayout
 
     private _addRevealActiveButton(_header: HTMLElement): void { /* handled by ViewLayout */ }
 
@@ -237,22 +218,22 @@ export default class PluginMainPanel extends ItemView {
      * Highlight the active file in the tree view and scroll it into view
      */
     private highlightActiveFile(): void {
-        if (!this.activeFile) return;
+        const file = this.activeFile ?? this.app.workspace.getActiveFile();
+        if (!file) return;
 
-        if (this.virtualTree) { this.virtualTree.revealPath(this.activeFile.path); return; }
+        // Prefer going through the manager (stable API)
+        try {
+            if (this.vtManager) { this.vtManager.revealPath(file.path); return; }
+            if (this.virtualTree) { this.virtualTree.revealPath(file.path); return; }
+        } catch (e) {
+            // Never let highlight errors break the app; just log
+            logger.error('[TreeMapper] highlightActiveFile failed:', e);
+        }
     }
 
-    private _highlightInLegacyTree(): void { /* legacy renderer removed */ }
+    // Legacy highlighter removed
 
-    /**
-     * Save the expanded state of nodes
-     */
-    private saveExpandedState(): void { /* handled by vtManager */ }
-
-    /**
-     * Restore the expanded state of nodes
-     */
-    private restoreExpandedState(): void { /* handled by vtManager */ }
+    // Expanded state persistence handled by VirtualTreeManager
 
     async refresh(changedPath?: string, _forceFullRefresh: boolean = false, oldPath?: string) {
         if (!this.containerEl) return;
@@ -265,35 +246,9 @@ export default class PluginMainPanel extends ItemView {
         }
     }
 
-    private async _rebuildVirtualIfActive(_newPath?: string, _oldPath?: string): Promise<boolean> { return false; }
+    // Incremental refresh and legacy rebuild paths removed; manager handles updates
 
-    private _tryIncrementalRefresh(_changedPath: string): boolean {
-        // For consistency, we're going to avoid incremental updates
-        // and always use the full virtualized tree rebuild approach
-        // This ensures we always use the same rendering method
-        return false;
-        
-        /* Original incremental update code kept for reference
-        const success = this.eventHandler.tryIncrementalUpdate(
-            changedPath,
-            this.container!,
-            this.lastBuiltTree,
-            this.nodePathMap,
-            (node, container) => this.nodeRenderer.renderDendronNode(node, container, this.expandedNodes)
-        );
-        if (success) this.highlightActiveFile();
-        return success;
-        */
-    }
-
-    private async _fullRefresh(): Promise<void> { /* handled by vtManager */ }
-
-    async buildDendronTree(_container: HTMLElement) { /* legacy renderer removed */ }
-
-    /**
-     * Build the Dendron structure and initialize (or refresh) the virtualized tree view.
-     */
-    private async buildVirtualizedDendronTree(_rootContainer: HTMLElement): Promise<void> { /* superseded by VirtualTreeManager */ }
+    // Legacy full refresh/tree builders removed in favor of VirtualTreeManager
 
     private _syncHeaderToggle(): void {
         if (!this.layout) return;
@@ -301,20 +256,26 @@ export default class PluginMainPanel extends ItemView {
         this.layout.updateToggleDisplay(expandedCount > 0);
     }
 
-    // computeRowHeight/computeGap moved to src/utils/measure.ts
-
-    /**
-     * Build a map of paths to nodes for quick lookups
-     */
-    private buildNodePathMap(_node: unknown): void { /* legacy no-op */ }
+    // computeRowHeight/computeGap live in src/utils/measure.ts
 
     /**
      * Get expanded nodes for saving in settings
      */
     public getExpandedNodesForSettings(): string[] {
-        if (this.vtManager) return this.vtManager.getExpandedPaths();
-        if (this.virtualTree) return this.virtualTree.getExpandedPaths();
-        return [];
+        try {
+            // Prefer live data when VT is active
+            if (this.vtManager) {
+                if (typeof (this.vtManager as any).isActive === 'function' && (this.vtManager as any).isActive()) {
+                    return this.vtManager.getExpandedPaths();
+                }
+            }
+            if (this.virtualTree) return this.virtualTree.getExpandedPaths();
+        } catch {
+            // ignore and fall through to snapshot/settings
+        }
+        // Fallback to the last known snapshot or settings
+        if (this._lastExpandedSnapshot && this._lastExpandedSnapshot.length >= 0) return this._lastExpandedSnapshot;
+        return this.settings?.expandedNodes ?? [];
     }
 
     /**
@@ -355,8 +316,10 @@ export default class PluginMainPanel extends ItemView {
 
         // No observers or timers to clean up anymore
 
+        // Persist expanded nodes immediately before teardown
+        this._persistExpandedNodesImmediate();
+
         // Clear references
-        this.container = null;
         if (this.vtManager) this.vtManager.destroy();
         this.activeFile = null;
 

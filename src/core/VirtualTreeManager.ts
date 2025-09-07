@@ -36,13 +36,21 @@ export class VirtualTreeManager {
       container: rootContainer,
       data,
       rowHeight,
-      buffer: 10,
+      // Use moderate overscan; we'll debug movement on scroll
+      buffer: 100,
       app: this.app,
       gap,
       onExpansionChange: () => this.onExpansionChange?.(),
     });
     this.vt.setParentMap(parentMap);
     if (expanded && expanded.length) this.vt.setExpanded(expanded);
+    // Debug init metrics
+    logger.info('[TreeMapper][VT] init', {
+      rowHeight,
+      gap,
+      buffer: 100,
+      items: data.length
+    });
   }
 
   updateOnVaultChange(newPath?: string, oldPath?: string): void {
@@ -80,4 +88,7 @@ export class VirtualTreeManager {
   getExpandedPaths(): string[] { return this.vt?.getExpandedPaths() ?? []; }
   setExpandedPaths(paths: string[]): void { this.vt?.setExpanded(paths); this.onExpansionChange?.(); }
   destroy(): void { try { this.vt?.destroy(); } catch { /* ignore */ } this.vt = null; }
+
+  // Expose whether the underlying virtual tree is present
+  isActive(): boolean { return this.vt != null; }
 }

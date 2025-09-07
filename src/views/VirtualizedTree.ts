@@ -41,6 +41,11 @@ export class ComplexVirtualTree extends VirtualTree {
   private _maxRowWidth: number = 0;
   private _widthAdjustTimer?: number;
   private _lastScrollTop: number = 0;
+  // Debug state
+  private _dbgLastStart = -1;
+  private _dbgLastEnd = -1;
+  private _dbgLastScroll = -1;
+  private _dbgLastLog = 0;
 
   // Cast this to access VirtualTree properties with proper typing
   private get virtualTree(): VirtualTreeInterface {
@@ -55,7 +60,8 @@ export class ComplexVirtualTree extends VirtualTree {
       container: options.container,
       data: options.data,
       rowHeight: options.rowHeight ?? 32,
-      buffer: options.buffer ?? 10,
+      // Default overscan buffer
+      buffer: options.buffer ?? 100,
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       onOpen: () => { },
       // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -727,6 +733,14 @@ export class ComplexVirtualTree extends VirtualTree {
           pool.push(row);
         }
         this.virtualTree.poolSize = desired;
+        logger.info('[TreeMapper][VT] grow pool', {
+          clientHeight: sc.clientHeight,
+          rowHeight,
+          visibleCount,
+          buffer,
+          oldPoolSize: poolSize,
+          newPoolSize: desired
+        });
       }
     }
   }
@@ -745,6 +759,36 @@ export class ComplexVirtualTree extends VirtualTree {
 
     const startIndex = Math.max(Math.floor(scrollTop / rowHeight) - buffer, 0);
     const endIndex = Math.min(startIndex + poolSize, total);
+
+    // Debug: log window movement and coverage
+    try {
+      const clientHeight = sc.clientHeight || 0;
+      const visibleCount = Math.max(1, Math.ceil(clientHeight / rowHeight));
+      const renderCount = Math.max(0, endIndex - startIndex);
+      const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      const movedEnough = Math.abs(startIndex - this._dbgLastStart) >= 5 || Math.abs(scrollTop - this._dbgLastScroll) >= rowHeight * 3;
+      const timeElapsed = now - this._dbgLastLog > 200; // throttle
+      const underCoverage = renderCount < visibleCount; // not enough rows to cover viewport
+      if (this._dbgLastStart < 0 || movedEnough || timeElapsed || underCoverage) {
+        this._dbgLastStart = startIndex;
+        this._dbgLastEnd = endIndex;
+        this._dbgLastScroll = scrollTop;
+        this._dbgLastLog = now;
+        logger.info('[TreeMapper][VT] render window', {
+          scrollTop,
+          rowHeight,
+          clientHeight,
+          visibleCount,
+          buffer,
+          poolSize,
+          startIndex,
+          endIndex,
+          renderCount,
+          total,
+          underCoverage
+        });
+      }
+    } catch { /* ignore logging errors */ }
 
     // Determine minimum width as current panel width
     const minPanelWidth = sc.clientWidth || 0;
