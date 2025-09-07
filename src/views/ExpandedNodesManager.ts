@@ -14,6 +14,12 @@ export class ExpandedNodesManager {
      * Add control buttons to the header
      */
     addControlButtons(header: HTMLElement): void {
+        // Avoid duplicates if the header is re-initialized
+        if (header.querySelector('.tm_tree-toggle-button')) {
+            // Ensure icon state is refreshed but do not add another button
+            setTimeout(() => this.updateToggleButtonIcon(), 0);
+            return;
+        }
         // Add a single toggle button for expand/collapse all (as a div instead of button)
         const toggleButton = document.createElement('div');
         toggleButton.className = 'tm_tree-toggle-button';
@@ -44,9 +50,8 @@ export class ExpandedNodesManager {
         
         // Set initial icon and title based on state
         this.setToggleButtonState(false, iconContainer, toggleButton);
-        setTimeout(() => {
-            this.updateToggleButtonIcon();
-        }, 1000);
+        // Schedule a refresh soon after mount to reflect actual state
+        setTimeout(() => this.updateToggleButtonIcon(), 0);
     }
 
     /**

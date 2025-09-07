@@ -3,14 +3,17 @@ import { TreeNode } from '../types';
 
 export class DendronEventHandler {
     private app: App;
-    private refreshCallback: (path?: string, forceFullRefresh?: boolean) => void;
+    private refreshCallback: (path?: string, forceFullRefresh?: boolean, oldPath?: string) => void;
     private refreshDebounceTimeout: number | null = null;
     // Default debounce time of 500ms for better performance
     private debounceWaitTime = 500;
     // Track paths and flags for debounced updates
     private pendingChanges: Map<string, boolean> = new Map(); // path -> forceFullRefresh
+    // Short grace period after construction to avoid racing with initial setup
+    private readonly initAt = Date.now();
+    private readonly graceMs = 300; // keep very small to reduce perceived lag
 
-    constructor(app: App, refreshCallback: (path?: string, forceFullRefresh?: boolean) => void, debounceTime?: number) {
+    constructor(app: App, refreshCallback: (path?: string, forceFullRefresh?: boolean, oldPath?: string) => void, debounceTime?: number) {
         this.app = app;
         this.refreshCallback = refreshCallback;
         if (debounceTime !== undefined) {
@@ -43,38 +46,57 @@ export class DendronEventHandler {
     }
     
     // Bound event handlers to ensure 'this' is preserved
-    private handleFileCreate = (_: TAbstractFile) => {
-        this.queueRefresh(undefined, true);
+    private handleFileCreate = (file: TAbstractFile) => {
+        // Full rebuild safest for structural add; allow small debounce
+        this.queueRefresh((file as any)?.path, true, false);
     };
     
-    private handleFileModify = (file: TAbstractFile) => {
-        if (!(file instanceof TFile)) return;
-        this.queueRefresh(file.path, false);
+    private handleFileModify = (_file: TAbstractFile) => {
+        // Skip refreshes on file modifications as they don't affect the tree structure
+        // Only create, delete, and rename events should trigger tree refreshes
+        return;
     };
     
-    private handleFileDelete = (_: TAbstractFile) => {
-        this.queueRefresh(undefined, true);
+    private handleFileDelete = (file: TAbstractFile) => {
+        // Full rebuild safest for structural delete; allow small debounce
+        this.queueRefresh((file as any)?.path, true, false);
     };
-    
-    private handleFileRename = (_: TAbstractFile, __: string) => {
-        this.queueRefresh(undefined, true);
+
+    private handleFileRename = (file: TAbstractFile, oldPath: string) => {
+        // Renames should feel instant; bypass queue and notify with oldPath
+        try {
+            const newPath = (file as any)?.path as string | undefined;
+            this.refreshCallback(newPath, false, oldPath);
+        } catch {
+            // Fallback to queued refresh
+            this.queueRefresh((file as any)?.path, false, true);
+        }
     };
     
     /**
      * Queue a refresh with debouncing, tracking all affected paths
      */
-    private queueRefresh(path?: string, forceFullRefresh: boolean = false): void {
-        // If forceFullRefresh is true, it takes precedence
-        if (forceFullRefresh) {
-            this.pendingChanges.clear(); // Clear other pending changes
-            this.pendingChanges.set('', true); // Use empty string as key for full refresh
-        } else if (path && !this.pendingChanges.has('')) {
-            // Only add the path if we don't already have a full refresh pending
-            this.pendingChanges.set(path, false);
+    private queueRefresh(path?: string, forceFullRefresh: boolean = false, immediate: boolean = false): void {
+        const now = Date.now();
+        const withinGrace = now - this.initAt < this.graceMs;
+
+        const enqueue = () => {
+            if (forceFullRefresh) {
+                this.pendingChanges.clear();
+                this.pendingChanges.set('', true);
+            } else if (path && !this.pendingChanges.has('')) {
+                this.pendingChanges.set(path, false);
+            }
+            this.debounceRefresh(immediate ? 0 : undefined);
+        };
+
+        // Only defer during the very first moments after init
+        if (withinGrace) {
+            const delay = this.graceMs - (now - this.initAt);
+            window.setTimeout(enqueue, delay);
+        } else {
+            enqueue();
         }
-        
-        // Debounce
-        this.debounceRefresh();
     }
 
     /**
@@ -93,11 +115,12 @@ export class DendronEventHandler {
      * This improves performance by preventing rapid UI updates when multiple
      * file events occur close together (e.g., during sync or bulk operations)
      */
-    private debounceRefresh(): void {
+    private debounceRefresh(waitOverride?: number): void {
         if (this.refreshDebounceTimeout) {
             window.clearTimeout(this.refreshDebounceTimeout);
         }
         
+        const wait = typeof waitOverride === 'number' ? waitOverride : this.debounceWaitTime;
         this.refreshDebounceTimeout = window.setTimeout(() => {
             // Check if we have a full refresh pending
             const hasFullRefresh = this.pendingChanges.has('') && this.pendingChanges.get('');
@@ -117,7 +140,7 @@ export class DendronEventHandler {
             // Reset state
             this.pendingChanges.clear();
             this.refreshDebounceTimeout = null;
-        }, this.debounceWaitTime);
+        }, wait);
     }
 
     /**

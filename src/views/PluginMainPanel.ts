@@ -26,6 +26,9 @@ export default class PluginMainPanel extends ItemView {
     private eventHandler: DendronEventHandler;
     private controls: ExpandedNodesManager;
 
+    // Internal state for tracking initialization
+    private _onOpenCalled: boolean = false;
+
     constructor(leaf: WorkspaceLeaf, settings: PluginSettings) {
         super(leaf);
         this.instanceId = ++PluginMainPanel.instanceCounter;
@@ -33,8 +36,8 @@ export default class PluginMainPanel extends ItemView {
 
         // Initialize components
         this.nodeRenderer = new TreeRenderer(this.app, this.fileItemsMap);
-        // Use 500ms debounce time for better performance when files change
-        this.eventHandler = new DendronEventHandler(this.app, this.refresh.bind(this), 500);
+        // Lower debounce to make updates feel snappier; structural ops still coalesce
+        this.eventHandler = new DendronEventHandler(this.app, this.refresh.bind(this), 120);
         // Controls will be initialized in onOpen when container is available
     }
 
@@ -51,8 +54,27 @@ export default class PluginMainPanel extends ItemView {
     }
 
     async onOpen() {
-        const viewRoot = this.containerEl.children[1];
+        // Track if onOpen has been called before to detect multiple calls
+        if (this._onOpenCalled) {
+            logger.log('[TreeMapper] WARNING: onOpen called multiple times!');
+            return;
+        }
+        this._onOpenCalled = true;
+
+        logger.log('[TreeMapper] onOpen called with containerEl:', {
+            containerEl: this.containerEl,
+            containerClass: this.containerEl?.className,
+            containerType: typeof this.containerEl,
+            containerId: this.containerEl?.id
+        });
+
+        // Wait for the container to be properly initialized
+        await this.waitForContainerReady();
+
+        // Use containerEl directly as the root container
+        const viewRoot = this.containerEl;
         if (viewRoot instanceof HTMLElement) {
+            // Set up the view containers
             this._setupViewContainers(viewRoot);
 
             // Wait for CSS to be loaded by checking if the styles are applied
@@ -66,7 +88,78 @@ export default class PluginMainPanel extends ItemView {
 
             // Highlight current file once initial render is ready
             this._highlightInitialActiveFile();
+
+            logger.log('[TreeMapper] onOpen completed successfully');
+        } else {
+            logger.error('[TreeMapper] Error: containerEl is not an HTMLElement:', {
+                containerEl: this.containerEl,
+                type: typeof this.containerEl
+            });
         }
+    }
+
+    /**
+     * Wait for the container to be properly initialized
+     */
+    private waitForContainerReady(): Promise<void> {
+        return new Promise((resolve) => {
+            const checkContainer = () => {
+                // Check if containerEl exists and is an HTMLElement
+                if (this.containerEl && this.containerEl instanceof HTMLElement) {
+                    resolve();
+                    return;
+                }
+
+                // If not ready, check again in a short while
+                setTimeout(checkContainer, 10);
+            };
+            checkContainer();
+        });
+    }
+
+    /**
+     * No longer needed - we've unified the tree building approach
+     * and don't need to watch for container changes
+     */
+    private _setupContainerWatcher(): void {
+        // This method is kept as a no-op to avoid changing all the call sites
+        // We don't need to watch the container anymore since we've unified the tree building approach
+    }
+
+    /**
+     * No longer needed - we've unified the tree building approach
+     * and don't need to restore the view
+     */
+    private async _restoreViewIfNeeded(): Promise<void> {
+        // This method is kept as a no-op to avoid changing all the call sites
+        // We don't need to restore the view anymore since we've unified the tree building approach
+    }
+
+    /**
+     * No longer needed - we've unified the tree building approach
+     * and don't need restoration tracking
+     */
+    private _resetRestorationTracking(): void {
+        // This method is kept as a no-op to avoid changing all the call sites
+        // We don't need restoration tracking anymore
+    }
+
+    /**
+     * No longer needed - we've unified the tree building approach
+     * and don't need stability checks
+     */
+    private _setupStabilityCheck(): void {
+        // This method is kept as a no-op to avoid changing all the call sites
+        // We don't need stability checks anymore
+    }
+
+    /**
+     * No longer needed - we've unified the tree building approach
+     * and don't need stability check timers
+     */
+    private _clearStabilityCheckTimers(): void {
+        // This method is kept as a no-op to avoid changing all the call sites
+        // We don't need stability check timers anymore
     }
 
     /**
@@ -75,19 +168,17 @@ export default class PluginMainPanel extends ItemView {
     private waitForCSSLoad(): Promise<void> {
         return new Promise((resolve) => {
             const checkCSS = () => {
-                if (!this.container) {
-                    setTimeout(checkCSS, 10);
-                    return;
+                // Check if the main container has the tm_view class and CSS is loaded
+                if (this.containerEl && this.containerEl.classList.contains('tm_view')) {
+                    const computedStyle = window.getComputedStyle(this.containerEl);
+                    if (computedStyle.getPropertyValue('--tm_css-is-loaded')) {
+                        resolve();
+                        return;
+                    }
                 }
 
-                // Check if the styles are applied by looking for a specific CSS variable
-                const computedStyle = window.getComputedStyle(this.container);
-                if (computedStyle.getPropertyValue('--tm_css-is-loaded')) {
-                    resolve();
-                } else {
-                    // If styles are not loaded yet, check again in a short while
-                    setTimeout(checkCSS, 10);
-                }
+                // If not ready, check again in a short while
+                setTimeout(checkCSS, 10);
             };
             checkCSS();
         });
@@ -96,9 +187,60 @@ export default class PluginMainPanel extends ItemView {
     /**
      * Prepare the header/body containers and baseline controls.
      */
-    private _setupViewContainers(container: HTMLElement): void {
-        container.empty();
+    /**
+     * Ensures the view structure exists in the container.
+     * This is a helper method that can be called before any operation that requires
+     * the view structure to be in place.
+     */
+    private _ensureViewStructureExists(container: HTMLElement): void {
+        // Just use the standard setup method - simpler and more reliable
+        this._setupViewContainers(container);
+    }
 
+    private _setupViewContainers(container: HTMLElement): void {
+        logger.log('[TreeMapper] Setting up view containers for:', {
+            container,
+            containerClass: container.className,
+            initialChildrenCount: container.children.length
+        });
+
+        // Check if our structure already exists
+        const existingHeader = container.querySelector('.tm_view-header');
+        const existingBody = container.querySelector('.tm_view-body');
+        
+        if (existingHeader && existingBody) {
+            logger.log('[TreeMapper] View structure already exists, preserving it');
+            // Structure already exists, just update classes
+            container.addClass('tm_view');
+            if (Platform.isMobile) container.addClass('tm_view-mobile');
+            
+            // Find existing tree container
+            const existingTreeContainer = existingBody.querySelector('.tm_view-tree');
+            if (existingTreeContainer instanceof HTMLElement) {
+                this.container = existingTreeContainer;
+            } else {
+                // Create tree container if it doesn't exist
+                const treeContainer = document.createElement('div');
+                treeContainer.className = 'tm_view-tree';
+                existingBody.appendChild(treeContainer);
+                this.container = treeContainer;
+            }
+            
+            // Add controls to existing header
+            this.controls = new ExpandedNodesManager(this.containerEl, this.expandedNodes);
+            if (existingHeader instanceof HTMLElement) {
+                this.controls.addControlButtons(existingHeader);
+                
+                // Add reveal button to existing header
+                this._addRevealActiveButton(existingHeader);
+            }
+            
+            return;
+        }
+        
+        // If our structure doesn't exist, create it from scratch
+        container.empty(); // This is necessary to avoid duplicate elements
+        
         container.addClass('tm_view');
         if (Platform.isMobile) container.addClass('tm_view-mobile');
 
@@ -124,11 +266,22 @@ export default class PluginMainPanel extends ItemView {
 
         // Reveal active file button
         this._addRevealActiveButton(header);
+
+        logger.log('[TreeMapper] View containers setup complete:', {
+            containerChildrenCount: container.children.length,
+            containerClass: container.className,
+            hasHeader: !!container.querySelector('.tm_view-header'),
+            hasBody: !!container.querySelector('.tm_view-body'),
+            hasTree: !!container.querySelector('.tm_view-tree')
+        });
     }
 
     private _addRevealActiveButton(header: HTMLElement): void {
+        // Avoid duplicates when header is re-initialized
+        if (header.querySelector('.tm_reveal-active')) return;
+
         const revealBtn = document.createElement('div');
-        revealBtn.className = 'tm_button-icon';
+        revealBtn.className = 'tm_button-icon tm_reveal-active';
         setIcon(revealBtn, 'locate-fixed');
         revealBtn.setAttribute('title', t('tooltipRevealActiveFile'));
         header.appendChild(revealBtn);
@@ -240,34 +393,70 @@ export default class PluginMainPanel extends ItemView {
         }
     }
 
-    async refresh(changedPath?: string, forceFullRefresh: boolean = false) {
-        if (!this.container) {
-            return;
-        }
+    async refresh(changedPath?: string, forceFullRefresh: boolean = false, oldPath?: string) {
+        if (!this.container) return;
 
-        // If using virtualized tree, rebuild virtual data outright on changes
-        if (await this._rebuildVirtualIfActive()) return;
+        // Prefer in-place virtualized update to avoid flicker and scroll jumps
+        if (await this._rebuildVirtualIfActive(changedPath, oldPath)) return;
 
-        // Try incremental update first unless forced
+        // Try incremental update first unless forced (legacy path)
         if (changedPath && !forceFullRefresh && this._tryIncrementalRefresh(changedPath)) return;
 
-        // Fallback to full refresh
+        // Fallback to full refresh (legacy path)
         await this._fullRefresh();
-        this.highlightActiveFile();
+        // Do NOT auto-scroll here. Scrolling is reserved for file-open events.
     }
 
-    private async _rebuildVirtualIfActive(): Promise<boolean> {
+    private async _rebuildVirtualIfActive(newPath?: string, oldPath?: string): Promise<boolean> {
+        // If we already have a virtual tree, update its data in place
         if (!this.virtualTree) return false;
-        const rootContainer = this.containerEl.children[1];
-        if (rootContainer instanceof HTMLElement) {
-            await this.buildVirtualizedDendronTree(rootContainer);
-            if (this.activeFile) this.virtualTree.revealPath(this.activeFile.path);
-            return true;
+
+        // If this is a rename within the same parent, try an in-place rename
+        if (oldPath && newPath) {
+            try {
+                const didRename = this.virtualTree.renamePath(oldPath, newPath);
+                if (didRename) {
+                    // Maintain selection to new path if active file still points there
+                    if (this.activeFile) this.virtualTree.selectPath(this.activeFile.path, { reveal: false });
+                    this.updateHeaderToggleIcon();
+                    return true;
+                }
+            } catch (e) {
+            logger.error('[TreeMapper] Error attempting in-place rename, will fall back to data update:', e);
+            }
         }
-        return false;
+
+        // Rebuild data model from vault
+        const folders = this.app.vault.getAllFolders();
+        const files = this.app.vault.getFiles();
+        const treeBuilder = new TreeBuilder();
+        const rootNode = treeBuilder.buildDendronStructure(folders, files);
+        this.lastBuiltTree = rootNode;
+
+        const { data, parentMap } = buildVirtualizedData(rootNode);
+        try {
+            this.virtualTree.updateData(data, parentMap);
+            // Re-select active file without scrolling (handles rename path changes)
+            if (this.activeFile) {
+                this.virtualTree.selectPath(this.activeFile.path, { reveal: false });
+            }
+            // Keep header icon state in sync with expansion set
+            this.updateHeaderToggleIcon();
+        } catch (e) {
+            logger.error('[TreeMapper] Error updating virtual tree data in-place, falling back to rebuild:', e);
+            if (this.containerEl instanceof HTMLElement) await this.buildVirtualizedDendronTree(this.containerEl);
+        }
+        // Do NOT reveal/scroll here; only scroll on file-open events
+        return true;
     }
 
-    private _tryIncrementalRefresh(changedPath: string): boolean {
+    private _tryIncrementalRefresh(_changedPath: string): boolean {
+        // For consistency, we're going to avoid incremental updates
+        // and always use the full virtualized tree rebuild approach
+        // This ensures we always use the same rendering method
+        return false;
+        
+        /* Original incremental update code kept for reference
         const success = this.eventHandler.tryIncrementalUpdate(
             changedPath,
             this.container!,
@@ -277,14 +466,24 @@ export default class PluginMainPanel extends ItemView {
         );
         if (success) this.highlightActiveFile();
         return success;
+        */
     }
 
     private async _fullRefresh(): Promise<void> {
+        // Save expanded state for restoration later
         this.saveExpandedState();
-        this.container!.empty();
-        this.fileItemsMap.clear();
-        await this.buildDendronTree(this.container!);
-        this.restoreExpandedState();
+        
+        // Instead of emptying the container and rebuilding the DOM tree,
+        // use the same virtualized tree building approach as the initial render
+        if (this.containerEl) {
+            // Use the same method as initial render
+            await this.buildVirtualizedDendronTree(this.containerEl);
+            
+            // Restore expanded state
+            this.restoreExpandedState();
+        } else {
+            logger.error('[TreeMapper] Error: Cannot refresh, containerEl is null');
+        }
     }
 
     async buildDendronTree(container: HTMLElement) {
@@ -309,6 +508,9 @@ export default class PluginMainPanel extends ItemView {
      * Build the Dendron structure and initialize (or refresh) the virtualized tree view.
      */
     private async buildVirtualizedDendronTree(rootContainer: HTMLElement): Promise<void> {
+        // First, ensure our view structure exists
+        this._ensureViewStructureExists(rootContainer);
+        
         // Build dendron structure
         const folders = this.app.vault.getAllFolders();
         const files = this.app.vault.getFiles();
@@ -319,12 +521,20 @@ export default class PluginMainPanel extends ItemView {
         // Convert to virtualized data and remember parent relationships
         const { data, parentMap } = buildVirtualizedData(rootNode);
 
-        // Tear down previous
+        // Always destroy and recreate the virtual tree for now
+        // This is safer until we can fix the type compatibility issues
         if (this.virtualTree) {
-            this.virtualTree.destroy();
+            try {
+                this.virtualTree.destroy();
+            } catch (destroyError) {
+                logger.error('[TreeMapper] Error destroying virtual tree:', destroyError);
+            }
             this.virtualTree = null;
         }
 
+        // Create a new virtual tree
+        logger.log('[TreeMapper] Creating new virtual tree');
+        
         // Determine row height from current CSS so spacing matches visuals
         const gap = this.computeGap(rootContainer) ?? 4;
         const rowHeight = this.computeRowHeight(rootContainer) || (24 + gap); // total = content + gap
@@ -348,7 +558,7 @@ export default class PluginMainPanel extends ItemView {
             try {
                 logger.log('[TreeMapper] No saved expanded nodes. All collapsed initially.');
             } catch (error) {
-                logger.log('[TreeMapper] Error logging expanded nodes status:', error);
+                logger.error('[TreeMapper] Error logging expanded nodes status:', error);
             }
         }
 
@@ -381,7 +591,7 @@ export default class PluginMainPanel extends ItemView {
     }
 
     private updateHeaderToggleIcon(): void {
-        const rootContainer = this.containerEl.children[1];
+        const rootContainer = this.containerEl;
         if (rootContainer instanceof HTMLElement) {
             const toggleButton: HTMLElement | null = rootContainer.querySelector('.tm_tree-toggle-button');
             const iconContainer: HTMLElement | null = toggleButton?.querySelector('.tm_tree-toggle-icon') || null;
@@ -394,14 +604,14 @@ export default class PluginMainPanel extends ItemView {
                 try {
                     setIcon(iconContainer, 'chevrons-up-down');
                 } catch (error) {
-                    logger.log('[TreeMapper] Error setting expand icon:', error);
+                    logger.error('[TreeMapper] Error setting expand icon:', error);
                 }
                 toggleButton.setAttribute('title', t('tooltipExpandAll'));
             } else {
                 try {
                     setIcon(iconContainer, 'chevrons-down-up');
                 } catch (error) {
-                    logger.log('[TreeMapper] Error setting collapse icon:', error);
+                    logger.error('[TreeMapper] Error setting collapse icon:', error);
                 }
                 toggleButton.setAttribute('title', t('tooltipCollapseAll'));
             }
@@ -438,7 +648,7 @@ export default class PluginMainPanel extends ItemView {
             if (total < 26) return 28;
             if (total > 0) return total;
         } catch (error) {
-            logger.log('[TreeMapper] Error computing row height:', error);
+            logger.error('[TreeMapper] Error computing row height:', error);
         }
         return null;
     }
@@ -457,7 +667,7 @@ export default class PluginMainPanel extends ItemView {
             probe.remove();
             if (Number.isFinite(h) && h >= 0) return h;
         } catch (error) {
-            logger.log('[TreeMapper] Error computing gap:', error);
+            logger.error('[TreeMapper] Error computing gap:', error);
         }
         return null;
     }
@@ -514,6 +724,8 @@ export default class PluginMainPanel extends ItemView {
      * Clean up resources when the view is closed
      */
     async onClose() {
+        logger.log('[TreeMapper] onClose called, cleaning up resources');
+
         // Save expanded state before closing
         this.saveExpandedState();
 
@@ -523,10 +735,14 @@ export default class PluginMainPanel extends ItemView {
             this.eventHandler.unregisterFileEvents();
         }
 
+        // No observers or timers to clean up anymore
+
         // Clear references
         this.container = null;
         this.lastBuiltTree = null;
         this.fileItemsMap.clear();
         this.activeFile = null;
+
+        logger.log('[TreeMapper] onClose cleanup completed');
     }
 } 

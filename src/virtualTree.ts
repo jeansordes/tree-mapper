@@ -3,6 +3,7 @@
 import { flattenTree } from './flatten';
 import { computeWindow } from './utils';
 import { VirtualTreeItem, VirtualTreeOptions } from './types';
+import { logger } from './utils/logger';
 
 export class VirtualTree {
   private container: HTMLElement;
@@ -21,6 +22,8 @@ export class VirtualTree {
   private visible: VirtualTreeItem[];
   private total: number;
   private _onScroll: () => void;
+  // Store the exact scroll handler we add so we can remove it later
+  private _scrollHandler?: () => void;
   private _onKeyDown: (e: KeyboardEvent) => void;
 
   constructor({ container, data = [], rowHeight = 20, buffer = 10, onOpen, onSelect }: VirtualTreeOptions) {
@@ -40,11 +43,37 @@ export class VirtualTree {
     this.container.style.outline = 'none';
     
     // Create a wrapper div to contain all virtualizer content
-    this.virtualizer = document.createElement('div');
-    this.virtualizer.className = 'tm_view-tree';
+    // Look for .tm_view-tree within the provided container first, then globally as fallback
+    let viewTree: HTMLElement | null = container.querySelector('.tm_view-tree');
+
+    // If not found in container, try global search (backward compatibility)
+    if (!viewTree) {
+      viewTree = document.querySelector('.tm_view-tree');
+    }
+
+    if (!viewTree) {
+      logger.error('[TreeMapper] No view tree found - DOM element with class .tm_view-tree does not exist. Container structure:', {
+        container: container,
+        containerChildren: Array.from(container.children).map(child => ({
+          tagName: child.tagName,
+          className: child.className
+        }))
+      });
+      return;
+    }
+    this.virtualizer = viewTree;
     this.virtualizer.style.position = 'relative';
     this.virtualizer.style.height = '0px'; // Will be updated based on content
-    this.container.appendChild(this.virtualizer);
+    
+    // Don't append the virtualizer if it's already a child of the container
+    // This prevents duplicate appending which can cause issues
+    const isAlreadyChild = Array.from(this.container.children).includes(this.virtualizer);
+    if (!isAlreadyChild) {
+      logger.log('[TreeMapper] Appending virtualizer to container');
+      this.container.appendChild(this.virtualizer);
+    } else {
+      logger.log('[TreeMapper] Virtualizer is already a child of container, skipping append');
+    }
 
     this.pool = [];
     this.visibleCount = Math.ceil(this.container.clientHeight / this.rowHeight);
@@ -61,7 +90,9 @@ export class VirtualTree {
     this.setData(data);
     this._onScroll = () => this._render();
     this._onKeyDown = (e: KeyboardEvent) => this._handleKeyDown(e);
-    this.container.addEventListener('scroll', () => requestAnimationFrame(this._onScroll));
+    // Keep a stable reference to the wrapper we actually attach
+    this._scrollHandler = () => requestAnimationFrame(this._onScroll);
+    this.container.addEventListener('scroll', this._scrollHandler);
     this.container.addEventListener('keydown', this._onKeyDown);
   }
 
@@ -136,7 +167,9 @@ export class VirtualTree {
     this.visible = flattenTree(this.data, this.expanded);
     this.total = this.visible.length;
     // Set the virtualizer height to create scrollable area
-    this.virtualizer.style.height = `${this.total * this.rowHeight}px`;
+    if (this.virtualizer) {
+      this.virtualizer.style.height = `${this.total * this.rowHeight}px`;
+    }
   }
 
 
@@ -225,7 +258,7 @@ export class VirtualTree {
     }
   }
 
-  private _render(): void {
+  protected _render(): void {
     const { scrollTop, clientHeight } = this.container;
     const { startIndex, endIndex } = computeWindow(scrollTop, this.rowHeight, this.buffer, clientHeight, this.total, this.poolSize);
 
@@ -276,7 +309,7 @@ export class VirtualTree {
     }
   }
 
-  private _onRowClick(e: MouseEvent, row: HTMLElement): void {
+  protected _onRowClick(e: MouseEvent, row: HTMLElement): void {
     const id = row.dataset.id;
     const idx = Number(row.dataset.index);
     if (!id || isNaN(idx)) return;
@@ -298,8 +331,17 @@ export class VirtualTree {
   }
 
   destroy(): void {
-    this.container.removeEventListener('scroll', () => requestAnimationFrame(this._onScroll));
-    this.container.removeEventListener('keydown', this._onKeyDown);
-    this.container.innerHTML = '';
+    // Remove listeners using the same references that were added
+    if (this._scrollHandler) {
+      this.container.removeEventListener('scroll', this._scrollHandler);
+      this._scrollHandler = undefined;
+    }
+    if (this._onKeyDown) {
+      this.container.removeEventListener('keydown', this._onKeyDown);
+    }
+    // Only clear our own rows; do not wipe the whole view container
+    if (this.virtualizer) {
+      this.virtualizer.innerHTML = '';
+    }
   }
 }

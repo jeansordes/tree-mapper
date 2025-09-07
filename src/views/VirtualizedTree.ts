@@ -113,6 +113,7 @@ export class ComplexVirtualTree extends VirtualTree {
   private _resizeObs?: ResizeObserver;
   private _onExpansionChange?: () => void;
   private _selectedId?: string;
+  private _isAttached: boolean = false;
 
   // Cast this to access VirtualTree properties with proper typing
   private get virtualTree(): VirtualTreeInterface {
@@ -139,36 +140,146 @@ export class ComplexVirtualTree extends VirtualTree {
     if (typeof options.gap === 'number' && options.gap >= 0) this._gap = options.gap;
     this._onExpansionChange = options.onExpansionChange;
 
-    const viewBody = options.container.querySelector('.tm_view-body');
-    if (viewBody instanceof HTMLElement) {
-      if (viewBody) this._attachToViewBody(options.container, viewBody);
+    // Try to find the view body, but be more resilient if it's not ready yet
+    const findAndAttachViewBody = () => {
+      // Log container structure for debugging
+      logger.log('[TreeMapper] Looking for view body in container:', {
+        containerClass: options.container.className,
+        children: Array.from(options.container.children).map(child => ({
+          tagName: child.tagName,
+          className: child.className
+        }))
+      });
+      
+      // First check if we're directly in the view-content element
+      if (options.container.classList.contains('view-content')) {
+        // We need to check if our tm_view-body exists
+        const viewBody = options.container.querySelector('.tm_view-body');
+        if (viewBody instanceof HTMLElement && !this._isAttached) {
+          logger.log('[TreeMapper] View body found in view-content, attaching now');
+          this._attachToViewBody(options.container, viewBody);
+          this._safeRender('first render');
+          requestAnimationFrame(() => this._safeRender('deferred render'));
+          if ('ResizeObserver' in window) this._observeResize(viewBody);
+          return true;
+        }
+      }
+      
+      // Fall back to standard search
+      const viewBody = options.container.querySelector('.tm_view-body');
+      if (viewBody instanceof HTMLElement && !this._isAttached) {
+        logger.log('[TreeMapper] View body found, attaching now');
+        this._attachToViewBody(options.container, viewBody);
+        this._safeRender('first render');
+        requestAnimationFrame(() => this._safeRender('deferred render'));
+        if ('ResizeObserver' in window) this._observeResize(viewBody);
+        return true;
+      }
+      return false;
+    };
 
-      // Initial renders
-      this._safeRender('first render');
-      requestAnimationFrame(() => this._safeRender('deferred render'));
+    // Try immediately first
+    if (!findAndAttachViewBody()) {
+      // If not found, set up a single retry mechanism
+      let retryCount = 0;
+      const maxRetries = 20;
+      const retryInterval = 100; // 100ms
 
-      // React to container resize so pool grows when the panel opens/resizes
-      if (viewBody && 'ResizeObserver' in window) this._observeResize(viewBody);
-    } else {
-      logger.log('[TreeMapper] Error attaching to view body:', viewBody);
+      const retry = () => {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          logger.error('[TreeMapper] Error: Could not find .tm_view-body after maximum retries. Container structure:', {
+            container: options.container,
+            containerClass: options.container.className,
+            children: Array.from(options.container.children).map(child => ({
+              tagName: child.tagName,
+              className: child.className,
+              innerHTML: child.innerHTML?.substring(0, 100) + '...'
+            }))
+          });
+          return;
+        }
+
+        if (!findAndAttachViewBody()) {
+          setTimeout(retry, retryInterval);
+        }
+      };
+
+      setTimeout(retry, retryInterval);
     }
   }
 
   private _attachToViewBody(host: HTMLElement, viewBody: HTMLElement): void {
+    if (this._isAttached) {
+      logger.log('[TreeMapper] Already attached to view body, skipping');
+      return;
+    }
+
+    // Log the current structure for debugging
+    logger.log('[TreeMapper] Attaching to view body, current structure:', {
+      hostClass: host.className,
+      viewBodyClass: viewBody.className,
+      hostChildren: Array.from(host.children).map(c => c.className),
+      viewBodyChildren: Array.from(viewBody.children).map(c => c.className),
+      virtualizerExists: !!this.virtualTree.virtualizer
+    });
+
     // Move virtualizer to view body
     try {
-      host.removeChild(this.virtualTree.virtualizer);
+      // First check if the virtualizer is actually a child of the host
+      const isChildOfHost = Array.from(host.children).includes(this.virtualTree.virtualizer);
+      
+      if (isChildOfHost) {
+        logger.log('[TreeMapper] Removing virtualizer from host');
+        host.removeChild(this.virtualTree.virtualizer);
+      } else {
+        logger.log('[TreeMapper] Virtualizer is not a child of host, skipping removal');
+      }
     } catch (error) {
-      logger.log('[TreeMapper] Error removing virtualizer:', error);
+      logger.error('[TreeMapper] Error removing virtualizer:', error);
     }
-    viewBody.appendChild(this.virtualTree.virtualizer);
+    
+    // Check if the virtualizer is already a child of the view body
+    const isChildOfViewBody = Array.from(viewBody.children).includes(this.virtualTree.virtualizer);
+    
+    if (!isChildOfViewBody) {
+      logger.log('[TreeMapper] Appending virtualizer to view body');
+      
+      // Clear any existing content in the view body
+      // This is important to prevent duplicate or stale content
+      const treeContainer = viewBody.querySelector('.tm_view-tree');
+      if (treeContainer instanceof HTMLElement) {
+        logger.log('[TreeMapper] Found existing tm_view-tree, using it as target');
+        
+        // Empty the tree container before adding our virtualizer
+        while (treeContainer.firstChild) {
+          treeContainer.removeChild(treeContainer.firstChild);
+        }
+        
+        // Append our virtualizer to the tree container
+        treeContainer.appendChild(this.virtualTree.virtualizer);
+      } else {
+        // If no tree container, append directly to view body
+        viewBody.appendChild(this.virtualTree.virtualizer);
+      }
+    } else {
+      logger.log('[TreeMapper] Virtualizer is already a child of view body, skipping append');
+    }
 
     // Rebind scroll to view body
     host.removeEventListener('scroll', this.virtualTree._onScroll);
     this._boundScroll = () => requestAnimationFrame(() => this.virtualTree._onScroll());
     viewBody.addEventListener('scroll', this._boundScroll);
+
+    this._isAttached = true;
     // Store reference for later cleanup
     this.virtualTree.scrollContainer = viewBody;
+    
+    // Force a render after attachment
+    setTimeout(() => {
+      logger.log('[TreeMapper] Forcing render after attachment');
+      this._safeRender('post-attachment render');
+    }, 100);
   }
 
   private _observeResize(viewBody: HTMLElement): void {
@@ -180,7 +291,7 @@ export class ComplexVirtualTree extends VirtualTree {
     try {
       this.virtualTree._render();
     } catch (error) {
-      logger.log(`[TreeMapper] Error in ${context}:`, error);
+      logger.error(`[TreeMapper] Error in ${context}:`, error);
     }
   }
 
@@ -201,6 +312,129 @@ export class ComplexVirtualTree extends VirtualTree {
 
   public setParentMap(map: Map<string, string | undefined>): void { this.parentMap = map; }
 
+  // Update underlying data without recreating the tree to avoid flicker/scroll jumps
+  public updateData(data: VItem[], parentMap: Map<string, string | undefined>): void {
+    const vt = this.virtualTree;
+    const scrollContainer = vt.scrollContainer;
+    const host = (scrollContainer instanceof HTMLElement ? scrollContainer : vt.container) as HTMLElement;
+    const prevScrollTop = host.scrollTop;
+    const prevTotalPx = vt.total * vt.rowHeight;
+
+    // Swap data and recompute visible rows based on current expansion map
+    vt.data = data;
+    this.setParentMap(parentMap);
+    vt._recomputeVisible();
+
+    // Reapply selection by id if any
+    this._reapplySelection();
+
+    // Keep focus index within bounds
+    if (vt.focusedIndex >= vt.total) {
+      vt.focusedIndex = Math.max(0, vt.total - 1);
+    }
+
+    // Preserve scrollTop where possible; clamp if new content is shorter
+    const newTotalPx = vt.total * vt.rowHeight;
+    const maxScrollTop = Math.max(0, newTotalPx - host.clientHeight);
+    if (prevScrollTop > maxScrollTop) {
+      host.scrollTop = maxScrollTop; // only set when it actually changes
+    }
+    // Render with updated data
+    vt._render();
+    this._onExpansionChange?.();
+  }
+
+  // Attempt to rename a single path in-place (only supports same-parent renames).
+  // Returns true if applied in place; false if caller should rebuild.
+  public renamePath(oldPath: string, newPath: string): boolean {
+    if (!oldPath || !newPath || oldPath === newPath) return true;
+
+    const dirname = (p: string) => p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : '';
+    const sameParent = dirname(oldPath) === dirname(newPath);
+    if (!sameParent) return false; // moving across parents is more complex; let caller rebuild
+
+    const vt = this.virtualTree;
+    const scrollContainer = vt.scrollContainer;
+    const host = (scrollContainer instanceof HTMLElement ? scrollContainer : vt.container) as HTMLElement;
+    const prevScrollTop = host.scrollTop;
+
+    // Helper to walk and find item + parent list
+    const findIn = (arr: VItem[], target: string): { list: VItem[]; index: number } | null => {
+      for (let i = 0; i < arr.length; i++) {
+        const it = arr[i];
+        if (it.id === target) return { list: arr, index: i };
+        if (it.children && it.children.length) {
+          const found = findIn(it.children, target);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const loc = findIn(vt.data, oldPath);
+    if (!loc) return false;
+
+    // Update expanded set by prefix replacement
+    const newExpanded = new Map<string, boolean>();
+    vt.expanded.forEach((v, k) => {
+      if (!v) return;
+      if (k === oldPath || k.startsWith(oldPath + '/')) {
+        const replaced = newPath + k.slice(oldPath.length);
+        newExpanded.set(replaced, true);
+      } else {
+        newExpanded.set(k, true);
+      }
+    });
+    vt.expanded = newExpanded;
+
+    // Update item id/name and descendants' ids
+    const updateIds = (node: VItem) => {
+      if (node.id === oldPath) {
+        node.id = newPath;
+        const base = FileUtils.basename(newPath);
+        if (node.kind === 'folder') node.name = base.replace(/ \(\d+\)$/, '');
+        else {
+          const matched = base.match(/([^.]+)\.[^.]+$/);
+          node.name = (matched ? matched[1] : base).replace(/ \(\d+\)$/, '');
+        }
+      } else if (node.id.startsWith(oldPath + '/')) {
+        node.id = newPath + node.id.slice(oldPath.length);
+      }
+      // Names of descendants do not change on path rename
+      if (node.children) node.children.forEach(updateIds);
+    };
+    updateIds(loc.list[loc.index]);
+
+    // Re-sort siblings by name (localeCompare) to keep ordering consistent
+    loc.list.sort((a, b) => a.name.localeCompare(b.name));
+
+    // Rebuild parent map from current data
+    const newParentMap = new Map<string, string | undefined>();
+    const walk = (items: VItem[], parent?: string) => {
+      for (const it of items) {
+        newParentMap.set(it.id, parent);
+        if (it.children && it.children.length) walk(it.children, it.id);
+      }
+    };
+    walk(vt.data, (vt as any).rootId || undefined);
+    this.setParentMap(newParentMap);
+
+    // Maintain selection id if it was under the renamed subtree
+    if (this._selectedId) {
+      if (this._selectedId === oldPath || this._selectedId.startsWith(oldPath + '/')) {
+        this._selectedId = newPath + this._selectedId.slice(oldPath.length);
+      }
+    }
+
+    // Recompute and render; preserve scrollTop
+    vt._recomputeVisible();
+    this._reapplySelection();
+    vt._render();
+    host.scrollTop = prevScrollTop;
+    this._onExpansionChange?.();
+    return true;
+  }
+
   public expandAll(): void {
     // Expand every folder/virtual item present in visible data by id.
     // We iterate over flattened visible source (not just current visible window)
@@ -218,6 +452,23 @@ export class ComplexVirtualTree extends VirtualTree {
     this._reapplySelection();
     this.virtualTree._render();
     this._onExpansionChange?.();
+  }
+
+  // Select a path without scrolling or expanding; useful on rename/update
+  public selectPath(path: string, options?: { reveal?: boolean }): void {
+    if (options?.reveal) {
+      // Delegate to revealPath when explicit reveal is requested
+      void this.revealPath(path);
+      return;
+    }
+    this._selectedId = path;
+    const list = this.virtualTree.visible;
+    const idx = list.findIndex(it => it.id === path);
+    if (idx >= 0) {
+      this.virtualTree.selectedIndex = idx;
+      // do not change focusedIndex or scroll; just re-render
+      this.virtualTree._render();
+    }
   }
 
   public collapseAll(): void {
@@ -453,7 +704,7 @@ export class ComplexVirtualTree extends VirtualTree {
         if (kind) this._handleTitleClick(kind, id, idx);
       }
     } else {
-      logger.log('[TreeMapper] Error handling row click:', e);
+      logger.error('[TreeMapper] Error handling row click:', e);
     }
   }
 

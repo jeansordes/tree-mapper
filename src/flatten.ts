@@ -1,11 +1,16 @@
 import { VirtualTreeItem } from './types';
 
 export function flattenTree(
-  nodes: VirtualTreeItem[], 
+  nodes: VirtualTreeItem[] | undefined, 
   expandedMap: Map<string, boolean> = new Map(), 
   level: number = 0, 
   out: VirtualTreeItem[] = []
 ): VirtualTreeItem[] {
+  // Handle case when nodes is undefined or not an array
+  if (!nodes || !Array.isArray(nodes)) {
+    return out;
+  }
+  
   for (const n of nodes) {
     const hasChildren = Array.isArray(n.children) && n.children.length > 0;
     // Include hasChildren so virtual row renderers can decide whether to show toggles
