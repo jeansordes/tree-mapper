@@ -135,8 +135,13 @@ export class VirtualTree {
 
   scrollToIndex(index: number): void {
     if (index < 0 || index >= this.total) return;
-    const targetScrollTop = index * this.rowHeight;
-    this.container.scrollTop = targetScrollTop;
+    const rowTop = index * this.rowHeight;
+    const rowBottom = rowTop + this.rowHeight;
+    const viewTop = this.container.scrollTop;
+    const viewBottom = viewTop + this.container.clientHeight;
+    // If row is already fully visible, skip scrolling
+    if (rowTop >= viewTop && rowBottom <= viewBottom) return;
+    this.container.scrollTop = rowTop;
   }
 
   private _clampFocus(): void {

@@ -1,46 +1,8 @@
 import { App, TFile, setIcon } from 'obsidian';
 import { VirtualTree } from '../virtualTree';
 import { FileUtils } from '../utils/FileUtils';
-import { TreeNode, TreeNodeType } from '../types';
 import { logger } from '../utils/logger';
-
-type Kind = 'folder' | 'file' | 'virtual';
-
-interface VItem {
-  id: string;            // full path used as unique id
-  name: string;          // display name
-  kind: Kind;            // node kind
-  extension?: string;    // file extension (e.g., md, pdf)
-  children?: VItem[];    // nested items
-}
-
-function nodeKind(node: TreeNode): Kind {
-  // Preserve actual type; files remain files even if they have children.
-  switch (node.nodeType) {
-    case TreeNodeType.FOLDER: return 'folder';
-    case TreeNodeType.FILE: return 'file';
-    case TreeNodeType.VIRTUAL: return 'virtual';
-  }
-  return 'virtual';
-}
-
-function displayName(node: TreeNode): string {
-  // Mirror TreeRenderer.getNodeName
-  const base = FileUtils.basename(node.path);
-  if (node.nodeType === TreeNodeType.FOLDER) return base.replace(/ \(\d+\)$/, '');
-  const matched = base.match(/([^.]+)\.[^.]+$/);
-  return (matched ? matched[1] : base).replace(/ \(\d+\)$/, '');
-}
-
-function extOf(path: string): string | undefined {
-  const idx = path.lastIndexOf('.');
-  return idx > -1 ? path.slice(idx + 1) : undefined;
-}
-
-export interface VirtualizedData {
-  data: VItem[];
-  parentMap: Map<string, string | undefined>;
-}
+import type { VItem } from '../core/virtualData';
 
 // Shape of items after flattening, as consumed by the virtual renderer
 type RowItem = VItem & { level: number; hasChildren?: boolean };
@@ -64,45 +26,6 @@ interface VirtualTreeInterface {
   _recomputeVisible: () => void;
   _onScroll: () => void;
   scrollToIndex: (index: number) => void;
-}
-
-export function buildVirtualizedData(root: TreeNode): VirtualizedData {
-  const parentMap = new Map<string, string | undefined>();
-
-  function build(node: TreeNode, parentId?: string): VItem {
-    parentMap.set(node.path, parentId);
-    const item: VItem = {
-      id: node.path,
-      name: displayName(node),
-      kind: nodeKind(node),
-    };
-
-    if (node.nodeType === TreeNodeType.FILE) {
-      const e = extOf(node.path);
-      if (e) item.extension = e;
-    }
-
-    if (node.children && node.children.size > 0) {
-      const children: VItem[] = [];
-      // Keep same ordering as TreeRenderer
-      Array.from(node.children.entries())
-        .sort(([aKey], [bKey]) => aKey.localeCompare(bKey))
-        .forEach(([, child]) => {
-          children.push(build(child, node.path));
-        });
-      item.children = children;
-    }
-
-    return item;
-  }
-
-  // We render the root's children as top-level
-  const data: VItem[] = [];
-  Array.from(root.children.entries())
-    .sort(([aKey], [bKey]) => aKey.localeCompare(bKey))
-    .forEach(([, child]) => data.push(build(child, root.path)));
-
-  return { data, parentMap };
 }
 
 export class ComplexVirtualTree extends VirtualTree {
@@ -514,15 +437,19 @@ export class ComplexVirtualTree extends VirtualTree {
       const total: number = this.virtualTree.total;
       if (index < 0 || index >= total) return;
       const rowHeight: number = this.virtualTree.rowHeight;
-      const offsetRows = 3; // keep 3 rows above when scrolling into view
+      // Skip scrolling if the row is already fully visible
+      const rowTop = index * rowHeight;
+      const rowBottom = rowTop + rowHeight;
+      const viewTop = sc.scrollTop;
+      const viewBottom = viewTop + sc.clientHeight;
+      if (rowTop >= viewTop && rowBottom <= viewBottom) return;
+      // Otherwise scroll with a small offset so the row isn't at the very edge
+      const offsetRows = 3;
       const maxScrollTop = Math.max(0, total * rowHeight - sc.clientHeight);
       let targetScrollTop = Math.max(0, (index - offsetRows) * rowHeight);
       targetScrollTop = Math.min(targetScrollTop, maxScrollTop);
-      try {
-        sc.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-      } catch {
-        sc.scrollTop = targetScrollTop;
-      }
+      try { sc.scrollTo({ top: targetScrollTop, behavior: 'smooth' }); }
+      catch { sc.scrollTop = targetScrollTop; }
     }
   }
 
