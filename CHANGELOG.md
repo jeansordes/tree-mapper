@@ -1,3 +1,17 @@
+## [1.8.3](https://github.com/jeansordes/tree-mapper/compare/1.8.2...1.8.3) (2025-09-07)
+
+### Code Refactoring
+
+* convert JavaScript files to TypeScript ([0602c07](https://github.com/jeansordes/tree-mapper/commit/0602c073b5bc5e61f81a99f83092afac97906c8d))
+
+### Performance Improvements
+
+* **core:** optimize file event handling and improve performance ([8d3129a](https://github.com/jeansordes/tree-mapper/commit/8d3129a6ac2b33a470d6459f2ad97ff7103671bc))
+
+### BREAKING CHANGES
+
+* All JavaScript source files converted to TypeScript
+
 ## [1.8.2](https://github.com/jeansordes/tree-mapper/compare/1.8.1...1.8.2) (2025-09-02)
 
 ### Bug Fixes
