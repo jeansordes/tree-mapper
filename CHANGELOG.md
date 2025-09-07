@@ -1,3 +1,13 @@
+## [1.8.6](https://github.com/jeansordes/tree-mapper/compare/1.8.5...1.8.6) (2025-09-07)
+
+### Code Refactoring
+
+* optimize virtual tree performance and simplify architecture ([29a09dc](https://github.com/jeansordes/tree-mapper/commit/29a09dcf58233f4d20276d93629c04127bb83f1d))
+
+### BREAKING CHANGES
+
+* ExpandedNodesManager class removed - functionality moved to VirtualTreeManager
+
 ## [1.8.5](https://github.com/jeansordes/tree-mapper/compare/1.8.4...1.8.5) (2025-09-07)
 
 ### Performance Improvements
