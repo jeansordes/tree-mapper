@@ -1,3 +1,9 @@
+## [1.8.7](https://github.com/jeansordes/tree-mapper/compare/1.8.6...1.8.7) (2025-09-07)
+
+### Bug Fixes
+
+* **VirtualizedTree:** enhance path renaming logic and Dendron parent computation ([a75b436](https://github.com/jeansordes/tree-mapper/commit/a75b4363d02503e02aa581a274bea6b177814947))
+
 ## [1.8.6](https://github.com/jeansordes/tree-mapper/compare/1.8.5...1.8.6) (2025-09-07)
 
 ### Code Refactoring
