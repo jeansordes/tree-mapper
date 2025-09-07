@@ -37,6 +37,10 @@ export class ComplexVirtualTree extends VirtualTree {
   private _onExpansionChange?: () => void;
   private _selectedId?: string;
   private _isAttached: boolean = false;
+  // Width management for rows
+  private _maxRowWidth: number = 0;
+  private _widthAdjustTimer?: number;
+  private _lastScrollTop: number = 0;
 
   // Cast this to access VirtualTree properties with proper typing
   private get virtualTree(): VirtualTreeInterface {
@@ -191,12 +195,29 @@ export class ComplexVirtualTree extends VirtualTree {
 
     // Rebind scroll to view body
     host.removeEventListener('scroll', this.virtualTree._onScroll);
-    this._boundScroll = () => requestAnimationFrame(() => this.virtualTree._onScroll());
+    // Only trigger render when vertical scroll changes (ignore horizontal scroll)
+    this._boundScroll = () => requestAnimationFrame(() => {
+      const sc1 = this.virtualTree.scrollContainer;
+      const sc2 = this.virtualTree.container;
+      const sc = sc1 instanceof HTMLElement ? sc1 : sc2;
+      const st = sc instanceof HTMLElement ? sc.scrollTop : 0;
+      if (st !== this._lastScrollTop) {
+        this._lastScrollTop = st;
+        this.virtualTree._onScroll();
+      }
+    });
     viewBody.addEventListener('scroll', this._boundScroll);
 
     this._isAttached = true;
     // Store reference for later cleanup
     this.virtualTree.scrollContainer = viewBody;
+    // Initialize default width to the panel width
+    try {
+      const minPanelWidth = viewBody.clientWidth;
+      this._maxRowWidth = Math.max(this._maxRowWidth, minPanelWidth);
+      const virtualizerEl = this.virtualTree.virtualizer as HTMLElement | undefined;
+      if (virtualizerEl) virtualizerEl.style.width = `${this._maxRowWidth}px`;
+    } catch {}
     
     // Force a render after attachment
     setTimeout(() => {
@@ -470,19 +491,7 @@ export class ComplexVirtualTree extends VirtualTree {
     row.style.setProperty('padding-bottom', 'var(--tm_gap)');
     // Add an extra gap between the rightmost guide and the node content
     row.style.paddingLeft = `calc(${item.level * 20 + 8}px + var(--tm_gap))`;
-    
-    // Calculate the full content width to ensure rows stretch across the entire scrollable area
-    const container = this.virtualTree.container;
-    const viewBody = container.closest('.tm_view-body');
-    
-    // Get the actual width of .tm_view-tree
-    let contentWidth = viewBody?.clientWidth ?? 0;
-    
-    // Ensure minimum width for proper display and add buffer for content
-    contentWidth = Math.max(contentWidth, 800);
-    
-    row.style.width = `${contentWidth}px`;
-    
+
     row.className = 'tree-row';
 
     // Track collapsed for CSS (triangle rotation) when item has children
@@ -737,6 +746,11 @@ export class ComplexVirtualTree extends VirtualTree {
     const startIndex = Math.max(Math.floor(scrollTop / rowHeight) - buffer, 0);
     const endIndex = Math.min(startIndex + poolSize, total);
 
+    // Determine minimum width as current panel width
+    const minPanelWidth = sc.clientWidth || 0;
+    const appliedWidth = Math.max(this._maxRowWidth || 0, minPanelWidth);
+    const appliedWidthPx = appliedWidth > 0 ? `${appliedWidth}px` : '';
+
     for (let i = 0; i < poolSize; i++) {
       const itemIndex = startIndex + i;
       const row: HTMLElement = this.virtualTree.pool[i];
@@ -746,7 +760,55 @@ export class ComplexVirtualTree extends VirtualTree {
       }
       const item = this.virtualTree.visible[itemIndex];
       this._renderRow(row, item, itemIndex);
+      // Apply cached width immediately for smooth scrolling
+      if (appliedWidthPx) row.style.width = appliedWidthPx;
+      else row.style.removeProperty('width');
     }
+
+    // Defer width adjustment until scroll settles
+    this._scheduleWidthAdjust();
+  }
+
+  private _scheduleWidthAdjust(): void {
+    if (this._widthAdjustTimer) window.clearTimeout(this._widthAdjustTimer);
+    // Trailing debounce so it runs after scrolling slows/stops
+    this._widthAdjustTimer = window.setTimeout(() => {
+      this._widthAdjustTimer = undefined;
+      try {
+        // Determine currently visible rows from the pool
+        const rows: HTMLElement[] = this.virtualTree.pool.filter(r => r.style.display !== 'none');
+        if (rows.length === 0) return;
+
+        // Temporarily allow natural width to measure content accurately
+        let max = 0;
+        const prevWidths: string[] = [];
+        for (const row of rows) {
+          prevWidths.push(row.style.width);
+          row.style.width = 'auto';
+          const w = Math.ceil(row.scrollWidth);
+          if (w > max) max = w;
+        }
+
+        // Restore and apply final width with a minimum of the panel width
+        const sc1 = this.virtualTree.scrollContainer;
+        const sc2 = this.virtualTree.container;
+        const sc = sc1 instanceof HTMLElement ? sc1 : sc2;
+        const minPanelWidth = sc instanceof HTMLElement ? sc.clientWidth : 0;
+        const finalWidth = Math.max(max, minPanelWidth);
+        const widthPx = finalWidth > 0 ? `${finalWidth}px` : '';
+        for (let i = 0; i < rows.length; i++) {
+          rows[i].style.width = widthPx || prevWidths[i] || '';
+        }
+
+        if (finalWidth > 0) {
+          this._maxRowWidth = finalWidth;
+          const virtualizerEl = this.virtualTree.virtualizer as HTMLElement | undefined;
+          if (virtualizerEl && virtualizerEl.style.width !== widthPx) virtualizerEl.style.width = widthPx;
+        }
+      } catch (error) {
+        // Best effort; width adjustment is non-critical
+      }
+    }, 120);
   }
 
   // Reapply selection by id after the visible list changes so highlight stays on the same item.

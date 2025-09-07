@@ -358,5 +358,3 @@
     height: 100%;
     pointer-events: auto;
 }
-/* Remove visual hover/click effect for indent bar */
-/* Intentionally left without hover styles; behavior remains clickable */
