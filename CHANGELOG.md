@@ -1,3 +1,5 @@
+## [1.8.4](https://github.com/jeansordes/tree-mapper/compare/1.8.3...1.8.4) (2025-09-07)
+
 ## [1.8.3](https://github.com/jeansordes/tree-mapper/compare/1.8.2...1.8.3) (2025-09-07)
 
 ### Code Refactoring
