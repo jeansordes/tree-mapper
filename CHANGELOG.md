@@ -1,3 +1,9 @@
+## [1.8.5](https://github.com/jeansordes/tree-mapper/compare/1.8.4...1.8.5) (2025-09-07)
+
+### Performance Improvements
+
+* **VirtualizedTree:** optimize width management and scroll handling ([09e1dfa](https://github.com/jeansordes/tree-mapper/commit/09e1dfa3287bff9ee9b3969736ecb91889f05882))
+
 ## [1.8.4](https://github.com/jeansordes/tree-mapper/compare/1.8.3...1.8.4) (2025-09-07)
 
 ## [1.8.3](https://github.com/jeansordes/tree-mapper/compare/1.8.2...1.8.3) (2025-09-07)
