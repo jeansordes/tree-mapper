@@ -1,3 +1,9 @@
+# [1.9.0](https://github.com/jeansordes/tree-mapper/compare/1.8.9...1.9.0) (2025-09-09)
+
+### Features
+
+* **menu:** customizable “More” menu + command picker modal ([4c11cdd](https://github.com/jeansordes/tree-mapper/commit/4c11cddb75c3aee17922d43e2525231f1bbacad8))
+
 ## [1.8.9](https://github.com/jeansordes/tree-mapper/compare/1.8.8...1.8.9) (2025-09-09)
 
 ## [1.8.8](https://github.com/jeansordes/tree-mapper/compare/1.8.7...1.8.8) (2025-09-09)

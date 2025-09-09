@@ -1,11 +1,11 @@
 {
-  "id": "tree-mapper",
-  "name": "Tree Mapper",
-  "version": "1.8.9",
-  "minAppVersion": "0.15.0",
-  "description": "A Dendron-like hierarchical note management system for your vault.",
-  "author": "jeansordes",
-  "authorUrl": "https://github.com/jeansordes",
-  "isDesktopOnly": false,
-  "fundingUrl": "https://github.com/sponsors/jeansordes"
+	"id": "tree-mapper",
+	"name": "Tree Mapper",
+	"version": "1.9.0",
+	"minAppVersion": "0.15.0",
+	"description": "A Dendron-like hierarchical note management system for your vault.",
+	"author": "jeansordes",
+	"authorUrl": "https://github.com/jeansordes",
+	"isDesktopOnly": false,
+	"fundingUrl": "https://github.com/sponsors/jeansordes"
 }
