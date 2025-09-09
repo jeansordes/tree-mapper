@@ -112,7 +112,12 @@
         line-height: var(--tm_button-size);
         white-space: nowrap;
         padding: 0 0.5rem;
-        margin-left: var(--tm_gap);
+        /* Default: no extra margin; context rules below add it when needed */
+        margin-left: 0;
+    }
+
+    .tm_tree-item-title[data-node-kind="folder"] {
+        padding-left: 0;
     }
 
     .tm_extension {
@@ -195,6 +200,7 @@
     .tm_icon svg, .tm_button-icon svg {
         width: var(--tm_button-icon-size);
         height: var(--tm_button-icon-size);
+        display: block; /* fix baseline offset to center icons vertically */
     }
 
     svg.right-triangle {
@@ -219,6 +225,45 @@
 
     .tm_icon[data-icon-name="folder"] {
         margin-right: 0; /* keep icon from overlapping the toggle */
+    }
+
+    /* Ensure icons reserve consistent space and align with row height */
+    .tm_icon, .tm_file-badge {
+        min-width: var(--tm_button-size);
+        height: var(--tm_button-size);
+        box-sizing: border-box;
+    }
+
+    /* Badge for unknown file extensions shown in place of an icon */
+    .tm_file-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--tm_font-size-small);
+        color: var(--tm_text-faint);
+        background-color: var(--tm_bg-clickable);
+        border-radius: var(--tm_border-radius);
+        text-transform: uppercase;
+        padding: 0 4px;
+    }
+
+    /* Even spacing between toggle ⇄ icon ⇄ title in both renderers */
+    .tm_tree-item-self .tm_button-icon + .tm_icon,
+    .tm_tree-item-self .tm_button-icon + .tm_file-badge,
+    .tree-row .tm_button-icon + .tm_icon,
+    .tree-row .tm_button-icon + .tm_file-badge {
+        margin-left: var(--tm_gap);
+    }
+    /* When there is no icon/badge, keep some space between toggle/indent and title */
+    .tree-row .tm_button-icon + .tm_tree-item-title,
+    .tree-row .tm_indent + .tm_tree-item-title {
+        margin-left: var(--tm_gap);
+    }
+    .tm_tree-item-self .tm_icon,
+    .tm_tree-item-self .tm_file-badge,
+    .tree-row .tm_icon,
+    .tree-row .tm_file-badge {
+        margin-right: var(--tm_gap);
     }
 
     /* Buttons */
@@ -392,6 +437,9 @@
 }
 /* Space between triangle button and folder icon */
 .tree-row .tm_button-icon + .tm_icon {
+    margin-left: var(--tm_gap);
+}
+.tree-row .tm_button-icon + .tm_file-badge {
     margin-left: var(--tm_gap);
 }
 .tree-row .tm_indent-click {

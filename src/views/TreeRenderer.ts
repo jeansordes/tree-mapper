@@ -1,6 +1,7 @@
+/* eslint max-lines: ["warn", { "max": 500, "skipBlankLines": true, "skipComments": true }] */
 import { App, setIcon, TFile, Menu } from 'obsidian';
 import { t } from '../i18n';
-import { TreeNode, TreeNodeType } from '../types';
+import { TreeNode, TreeNodeType, DEFAULT_MORE_MENU, MoreMenuItem } from '../types';
 import { FileUtils } from '../utils/FileUtils';
 import { createActionButton, createElement } from './domUtils';
 
@@ -33,7 +34,6 @@ export class TreeRenderer {
 
     private renderChildNode(name: string, childNode: TreeNode, expandedNodes: Set<string>): HTMLElement {
         const isFolder = childNode.nodeType === TreeNodeType.FOLDER;
-        const isFile = childNode.nodeType === TreeNodeType.FILE;
         const isMarkdownFile = childNode.path.endsWith('.md');
         const hasChildren = childNode.children.size > 0;
 
@@ -55,24 +55,26 @@ export class TreeRenderer {
 
         if (!isMarkdownFile) {
             const iconName = this.getNodeIconName(childNode);
-            const icon = createElement('div', {
-                className: 'tm_icon',
-                attributes: { 'data-icon-name': iconName }
-            });
-            setIcon(icon, iconName);
-            itemSelf.appendChild(icon);
+            if (iconName) {
+                const icon = createElement('div', {
+                    className: 'tm_icon',
+                    attributes: { 'data-icon-name': iconName }
+                });
+                setIcon(icon, iconName);
+                itemSelf.appendChild(icon);
+            } else {
+                const ext = childNode.path.split('.').pop() || '';
+                const badge = createElement('div', {
+                    className: 'tm_file-badge',
+                    textContent: ext.slice(0, 4).toUpperCase()
+                });
+                itemSelf.appendChild(badge);
+            }
         }
 
         this.addNode(itemSelf, childNode);
 
-        if (isFile && !isMarkdownFile) {
-            const extension = childNode.path.split('.').pop() || '';
-            const extensionEl = createElement('div', {
-                className: 'tm_extension',
-                textContent: extension
-            });
-            itemSelf.appendChild(extensionEl);
-        }
+        // trailing extension label removed; we now show an icon/badge before the title
         this.addActionButtons(itemSelf, childNode);
 
         if (hasChildren) {
@@ -145,14 +147,14 @@ export class TreeRenderer {
         return name.replace(/ \(\d+\)$/, '');
     }
 
-    private getNodeIconName(node: TreeNode): string {
+    private getNodeIconName(node: TreeNode): string | null {
         if (node.nodeType === TreeNodeType.FOLDER) {
             return 'folder';
         }
         const extension = node.path.split('.').pop() || '';
         switch (extension) {
             case 'md':
-                return 'file-markdown';
+                return null; // no icon for markdown
             case 'canvas':
                 return 'layout-dashboard';
             case 'pdf':
@@ -165,24 +167,34 @@ export class TreeRenderer {
             case 'heic':
             case 'heif':
             case 'svg':
+            case 'bmp':
+            case 'tif':
+            case 'tiff':
+            case 'avif':
                 return 'file-image';
             case 'mp3':
             case 'm4a':
             case 'wav':
             case 'ogg':
-            case 'webm':
+            case 'flac':
+            case 'aac':
+            case 'aiff':
                 return 'file-audio';
             case 'mp4':
             case 'mov':
             case 'avi':
+            case 'mkv':
+            case 'webm':
                 return 'file-video';
+            case 'excalidraw':
+                return 'pen-tool';
             case 'zip':
             case 'rar':
             case 'tar':
             case 'gz':
                 return 'file-zip';
             default:
-                return 'file-question';
+                return null; // unknown => badge
         }
     }
 
@@ -232,11 +244,13 @@ export class TreeRenderer {
         treeContainer.removeEventListener('click', this.handleTreeClick);
         treeContainer.removeEventListener('mousemove', this.handleTreeMouseMove);
         treeContainer.removeEventListener('mouseleave', this.handleTreeMouseLeave);
+        treeContainer.removeEventListener('contextmenu', this.handleTreeContextMenu);
 
         // Then add our event handlers
         treeContainer.addEventListener('click', this.handleTreeClick);
         treeContainer.addEventListener('mousemove', this.handleTreeMouseMove);
         treeContainer.addEventListener('mouseleave', this.handleTreeMouseLeave);
+        treeContainer.addEventListener('contextmenu', this.handleTreeContextMenu);
     }
 
     /**
@@ -301,6 +315,28 @@ export class TreeRenderer {
             await this.handleTitleClick(clickableElement);
             return;
         }
+    };
+
+    /**
+     * Open the "more" menu on right-click anywhere on a row (desktop)
+     */
+    private handleTreeContextMenu = async (event: MouseEvent) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        // Limit to actual row content, not the children container area
+        const self = target.closest('.tm_tree-item-self');
+        if (!self) return;
+        const container = self.closest('.tm_tree-item-container');
+        const path = container instanceof HTMLElement ? container.getAttribute('data-path') : null;
+        if (!path) return;
+        event.preventDefault();
+        event.stopPropagation();
+
+        // Reuse the existing button handler by faking a "more" button element
+        const fakeBtn = document.createElement('div');
+        fakeBtn.setAttribute('data-action', 'more');
+        fakeBtn.setAttribute('data-path', path);
+        await this.handleActionButtonClick(event, fakeBtn);
     };
 
     private handleCollapseViaGuideClick(event: MouseEvent, target: HTMLElement): boolean {
@@ -447,23 +483,19 @@ export class TreeRenderer {
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     private getConfiguredMenuItems() {
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const anyApp: any = this.app as any;
-            const plugin = anyApp?.plugins?.getPlugin?.('tree-mapper');
+            // Attempt to read plugin settings if available at runtime
+            // @ts-expect-error - Obsidian App has a plugins registry at runtime
+            const plugin = this.app?.plugins?.getPlugin?.('tree-mapper');
             const list = plugin?.settings?.moreMenuItems;
             if (Array.isArray(list) && list.length > 0) return list;
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const { DEFAULT_MORE_MENU } = require('../types');
             return DEFAULT_MORE_MENU;
         } catch {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const { DEFAULT_MORE_MENU } = require('../types');
             return DEFAULT_MORE_MENU;
         }
     }
 
     // Type guard for show filter used above
-    private shouldShowFor(item: any, kind: 'file' | 'folder' | 'virtual'): boolean {
+    private shouldShowFor(item: MoreMenuItem, kind: 'file' | 'folder' | 'virtual'): boolean {
         const show = item?.showFor && item.showFor.length > 0 ? item.showFor : undefined;
         if (!show) {
             if (item?.type === 'builtin') return item.builtin === 'create-child' ? true : kind === 'file';

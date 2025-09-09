@@ -20,25 +20,34 @@ export class InlineCommandSuggest {
     this.bind();
   }
 
+  private static hasCommands(app: unknown): app is { commands?: { listCommands?: () => Array<{ id?: string; name?: string }>; commands?: Record<string, { id?: string; name?: string }> } } {
+    if (typeof app !== 'object' || app === null) return false;
+    const maybe = Reflect.get(app, 'commands');
+    return typeof maybe === 'object' && maybe !== null;
+  }
+
   private collectCommands(): CommandEntry[] {
-    const anyApp = this.app as any;
     const res: CommandEntry[] = [];
     try {
-      const list = anyApp?.commands?.listCommands?.();
-      if (Array.isArray(list)) {
-        for (const c of list) if (c?.id && c?.name) res.push({ id: c.id, name: c.name });
-        return res;
-      }
-    } catch {}
-    try {
-      const map = anyApp?.commands?.commands;
-      if (map && typeof map === 'object') {
-        for (const k of Object.keys(map)) {
-          const c = map[k];
-          if (c?.id && c?.name) res.push({ id: c.id, name: c.name });
+      if (InlineCommandSuggest.hasCommands(this.app)) {
+        const list = this.app.commands?.listCommands?.();
+        if (Array.isArray(list)) {
+          for (const c of list) if (c?.id && c?.name) res.push({ id: c.id, name: c.name });
+          return res;
         }
       }
-    } catch {}
+    } catch { void 0; /* ignore listCommands access */ }
+    try {
+      if (InlineCommandSuggest.hasCommands(this.app)) {
+        const map = this.app.commands?.commands;
+        if (map && typeof map === 'object') {
+          for (const k of Object.keys(map)) {
+            const c = map[k];
+            if (c?.id && c?.name) res.push({ id: c.id, name: c.name });
+          }
+        }
+      }
+    } catch { void 0; /* ignore commands map access */ }
     return res;
   }
 
@@ -108,4 +117,3 @@ export class InlineCommandSuggest {
     if (this.listEl) this.listEl.style.display = 'none';
   }
 }
-

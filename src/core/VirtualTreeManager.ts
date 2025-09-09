@@ -28,7 +28,7 @@ export class VirtualTreeManager {
     const rowHeight = computeRowHeight(rootContainer) || (24 + gap);
 
     if (this.vt) {
-      try { this.vt.destroy(); } catch (e) { logger.error('[TreeMapper] Error destroying previous VT:', e); }
+      try { this.vt.destroy(); } catch (e) { logger.error('[DotNavigator] Error destroying previous VT:', e); }
       this.vt = null;
     }
 
@@ -45,7 +45,7 @@ export class VirtualTreeManager {
     this.vt.setParentMap(parentMap);
     if (expanded && expanded.length) this.vt.setExpanded(expanded);
     // Debug init metrics
-    logger.info('[TreeMapper][VT] init', {
+    logger.info('[DotNavigator][VT] init', {
       rowHeight,
       gap,
       buffer: 100,
@@ -63,7 +63,7 @@ export class VirtualTreeManager {
           return;
         }
       } catch (e) {
-        logger.error('[TreeMapper] In-place rename failed, will rebuild data:', e);
+        logger.error('[DotNavigator] In-place rename failed, will rebuild data:', e);
       }
     }
 
@@ -76,7 +76,7 @@ export class VirtualTreeManager {
       this.vt.updateData(data, parentMap);
       this.onExpansionChange?.();
     } catch (e) {
-      logger.error('[TreeMapper] Error updating VT data, rebuilding fully:', e);
+      logger.error('[DotNavigator] Error updating VT data, rebuilding fully:', e);
       if (this.rootContainer) this.init(this.rootContainer, this.getExpandedPaths());
     }
   }

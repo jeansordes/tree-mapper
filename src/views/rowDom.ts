@@ -1,6 +1,5 @@
 import { App, setIcon } from 'obsidian';
 import { t } from '../i18n';
-import { FileUtils } from '../utils/FileUtils';
 import type { RowItem } from './viewTypes';
 import type { VItem } from '../core/virtualData';
 
@@ -35,6 +34,39 @@ export function createFolderIcon(): HTMLElement {
   return icon;
 }
 
+export function createFileIconOrBadge(item: RowItem): HTMLElement | null {
+  if (item.kind !== 'file') return null;
+  const ext = (item.extension || '').toLowerCase();
+  if (!ext || (ext === 'md' && !item.name.endsWith('excalidraw'))) return null; // markdown has no icon
+
+  const imageExts = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'tif', 'tiff', 'avif', 'heic', 'heif']);
+  const audioExts = new Set(['mp3', 'wav', 'ogg', 'flac', 'm4a', 'aac', 'aiff']);
+  const videoExts = new Set(['mp4', 'mov', 'avi', 'mkv', 'webm']);
+
+  let iconName: string | null = null;
+  if (imageExts.has(ext)) iconName = 'file-image';
+  else if (audioExts.has(ext)) iconName = 'file-audio';
+  else if (videoExts.has(ext)) iconName = 'file-video';
+  else if (ext === 'excalidraw' || item.name.endsWith('excalidraw')) iconName = 'pen-tool';
+  else if (ext === 'canvas') iconName = 'layout-dashboard';
+
+  if (iconName) {
+    const icon = document.createElement('div');
+    icon.className = 'tm_icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.setAttribute('data-icon-name', iconName);
+    setIcon(icon, iconName);
+    return icon;
+  }
+
+  // Unknown extension: show a small badge in the icon slot
+  const badge = document.createElement('div');
+  badge.className = 'tm_file-badge';
+  badge.setAttribute('aria-hidden', 'true');
+  badge.textContent = (ext || '?').slice(0, 4).toUpperCase();
+  return badge;
+}
+
 export function createTitleElement(item: RowItem): HTMLElement {
   const titleClass = item.kind === 'virtual'
     ? 'tm_tree-item-title mod-create-new'
@@ -50,15 +82,12 @@ export function createTitleElement(item: RowItem): HTMLElement {
   return title;
 }
 
-export function maybeCreateExtension(item: RowItem): HTMLElement | null {
-  if (!(item.kind === 'file' && item.extension)) return null;
-  const extension = document.createElement('span');
-  extension.className = 'tm_extension';
-  extension.textContent = item.extension;
-  return extension;
+export function maybeCreateExtension(_item: RowItem): HTMLElement | null {
+  // Extension labels are no longer shown as trailing text; we use icons/badges instead.
+  return null;
 }
 
-export function createActionButtons(item: VItem, app: App): HTMLElement {
+export function createActionButtons(item: VItem, _app: App): HTMLElement {
   const container = document.createElement('div');
   container.className = 'tm_action-buttons-container';
 

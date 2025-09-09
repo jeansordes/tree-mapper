@@ -18,26 +18,35 @@ export class CommandSuggestModal extends FuzzySuggestModal<CommandOption> {
     this.items = this.collectCommands();
   }
 
+  private static hasCommands(app: unknown): app is { commands?: { listCommands?: () => Array<{ id?: string; name?: string }>; commands?: Record<string, { id?: string; name?: string }> } } {
+    if (typeof app !== 'object' || app === null) return false;
+    const maybe = Reflect.get(app, 'commands');
+    return typeof maybe === 'object' && maybe !== null;
+  }
+
   private collectCommands(): CommandOption[] {
-    const anyApp = this.appRef as any;
     const cmds: CommandOption[] = [];
     try {
-      const list = anyApp?.commands?.listCommands?.();
-      if (Array.isArray(list)) {
-        for (const c of list) {
-          if (c?.id && c?.name) cmds.push({ id: c.id, name: c.name });
+      if (CommandSuggestModal.hasCommands(this.appRef)) {
+        const list = this.appRef.commands?.listCommands?.();
+        if (Array.isArray(list)) {
+          for (const c of list) {
+            if (c?.id && c?.name) cmds.push({ id: c.id, name: c.name });
+          }
+          return cmds;
         }
-        return cmds;
       }
     } catch {
       // ignore and try fallback
     }
     try {
-      const map = anyApp?.commands?.commands;
-      if (map && typeof map === 'object') {
-        for (const k of Object.keys(map)) {
-          const c = map[k];
-          if (c?.id && c?.name) cmds.push({ id: c.id, name: c.name });
+      if (CommandSuggestModal.hasCommands(this.appRef)) {
+        const map = this.appRef.commands?.commands;
+        if (map && typeof map === 'object') {
+          for (const k of Object.keys(map)) {
+            const c = map[k];
+            if (c?.id && c?.name) cmds.push({ id: c.id, name: c.name });
+          }
         }
       }
     } catch {
@@ -59,4 +68,3 @@ export class CommandSuggestModal extends FuzzySuggestModal<CommandOption> {
     this.onPick(item);
   }
 }
-

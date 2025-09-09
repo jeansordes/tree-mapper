@@ -10,7 +10,7 @@ export function setupAttachment(opts: {
   const { container, isAttached, attachToViewBody, safeRender, observeResize } = opts;
 
   const findAndAttachViewBody = () => {
-    logger.log('[TreeMapper] Looking for view body in container:', {
+    logger.log('[DotNavigator] Looking for view body in container:', {
       containerClass: container.className,
       children: Array.from(container.children).map(child => ({
         tagName: child.tagName,
@@ -21,7 +21,7 @@ export function setupAttachment(opts: {
     if (container.classList.contains('view-content')) {
       const viewBody = container.querySelector('.tm_view-body');
       if (viewBody instanceof HTMLElement && !isAttached()) {
-        logger.log('[TreeMapper] View body found in view-content, attaching now');
+        logger.log('[DotNavigator] View body found in view-content, attaching now');
         attachToViewBody(container, viewBody);
         safeRender('first render');
         requestAnimationFrame(() => safeRender('deferred render'));
@@ -32,7 +32,7 @@ export function setupAttachment(opts: {
 
     const viewBody = container.querySelector('.tm_view-body');
     if (viewBody instanceof HTMLElement && !isAttached()) {
-      logger.log('[TreeMapper] View body found, attaching now');
+      logger.log('[DotNavigator] View body found, attaching now');
       attachToViewBody(container, viewBody);
       safeRender('first render');
       requestAnimationFrame(() => safeRender('deferred render'));
@@ -49,7 +49,7 @@ export function setupAttachment(opts: {
     const retry = () => {
       retryCount++;
       if (retryCount >= maxRetries) {
-        logger.error('[TreeMapper] Error: Could not find .tm_view-body after maximum retries. Container structure:', {
+        logger.error('[DotNavigator] Error: Could not find .tm_view-body after maximum retries. Container structure:', {
           container: container,
           containerClass: container.className,
           children: Array.from(container.children).map(child => ({
@@ -79,7 +79,7 @@ export function attachToViewBodyImpl(ctx: {
 }): void {
   const { virtualTree, host, viewBody, getLastScrollTop, setLastScrollTop, setAttached, setBoundScroll } = ctx;
 
-  logger.log('[TreeMapper] Attaching to view body, current structure:', {
+  logger.log('[DotNavigator] Attaching to view body, current structure:', {
     hostClass: host.className,
     viewBodyClass: viewBody.className,
     hostChildren: Array.from(host.children).map(c => (c instanceof HTMLElement ? c.className : '')),
@@ -90,28 +90,28 @@ export function attachToViewBodyImpl(ctx: {
   try {
     const isChildOfHost = Array.from(host.children).includes(virtualTree.virtualizer);
     if (isChildOfHost) {
-      logger.log('[TreeMapper] Removing virtualizer from host');
+      logger.log('[DotNavigator] Removing virtualizer from host');
       host.removeChild(virtualTree.virtualizer);
     } else {
-      logger.log('[TreeMapper] Virtualizer is not a child of host, skipping removal');
+      logger.log('[DotNavigator] Virtualizer is not a child of host, skipping removal');
     }
   } catch (error) {
-    logger.error('[TreeMapper] Error removing virtualizer:', error);
+    logger.error('[DotNavigator] Error removing virtualizer:', error);
   }
 
   const isChildOfViewBody = Array.from(viewBody.children).includes(virtualTree.virtualizer);
   if (!isChildOfViewBody) {
-    logger.log('[TreeMapper] Appending virtualizer to view body');
+    logger.log('[DotNavigator] Appending virtualizer to view body');
     const treeContainer = viewBody.querySelector('.tm_view-tree');
     if (treeContainer instanceof HTMLElement) {
-      logger.log('[TreeMapper] Found existing tm_view-tree, using it as target');
+      logger.log('[DotNavigator] Found existing tm_view-tree, using it as target');
       while (treeContainer.firstChild) treeContainer.removeChild(treeContainer.firstChild);
       treeContainer.appendChild(virtualTree.virtualizer);
     } else {
       viewBody.appendChild(virtualTree.virtualizer);
     }
   } else {
-    logger.log('[TreeMapper] Virtualizer is already a child of view body, skipping append');
+    logger.log('[DotNavigator] Virtualizer is already a child of view body, skipping append');
   }
 
   host.removeEventListener('scroll', virtualTree._onScroll);
@@ -137,7 +137,7 @@ export function attachToViewBodyImpl(ctx: {
   } catch { /* ignore width init errors */ }
 
   setTimeout(() => {
-    logger.log('[TreeMapper] Forcing render after attachment');
-    try { virtualTree._render(); } catch (error) { logger.error('[TreeMapper] Error in post-attachment render:', error); }
+    logger.log('[DotNavigator] Forcing render after attachment');
+    try { virtualTree._render(); } catch (error) { logger.error('[DotNavigator] Error in post-attachment render:', error); }
   }, 100);
 }

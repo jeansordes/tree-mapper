@@ -20,14 +20,14 @@ class Logger {
     if (this.isDev) {
       // eslint-disable-next-line no-console
       try { console.clear(); } catch { /* ignore */ }
-      this.info('[TreeMapper] Logging started');
+      this.info('[DotNavigator] Logging started');
     }
   }
 
   disable() {
     if (this.enabled) {
       this.enabled = false;
-      if (this.isDev) this.info('[TreeMapper] Logging stopped');
+      if (this.isDev) this.info('[DotNavigator] Logging stopped');
     }
   }
 

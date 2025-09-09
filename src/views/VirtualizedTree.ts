@@ -1,11 +1,12 @@
+/* eslint max-lines: ["warn", { "max": 500, "skipBlankLines": true, "skipComments": true }] */
 import { App } from 'obsidian';
 import { VirtualTree } from '../virtualTree';
 import type { VirtualTreeOptions } from '../types';
 import { logger } from '../utils/logger';
 import type { VItem } from '../core/virtualData';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
-import { createActionButtons, createFolderIcon, createIndentGuides, createTitleElement, createToggleButton, maybeCreateExtension } from './rowDom';
-import { handleActionButtonClick, handleRowDefaultClick, handleTitleClick } from './rowEvents';
+import { createActionButtons, createFolderIcon, createIndentGuides, createTitleElement, createToggleButton, maybeCreateExtension, createFileIconOrBadge } from './rowDom';
+import { handleActionButtonClick, handleTitleClick } from './rowEvents';
 import { ensurePoolCapacity, logRenderWindow, scheduleWidthAdjust } from './renderUtils';
 import { computeDendronParentId, expandAllInData, renamePathInPlace } from './treeOps';
 import { setupAttachment, attachToViewBodyImpl } from './attachUtils';
@@ -20,6 +21,8 @@ export class ComplexVirtualTree extends VirtualTree {
   private _onExpansionChange?: () => void;
   private _selectedId?: string;
   private _isAttached: boolean = false;
+  // Lazily initialized because base class constructor calls into our _render before fields run
+  private _ctxMenuBound?: WeakSet<HTMLElement>;
   // Width management for rows
   private _maxRowWidth: number = 0;
   private _widthAdjustTimer?: number;
@@ -66,7 +69,7 @@ export class ComplexVirtualTree extends VirtualTree {
 
   private _attachToViewBody(host: HTMLElement, viewBody: HTMLElement): void {
     if (this._isAttached) {
-      logger.log('[TreeMapper] Already attached to view body, skipping');
+      logger.log('[DotNavigator] Already attached to view body, skipping');
       return;
     }
     // Delegate detailed logic to utility to reduce file size
@@ -91,7 +94,7 @@ export class ComplexVirtualTree extends VirtualTree {
     try {
       this.virtualTree._render();
     } catch (error) {
-      logger.error(`[TreeMapper] Error in ${context}:`, error);
+      logger.error(`[DotNavigator] Error in ${context}:`, error);
     }
   }
 
@@ -239,6 +242,10 @@ export class ComplexVirtualTree extends VirtualTree {
     if (item.level && item.level > 0) row.appendChild(createIndentGuides(item.level));
     if (hasChildren) row.appendChild(createToggleButton());
     if (item.kind === 'folder') row.appendChild(createFolderIcon());
+    else if (item.kind === 'file') {
+      const ic = createFileIconOrBadge(item);
+      if (ic) row.appendChild(ic);
+    }
     row.appendChild(createTitleElement(item));
     const extEl = maybeCreateExtension(item);
     if (extEl) row.appendChild(extEl);
@@ -272,7 +279,7 @@ export class ComplexVirtualTree extends VirtualTree {
 
     const target = e.target;
     if (!(target instanceof Element)) {
-      logger.error('[TreeMapper] Error handling row click:', e);
+      logger.error('[DotNavigator] Error handling row click:', e);
       return;
     }
 
@@ -280,7 +287,7 @@ export class ComplexVirtualTree extends VirtualTree {
     const buttonEl = target.closest('.tm_button-icon');
     if (buttonEl) {
       const action = buttonEl.getAttribute('data-action');
-      if (action) handleActionButtonClick(this.app, action, id, item.kind, this.virtualTree, buttonEl as HTMLElement, e);
+      if (action && buttonEl instanceof HTMLElement) handleActionButtonClick(this.app, action, id, item.kind, this.virtualTree, buttonEl, e);
       return;
     }
 
@@ -314,6 +321,7 @@ export class ComplexVirtualTree extends VirtualTree {
 
   // Ensure we have enough pooled rows to fill the viewport plus buffer
   private _ensurePoolCapacity(): void {
+    if (!this._ctxMenuBound) this._ctxMenuBound = new WeakSet<HTMLElement>();
     ensurePoolCapacity(this.virtualTree, (row) => {
       row.addEventListener('click', (ev) => {
         if (ev instanceof MouseEvent) this._onRowClick(ev, row);
@@ -325,11 +333,11 @@ export class ComplexVirtualTree extends VirtualTree {
 
     // Also ensure existing pooled rows have a context menu handler (initial pool from base class)
     for (const row of this.virtualTree.pool) {
-      if (!(row as any)._tmCtxMenuBound) {
+      if (!this._ctxMenuBound!.has(row)) {
         row.addEventListener('contextmenu', (ev) => {
           if (ev instanceof MouseEvent) this._onRowContextMenu(ev, row);
         });
-        (row as any)._tmCtxMenuBound = true;
+        this._ctxMenuBound!.add(row);
       }
     }
   }

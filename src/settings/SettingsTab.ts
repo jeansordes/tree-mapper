@@ -1,12 +1,12 @@
 import { App, ButtonComponent, PluginSettingTab, Setting } from 'obsidian';
-import TreeMapperPlugin from '../main';
-import { DEFAULT_MORE_MENU, MenuItemKind, MoreMenuItem, MoreMenuItemCommand } from '../types';
+import DotNavigatorPlugin from '../main';
+import { DEFAULT_MORE_MENU, MoreMenuItem, MoreMenuItemCommand } from '../types';
 import { CommandSuggestModal } from './CommandSuggest';
 
-export class TreeMapperSettingTab extends PluginSettingTab {
-  plugin: TreeMapperPlugin;
+export class DotNavigatorSettingTab extends PluginSettingTab {
+  plugin: DotNavigatorPlugin;
 
-  constructor(app: App, plugin: TreeMapperPlugin) {
+  constructor(app: App, plugin: DotNavigatorPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
@@ -96,8 +96,11 @@ export class TreeMapperSettingTab extends PluginSettingTab {
             text.setValue(item.label || '')
               .onChange(async (v) => {
                 const list = this.getMenuItems();
-                (list[index] as MoreMenuItemCommand).label = v;
-                await this.updateMenuItems(list, false);
+                const cur = list[index];
+                if (cur.type === 'command') {
+                  cur.label = v;
+                  await this.updateMenuItems(list, false);
+                }
               });
           });
 
@@ -110,24 +113,33 @@ export class TreeMapperSettingTab extends PluginSettingTab {
             text.setValue(value);
           };
           updateDisplay();
-          const input = text.inputEl as HTMLInputElement;
-          input.readOnly = true;
-          input.placeholder = 'Select command…';
-          input.style.cursor = 'pointer';
+          const inputEl = text.inputEl;
+          if (inputEl instanceof HTMLInputElement) {
+            inputEl.readOnly = true;
+            inputEl.placeholder = 'Select command…';
+            inputEl.style.cursor = 'pointer';
+          }
 
           const openPicker = () => {
             const modal = new CommandSuggestModal(this.app, async (opt) => {
               const list = this.getMenuItems();
-              const current = list[index] as MoreMenuItemCommand;
-              current.commandId = opt.id;
-              if (!current.label) current.label = opt.name;
-              await this.updateMenuItems(list, false);
-              updateDisplay();
+              const current = list[index];
+              if (current.type === 'command') {
+                current.commandId = opt.id;
+                if (!current.label) current.label = opt.name;
+                await this.updateMenuItems(list, false);
+                updateDisplay();
+              }
             });
             modal.open();
           };
-          input.addEventListener('click', openPicker);
-          input.addEventListener('focus', (e) => { (e.target as HTMLInputElement).blur(); openPicker(); });
+          const el = text.inputEl;
+          el.addEventListener('click', openPicker);
+          el.addEventListener('focus', (e) => {
+            const tgt = e.target;
+            if (tgt instanceof HTMLInputElement) tgt.blur();
+            openPicker();
+          });
         });
 
         new Setting(card)
@@ -137,8 +149,11 @@ export class TreeMapperSettingTab extends PluginSettingTab {
             tg.setValue(item.openBeforeExecute !== false)
               .onChange(async (v) => {
                 const list = this.getMenuItems();
-                (list[index] as MoreMenuItemCommand).openBeforeExecute = v;
-                await this.updateMenuItems(list, false);
+                const cur = list[index];
+                if (cur.type === 'command') {
+                  cur.openBeforeExecute = v;
+                  await this.updateMenuItems(list, false);
+                }
               });
           });
       }
@@ -149,6 +164,7 @@ export class TreeMapperSettingTab extends PluginSettingTab {
     if (item.type === 'builtin') {
       if (item.builtin === 'create-child') return 'Builtin: Add child note';
       if (item.builtin === 'delete-file') return 'Builtin: Delete file (danger)';
+      if (item.builtin === 'delete-folder') return 'Builtin: Delete folder (danger)';
       return 'Builtin';
     }
     return `Command: ${item.label || item.commandId || '(unnamed)'}`;
@@ -174,7 +190,7 @@ export class TreeMapperSettingTab extends PluginSettingTab {
       commandId: '',
       openBeforeExecute: true,
       icon: 'dot',
-      showFor: ['file'] as MenuItemKind[]
+      showFor: ['file']
     };
   }
 }

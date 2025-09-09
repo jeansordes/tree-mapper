@@ -23,7 +23,7 @@ export function computeRowHeight(rootContainer: HTMLElement): number | null {
     if (total < 26) return 28; // guard fallback
     if (total > 0) return total;
   } catch (error) {
-    logger.error('[TreeMapper] Error computing row height:', error);
+    logger.error('[DotNavigator] Error computing row height:', error);
   }
   return null;
 }
@@ -42,7 +42,7 @@ export function computeGap(rootContainer: HTMLElement): number | null {
     probe.remove();
     if (Number.isFinite(h) && h >= 0) return h;
   } catch (error) {
-    logger.error('[TreeMapper] Error computing gap:', error);
+    logger.error('[DotNavigator] Error computing gap:', error);
   }
   return null;
 }

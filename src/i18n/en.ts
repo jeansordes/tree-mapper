@@ -22,6 +22,7 @@ export default {
     tooltipMoreActions: 'More actions',
     menuRenameFile: 'Rename file',
     menuDeleteFile: 'Delete file',
+    menuDeleteFolder: 'Delete folder',
     confirmDeleteFile: 'Delete this file?\n{{path}}',
     
     // Notices

@@ -94,7 +94,7 @@ export class ViewLayout {
         toggleButton.setAttribute('title', t('tooltipCollapseAll'));
       }
     } catch (error) {
-      logger.error('[TreeMapper] Error updating header toggle icon:', error);
+      logger.error('[DotNavigator] Error updating header toggle icon:', error);
     }
   }
 

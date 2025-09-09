@@ -35,6 +35,8 @@ export interface VirtualTreeBaseItem {
     id: string;
     name: string;
     kind: 'file' | 'folder' | 'virtual';
+    // Optional file extension (present for files when available)
+    extension?: string;
     children?: VirtualTreeBaseItem[];
     expanded?: boolean;
 }
@@ -73,7 +75,7 @@ export interface MoreMenuItemBase {
 
 export interface MoreMenuItemBuiltin extends MoreMenuItemBase {
     type: 'builtin';
-    builtin: 'create-child' | 'delete-file';
+    builtin: 'create-child' | 'delete-file' | 'delete-folder';
 }
 
 export interface MoreMenuItemCommand extends MoreMenuItemBase {
@@ -99,5 +101,13 @@ export const DEFAULT_MORE_MENU: MoreMenuItem[] = [
         icon: 'trash-2',
         section: 'danger',
         showFor: ['file']
+    },
+    {
+        id: 'builtin-delete-folder',
+        type: 'builtin',
+        builtin: 'delete-folder',
+        icon: 'trash-2',
+        section: 'danger',
+        showFor: ['folder']
     }
 ];

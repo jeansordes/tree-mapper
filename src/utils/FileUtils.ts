@@ -122,20 +122,19 @@ export class FileUtils {
         try {
             const leaves = app.workspace.getLeavesOfType('file-explorer');
             if (!leaves || leaves.length === 0) return false;
-            const view: any = leaves[0].view;
+            const view = leaves[0].view;
             if (!view) return false;
             // Reveal in tree if API available
-            if (typeof view.revealFile === 'function') {
-                await view.revealFile(file);
-            }
+            // Use safe optional calls across versions
+            // @ts-expect-error - historical APIs may be present at runtime
+            if (typeof view.revealFile === 'function') await view.revealFile(file);
             // Try various selection APIs used across Obsidian versions
-            if (typeof view.setSelection === 'function') {
-                view.setSelection([file], true, true);
-            } else if (typeof view.setSelectedFile === 'function') {
-                view.setSelectedFile(file);
-            } else if (typeof view.selectFile === 'function') {
-                view.selectFile(file);
-            }
+            // @ts-expect-error - historical APIs may be present at runtime
+            if (typeof view.setSelection === 'function') view.setSelection([file], true, true);
+            // @ts-expect-error - historical APIs may be present at runtime
+            else if (typeof view.setSelectedFile === 'function') view.setSelectedFile(file);
+            // @ts-expect-error - historical APIs may be present at runtime
+            else if (typeof view.selectFile === 'function') view.selectFile(file);
             return true;
         } catch {
             return false;
@@ -147,14 +146,15 @@ export class FileUtils {
         if (file) await this.selectInFileExplorer(app, file);
         try {
             // Prefer official API name if available; fallback to ById
-            const anyApp = app as any;
-            const anyCmds = anyApp?.commands;
-            if (anyCmds && typeof anyCmds.executeCommand === 'function') {
-                const res = await anyCmds.executeCommand(cmdId);
+            const cmdsUnknown = Reflect.get(app, 'commands');
+            if (typeof cmdsUnknown === 'object' && cmdsUnknown !== null && typeof Reflect.get(cmdsUnknown, 'executeCommand') === 'function') {
+                const fn = Reflect.get(cmdsUnknown, 'executeCommand');
+                const res = await Reflect.apply(fn, cmdsUnknown, [cmdId]);
                 return !!res;
             }
-            if (anyCmds && typeof anyCmds.executeCommandById === 'function') {
-                return !!anyCmds.executeCommandById(cmdId);
+            if (typeof cmdsUnknown === 'object' && cmdsUnknown !== null && typeof Reflect.get(cmdsUnknown, 'executeCommandById') === 'function') {
+                const fn = Reflect.get(cmdsUnknown, 'executeCommandById');
+                return !!Reflect.apply(fn, cmdsUnknown, [cmdId]);
             }
             return false;
         } catch {
@@ -165,13 +165,14 @@ export class FileUtils {
     /** Execute an app command by id without changing focus/selection (better for editor commands). */
     public static async executeAppCommand(app: App, cmdId: string): Promise<boolean> {
         try {
-            const anyApp = app as any;
-            const anyCmds = anyApp?.commands;
-            if (anyCmds && typeof anyCmds.executeCommandById === 'function') {
-                return !!anyCmds.executeCommandById(cmdId);
+            const cmdsUnknown = Reflect.get(app, 'commands');
+            if (typeof cmdsUnknown === 'object' && cmdsUnknown !== null && typeof Reflect.get(cmdsUnknown, 'executeCommandById') === 'function') {
+                const fn = Reflect.get(cmdsUnknown, 'executeCommandById');
+                return !!Reflect.apply(fn, cmdsUnknown, [cmdId]);
             }
-            if (anyCmds && typeof anyCmds.executeCommand === 'function') {
-                const res = await anyCmds.executeCommand(cmdId);
+            if (typeof cmdsUnknown === 'object' && cmdsUnknown !== null && typeof Reflect.get(cmdsUnknown, 'executeCommand') === 'function') {
+                const fn = Reflect.get(cmdsUnknown, 'executeCommand');
+                const res = await Reflect.apply(fn, cmdsUnknown, [cmdId]);
                 return !!res;
             }
             return false;

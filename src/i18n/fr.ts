@@ -22,6 +22,7 @@ export default {
     tooltipMoreActions: 'Plus d’actions',
     menuRenameFile: 'Renommer le fichier',
     menuDeleteFile: 'Supprimer le fichier',
+    menuDeleteFolder: 'Supprimer le dossier',
     confirmDeleteFile: 'Supprimer ce fichier ?\n{{path}}',
     
     // Notices

@@ -52,7 +52,7 @@ export class VirtualTree {
     }
 
     if (!viewTree) {
-      logger.error('[TreeMapper] No view tree found - DOM element with class .tm_view-tree does not exist. Container structure:', {
+      logger.error('[DotNavigator] No view tree found - DOM element with class .tm_view-tree does not exist. Container structure:', {
         container: container,
         containerChildren: Array.from(container.children).map(child => ({
           tagName: child.tagName,
@@ -69,10 +69,10 @@ export class VirtualTree {
     // This prevents duplicate appending which can cause issues
     const isAlreadyChild = Array.from(this.container.children).includes(this.virtualizer);
     if (!isAlreadyChild) {
-      logger.log('[TreeMapper] Appending virtualizer to container');
+      logger.log('[DotNavigator] Appending virtualizer to container');
       this.container.appendChild(this.virtualizer);
     } else {
-      logger.log('[TreeMapper] Virtualizer is already a child of container, skipping append');
+      logger.log('[DotNavigator] Virtualizer is already a child of container, skipping append');
     }
 
     this.pool = [];

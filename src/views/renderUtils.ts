@@ -24,7 +24,7 @@ export function ensurePoolCapacity(vt: VirtualTreeLike, onRowInit?: (row: HTMLEl
         pool.push(row);
       }
       vt.poolSize = desired;
-      logger.info('[TreeMapper][VT] grow pool', {
+      logger.info('[DotNavigator][VT] grow pool', {
         clientHeight: sc.clientHeight,
         rowHeight,
         visibleCount,
@@ -57,7 +57,7 @@ export function logRenderWindow(vt: VirtualTreeLike, sc: HTMLElement, startIndex
       sc.dataset.tmLastStart = String(startIndex);
       sc.dataset.tmLastScroll = String(scrollTop);
       sc.dataset.tmLastLog = String(now);
-      logger.info('[TreeMapper][VT] render window', {
+      logger.info('[DotNavigator][VT] render window', {
         scrollTop,
         rowHeight,
         clientHeight,

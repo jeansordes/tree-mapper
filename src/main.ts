@@ -4,30 +4,30 @@ import { DEFAULT_SETTINGS, FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON }
 import { FileUtils } from './utils/FileUtils';
 import PluginMainPanel from './views/PluginMainPanel';
 import { logger } from './utils/logger';
-import { TreeMapperSettingTab } from './settings/SettingsTab';
+import { DotNavigatorSettingTab } from './settings/SettingsTab';
 
-export default class TreeMapperPlugin extends Plugin {
+export default class DotNavigatorPlugin extends Plugin {
     settings: PluginSettings;
     private pluginMainPanel: PluginMainPanel | null = null;
 
     async onload() {
         logger.enable();
-        logger.log("[TreeMapper] Plugin loading");
+        logger.log("[DotNavigator] Plugin loading");
 
         // Force Obsidian to detach our previous views which should clean up attached event handlers
-        logger.log("[TreeMapper] Detaching any existing tree views");
+        logger.log("[DotNavigator] Detaching any existing tree views");
         try {
             // This ensures any existing views are properly closed, triggering onClose() for cleanup
             this.app.workspace.detachLeavesOfType(FILE_TREE_VIEW_TYPE);
         } catch {
             // This is normal if it's the first load
-            logger.log("[TreeMapper] No existing views to detach");
+            logger.log("[DotNavigator] No existing views to detach");
         }
         
         await this.loadSettings();
 
         // Settings tab
-        this.addSettingTab(new TreeMapperSettingTab(this.app, this));
+        this.addSettingTab(new DotNavigatorSettingTab(this.app, this));
 
         // Register the file tree view
         this.registerView(
@@ -192,14 +192,14 @@ export default class TreeMapperPlugin extends Plugin {
     }
 
     onunload() {
-        logger.log("[TreeMapper] Plugin unloading, cleaning up resources");
+        logger.log("[DotNavigator] Plugin unloading, cleaning up resources");
         
         // Save settings before unloading
         this.saveSettings();
         
         // Clean up plugin panel resources
         if (this.pluginMainPanel) {
-            logger.log("[TreeMapper] Cleaning up pluginMainPanel resources");
+            logger.log("[DotNavigator] Cleaning up pluginMainPanel resources");
             this.pluginMainPanel = null;
         }
     }

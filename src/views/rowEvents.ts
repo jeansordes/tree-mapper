@@ -2,6 +2,7 @@ import { App, Menu, TFile, TFolder } from 'obsidian';
 import { FileUtils } from '../utils/FileUtils';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
 import type { MenuItemKind, MoreMenuItem } from '../types';
+import { DEFAULT_MORE_MENU } from '../types';
 import { t } from '../i18n';
 
 export function handleRowDefaultClick(vt: VirtualTreeLike, item: RowItem, idx: number, id: string, setSelectedId: (id: string) => void): void {
@@ -28,6 +29,7 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
     const items = getConfiguredMenuItems(app);
     const fileOrFolder = app.vault.getAbstractFileByPath(id);
     const file = fileOrFolder instanceof TFile ? fileOrFolder : null;
+    const folder = fileOrFolder instanceof TFolder ? fileOrFolder : null;
 
     for (const it of items) {
       if (!shouldShowFor(it, kind)) continue;
@@ -48,6 +50,26 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
               .setSection(it.section === 'danger' ? 'danger' : 'default')
               .onClick(async () => {
                 await app.fileManager.trashFile(file);
+              });
+          });
+        } else if (it.builtin === 'delete-folder') {
+          if (!folder) continue; // only for folders
+          menu.addItem((mi) => {
+            mi.setTitle(t('menuDeleteFolder'))
+              .setIcon(it.icon || 'trash-2')
+              .setSection(it.section === 'danger' ? 'danger' : 'default')
+              .onClick(async () => {
+                try {
+                  // @ts-expect-error - older/newer Obsidian versions may expose trash API
+                  if (typeof app.vault.trash === 'function') {
+                    // @ts-expect-error - see above
+                    await app.vault.trash(folder, true);
+                  } else {
+                    await app.vault.delete(folder, true);
+                  }
+                } catch {
+                  // ignore
+                }
               });
           });
         }
@@ -79,16 +101,16 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
   }
 }
 
-function getConfiguredMenuItems(app: App): MoreMenuItem[] {
+// Intentionally loose typing here due to runtime plugin API shape variations
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+function getConfiguredMenuItems(app: App) {
   try {
-    const anyApp = app as any;
-    const plugin = anyApp?.plugins?.getPlugin?.('tree-mapper');
+    // @ts-expect-error - plugins registry exists at runtime
+    const plugin = app?.plugins?.getPlugin?.('tree-mapper');
     const list = plugin?.settings?.moreMenuItems;
     if (Array.isArray(list) && list.length > 0) return list;
-    const { DEFAULT_MORE_MENU } = require('../types');
     return DEFAULT_MORE_MENU;
   } catch {
-    const { DEFAULT_MORE_MENU } = require('../types');
     return DEFAULT_MORE_MENU;
   }
 }

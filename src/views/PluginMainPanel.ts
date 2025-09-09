@@ -53,12 +53,12 @@ export default class PluginMainPanel extends ItemView {
     async onOpen() {
         // Track if onOpen has been called before to detect multiple calls
         if (this._onOpenCalled) {
-            logger.log('[TreeMapper] WARNING: onOpen called multiple times!');
+            logger.log('[DotNavigator] WARNING: onOpen called multiple times!');
             return;
         }
         this._onOpenCalled = true;
 
-        logger.log('[TreeMapper] onOpen called with containerEl:', {
+        logger.log('[DotNavigator] onOpen called with containerEl:', {
             containerEl: this.containerEl,
             containerClass: this.containerEl?.className,
             containerType: typeof this.containerEl,
@@ -71,7 +71,7 @@ export default class PluginMainPanel extends ItemView {
         // Use containerEl directly as the root container
         const viewRoot = this.containerEl;
         if (!(viewRoot instanceof HTMLElement)) {
-            logger.error('[TreeMapper] Error: containerEl is not an HTMLElement:', { containerEl: this.containerEl });
+            logger.error('[DotNavigator] Error: containerEl is not an HTMLElement:', { containerEl: this.containerEl });
             return;
         }
 
@@ -111,7 +111,7 @@ export default class PluginMainPanel extends ItemView {
 
         // Sync header initial state
         this._syncHeaderToggle();
-        logger.log('[TreeMapper] onOpen completed successfully');
+        logger.log('[DotNavigator] onOpen completed successfully');
     }
 
     /**
@@ -142,7 +142,7 @@ export default class PluginMainPanel extends ItemView {
                 void plugin.saveSettings();
             }
         } catch (e) {
-            logger.error('[TreeMapper] Failed to persist expanded nodes', e);
+            logger.error('[DotNavigator] Failed to persist expanded nodes', e);
         }
     }
 
@@ -228,7 +228,7 @@ export default class PluginMainPanel extends ItemView {
             if (this.virtualTree) { this.virtualTree.revealPath(file.path); return; }
         } catch (e) {
             // Never let highlight errors break the app; just log
-            logger.error('[TreeMapper] highlightActiveFile failed:', e);
+            logger.error('[DotNavigator] highlightActiveFile failed:', e);
         }
     }
 
@@ -305,7 +305,7 @@ export default class PluginMainPanel extends ItemView {
      * Clean up resources when the view is closed
      */
     async onClose() {
-        logger.log('[TreeMapper] onClose called, cleaning up resources');
+        logger.log('[DotNavigator] onClose called, cleaning up resources');
 
         // Remove all event listeners through the event handler
         if (this.eventHandler) {
@@ -322,6 +322,6 @@ export default class PluginMainPanel extends ItemView {
         if (this.vtManager) this.vtManager.destroy();
         this.activeFile = null;
 
-        logger.log('[TreeMapper] onClose cleanup completed');
+        logger.log('[DotNavigator] onClose cleanup completed');
     }
 } 
