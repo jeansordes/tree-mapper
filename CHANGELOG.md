@@ -1,4 +1,14 @@
+## [1.10.1](https://github.com/jeansordes/dot-navigator/compare/1.10.0...1.10.1) (2025-09-09)
+
 # [1.10.0](https://github.com/jeansordes/dot-navigator/compare/1.9.2...1.10.0) (2025-09-09)
+
+## [1.9.2](https://github.com/jeansordes/dot-navigator/compare/1.9.1...1.9.2) (2025-09-09)
+
+### Features
+
+* add 'delete folder' option in menu ([fe744e6](https://github.com/jeansordes/dot-navigator/commit/fe744e63d5e8f66267fe81287d87514bd7574e72))
+* add proper file icon ([96c0225](https://github.com/jeansordes/dot-navigator/commit/96c0225366710020345313c22d743e24be8ca756))
+* support right click for opening the context menu on a file ([251a391](https://github.com/jeansordes/dot-navigator/commit/251a391d3655dcd9c93031644ca31a5bc1cf73a6))
 
 ## [1.9.1](https://github.com/jeansordes/dot-navigator/compare/1.9.0...1.9.1) (2025-09-09)
 
@@ -129,7 +139,7 @@
 
 ### Bug Fixes
 
-* remove unnecessary detachment of leaves in DotNavigatorPlugin cleanup ([7e6d389](https://github.com/jeansordes/dot-navigator/commit/7e6d389b79a5699be2de8f2ef87105de10f32b06))
+* remove unnecessary detachment of leaves in TreeMapperPlugin cleanup ([7e6d389](https://github.com/jeansordes/dot-navigator/commit/7e6d389b79a5699be2de8f2ef87105de10f32b06))
 
 # [1.3.0](https://github.com/jeansordes/dot-navigator/compare/1.2.2...1.3.0) (2025-04-20)
 
@@ -143,12 +153,6 @@
 
 * **TreeBuilder, TreeRenderer:** enhance node handling to avoid key collisions and improve name formatting ([2515df1](https://github.com/jeansordes/dot-navigator/commit/2515df1415758f04631ef250479d38d849968974)), closes [#4](https://github.com/jeansordes/dot-navigator/issues/4)
 * **TreeBuilder:** ensure virtual nodes have .md extension in paths ([671cee8](https://github.com/jeansordes/dot-navigator/commit/671cee8aee52ee84efbabfaf58ffccd3e3d83e24)), closes [#2](https://github.com/jeansordes/dot-navigator/issues/2)
-
-## [1.2.1](https://github.com/jeansordes/dot-navigator/compare/1.2.0...1.2.1) (2025-04-19)
-
-### Bug Fixes
-
-* **TreeBuilder, TreeRenderer:** enhance node handling to avoid key collisions and improve name formatting ([e0008de](https://github.com/jeansordes/dot-navigator/commit/e0008de47ae0e0425d29e82ae5c2dece5b4d345b)), closes [#4](https://github.com/jeansordes/dot-navigator/issues/4)
 
 # [1.2.0](https://github.com/jeansordes/dot-navigator/compare/1.1.2-beta.0...1.2.0) (2025-04-19)
 
@@ -218,7 +222,7 @@
 
 ## [1.0.2](https://github.com/jeansordes/dot-navigator/compare/1.0.1...1.0.2) (2025-03-18)
 
-## 1.0.1 (2025-03-16)
+## [1.0.1](https://github.com/jeansordes/dot-navigator/compare/088d021c086abde044993536b92b421b7f16e7e1...1.0.1) (2025-03-16)
 
 ### Bug Fixes
 
@@ -230,43 +234,3 @@
 * **ui:** add file highlighting and navigation ([f3b394d](https://github.com/jeansordes/dot-navigator/commit/f3b394db02d4b63183e8be41d5787d7fe572cebc))
 * **ui:** enhance view interaction and persistence ([c1aea71](https://github.com/jeansordes/dot-navigator/commit/c1aea71090129b6a947463e591f13cc4c10168b6))
 
-## 1.0.0 (2025-03-16)
-
-### Features
-
-- Initial plugin setup
-- Adds a view to see files
-- Implements dendron structure for displaying files
-- Refresh view when CRUD happens in vault
-- When clicking on a file, it opens in the current tab
-- Add folder support to tree view
-- Add child note creation
-
-#### UI Improvements
-- Enhance view interaction and persistence
-- Add file highlighting and navigation
-- Add i18n and view controls
-- Enhance expand/collapse button design
-- Refine button colors
-
-### Bug Fixes
-
-- Stabilize plugin core functionality
-- Correct tooltip and refactoring issues
-
-### Refactoring
-
-- Split files for better organization
-- Localize plugin styles
-- Enhance type definitions
-- Simplify codebase
-- Improve code organization
-- Clean up implementation
-
-### Styling
-
-- Improve button aesthetics
-
-### Chores
-
-- Implement automated release process
