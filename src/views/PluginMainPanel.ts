@@ -136,7 +136,7 @@ export default class PluginMainPanel extends ItemView {
             this._lastExpandedSnapshot = Array.isArray(expanded) ? [...expanded] : [];
             // Save through the plugin instance if available
             // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-            const plugin: any = (this.app as any)?.plugins?.getPlugin?.('tree-mapper');
+            const plugin: any = (this.app as any)?.plugins?.getPlugin?.('dot-navigator');
             if (plugin && typeof plugin.saveSettings === 'function') {
                 // Fire and forget; Obsidian handles persistence
                 void plugin.saveSettings();

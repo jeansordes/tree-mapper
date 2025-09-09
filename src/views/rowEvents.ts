@@ -60,15 +60,9 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
               .setSection(it.section === 'danger' ? 'danger' : 'default')
               .onClick(async () => {
                 try {
-                  // @ts-expect-error - older/newer Obsidian versions may expose trash API
-                  if (typeof app.vault.trash === 'function') {
-                    // @ts-expect-error - see above
-                    await app.vault.trash(folder, true);
-                  } else {
-                    await app.vault.delete(folder, true);
-                  }
+                  await app.vault.trash(folder, true);
                 } catch {
-                  // ignore
+                  try { await app.vault.delete(folder, true); } catch { /* ignore */ }
                 }
               });
           });
@@ -106,7 +100,7 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
 function getConfiguredMenuItems(app: App) {
   try {
     // @ts-expect-error - plugins registry exists at runtime
-    const plugin = app?.plugins?.getPlugin?.('tree-mapper');
+    const plugin = app?.plugins?.getPlugin?.('dot-navigator');
     const list = plugin?.settings?.moreMenuItems;
     if (Array.isArray(list) && list.length > 0) return list;
     return DEFAULT_MORE_MENU;

@@ -485,7 +485,7 @@ export class TreeRenderer {
         try {
             // Attempt to read plugin settings if available at runtime
             // @ts-expect-error - Obsidian App has a plugins registry at runtime
-            const plugin = this.app?.plugins?.getPlugin?.('tree-mapper');
+            const plugin = this.app?.plugins?.getPlugin?.('dot-navigator');
             const list = plugin?.settings?.moreMenuItems;
             if (Array.isArray(list) && list.length > 0) return list;
             return DEFAULT_MORE_MENU;

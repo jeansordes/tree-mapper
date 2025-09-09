@@ -332,12 +332,13 @@ export class ComplexVirtualTree extends VirtualTree {
     });
 
     // Also ensure existing pooled rows have a context menu handler (initial pool from base class)
+    const boundSet = this._ctxMenuBound ?? (this._ctxMenuBound = new WeakSet<HTMLElement>());
     for (const row of this.virtualTree.pool) {
-      if (!this._ctxMenuBound!.has(row)) {
+      if (!boundSet.has(row)) {
         row.addEventListener('contextmenu', (ev) => {
           if (ev instanceof MouseEvent) this._onRowContextMenu(ev, row);
         });
-        this._ctxMenuBound!.add(row);
+        boundSet.add(row);
       }
     }
   }

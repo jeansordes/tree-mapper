@@ -75,6 +75,12 @@ console.log(`Bumping version from ${currentVersion} to ${targetVersion}...`);
 packageJson.version = targetVersion;
 writeFileSync("package.json", JSON.stringify(packageJson, null, "\t") + "\n");
 
+// Update package-lock.json
+const packageLockJson = JSON.parse(readFileSync("package-lock.json", "utf8"));
+packageLockJson.version = targetVersion;
+packageLockJson.packages[""].version = targetVersion;
+writeFileSync("package-lock.json", JSON.stringify(packageLockJson, null, "\t") + "\n");
+
 // Read minAppVersion from manifest.json
 const manifest = JSON.parse(readFileSync("manifest.json", "utf8"));
 const { minAppVersion } = manifest;
@@ -112,6 +118,6 @@ versions[targetVersion] = minAppVersion;
 writeFileSync("versions.json", JSON.stringify(versions, null, "\t") + "\n");
 
 console.log(
-	`Updated version to ${targetVersion} in package.json and versions.json`
+	`Updated version to ${targetVersion} in package.json, package-lock.json and versions.json`
 );
 console.log(`Min app version is set to ${minAppVersion}`);
