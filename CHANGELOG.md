@@ -1,3 +1,5 @@
+# [1.10.0](https://github.com/jeansordes/dot-navigator/compare/1.9.2...1.10.0) (2025-09-09)
+
 ## [1.9.1](https://github.com/jeansordes/dot-navigator/compare/1.9.0...1.9.1) (2025-09-09)
 
 ### Bug Fixes
