@@ -1,7 +1,7 @@
-/* eslint max-lines: ["warn", { "max": 500, "skipBlankLines": true, "skipComments": true }] */
-import { App, setIcon, TFile, Menu } from 'obsidian';
+import { App, setIcon, TFile } from 'obsidian';
 import { t } from '../i18n';
-import { TreeNode, TreeNodeType, DEFAULT_MORE_MENU, MoreMenuItem } from '../types';
+import { TreeNode, TreeNodeType } from '../types';
+import { buildMoreMenu } from './menuUtils';
 import { FileUtils } from '../utils/FileUtils';
 import { createActionButton, createElement } from './domUtils';
 
@@ -148,54 +148,19 @@ export class TreeRenderer {
     }
 
     private getNodeIconName(node: TreeNode): string | null {
-        if (node.nodeType === TreeNodeType.FOLDER) {
-            return 'folder';
-        }
+        if (node.nodeType === TreeNodeType.FOLDER) return 'folder';
         const extension = node.path.split('.').pop() || '';
-        switch (extension) {
-            case 'md':
-                return null; // no icon for markdown
-            case 'canvas':
-                return 'layout-dashboard';
-            case 'pdf':
-                return 'file-scan';
-            case 'jpg':
-            case 'jpeg':
-            case 'png':
-            case 'gif':
-            case 'webp':
-            case 'heic':
-            case 'heif':
-            case 'svg':
-            case 'bmp':
-            case 'tif':
-            case 'tiff':
-            case 'avif':
-                return 'file-image';
-            case 'mp3':
-            case 'm4a':
-            case 'wav':
-            case 'ogg':
-            case 'flac':
-            case 'aac':
-            case 'aiff':
-                return 'file-audio';
-            case 'mp4':
-            case 'mov':
-            case 'avi':
-            case 'mkv':
-            case 'webm':
-                return 'file-video';
-            case 'excalidraw':
-                return 'pen-tool';
-            case 'zip':
-            case 'rar':
-            case 'tar':
-            case 'gz':
-                return 'file-zip';
-            default:
-                return null; // unknown => badge
-        }
+        const map: Record<string, string | null> = {
+            md: null,
+            canvas: 'layout-dashboard',
+            pdf: 'file-scan',
+            jpg: 'file-image', jpeg: 'file-image', png: 'file-image', gif: 'file-image', webp: 'file-image', heic: 'file-image', heif: 'file-image', svg: 'file-image', bmp: 'file-image', tif: 'file-image', tiff: 'file-image', avif: 'file-image',
+            mp3: 'file-audio', m4a: 'file-audio', wav: 'file-audio', ogg: 'file-audio', flac: 'file-audio', aac: 'file-audio', aiff: 'file-audio',
+            mp4: 'file-video', mov: 'file-video', avi: 'file-video', mkv: 'file-video', webm: 'file-video',
+            excalidraw: 'pen-tool',
+            zip: 'file-zip', rar: 'file-zip', tar: 'file-zip', gz: 'file-zip',
+        };
+        return extension in map ? map[extension] : null;
     }
 
     /**
@@ -393,64 +358,7 @@ export class TreeRenderer {
                 await FileUtils.createChildNote(this.app, path);
                 return;
             case 'more': {
-                const menu = new Menu();
-                const af = this.app.vault.getAbstractFileByPath(path);
-                const kind = af instanceof TFile ? 'file' : (af ? 'folder' : 'virtual');
-
-                // Pull configured menu items from settings or fallback defaults
-                const items = this.getConfiguredMenuItems();
-                for (const it of items) {
-                    if (!this.shouldShowFor(it, kind)) continue;
-                    if (it.type === 'builtin') {
-                        if (it.builtin === 'create-child') {
-                            menu.addItem((mi) => {
-                                mi.setTitle(t('commandCreateChildNote'))
-                                    .setIcon(it.icon || 'rotate-cw-square')
-                                    .onClick(async () => {
-                                        await FileUtils.createChildNote(this.app, path);
-                                    });
-                            });
-                        } else if (it.builtin === 'delete-file') {
-                            if (!(af instanceof TFile)) continue;
-                            menu.addItem((mi) => {
-                                mi.setTitle(t('menuDeleteFile'))
-                                    .setIcon(it.icon || 'trash-2')
-                                    .setSection(it.section === 'danger' ? 'danger' : 'default')
-                                    .onClick(async () => {
-                                        await this.app.fileManager.trashFile(af);
-                                    });
-                            });
-                        } else if (it.builtin === 'open-closest-parent') {
-                            if (!(af instanceof TFile)) continue;
-                            menu.addItem((mi) => {
-                                mi.setTitle(t('commandOpenClosestParent'))
-                                    .setIcon(it.icon || 'chevron-up')
-                                    .onClick(async () => {
-                                        await FileUtils.openClosestParentNote(this.app, af);
-                                    });
-                            });
-                        }
-                    } else if (it.type === 'command') {
-                        const label = it.label || it.commandId || 'Custom command';
-                        menu.addItem((mi) => {
-                            mi.setTitle(label)
-                                .setIcon(it.icon || 'dot')
-                                .onClick(async () => {
-                                    try {
-                                        if (it.openBeforeExecute !== false && af instanceof TFile) {
-                                            await FileUtils.openFile(this.app, af);
-                                        }
-                                        const { FileUtils: FU } = await import('../utils/FileUtils');
-                                        await FU.executeAppCommand(this.app, it.commandId);
-                                    } catch {
-                                        // ignore
-                                    }
-                                });
-                        });
-                    }
-                }
-
-                // Show at click position (mobile-friendly)
+                const menu = buildMoreMenu(this.app, path);
                 menu.showAtMouseEvent(event);
                 return;
             }
@@ -488,45 +396,5 @@ export class TreeRenderer {
 
     // Rename/delete are handled via native File Explorer commands triggered in the menu handlers above.
 
-    // Utilities to retrieve configured menu items from plugin settings
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    private getConfiguredMenuItems() {
-        try {
-            // Attempt to read plugin settings if available at runtime
-            // @ts-expect-error - Obsidian App has a plugins registry at runtime
-            const plugin = this.app?.plugins?.getPlugin?.('dot-navigator');
-            const builtinOrder: string[] = Array.isArray(plugin?.settings?.builtinMenuOrder) ? plugin.settings.builtinMenuOrder : [];
-            const userItems: MoreMenuItem[] = Array.isArray(plugin?.settings?.userMenuItems) ? plugin.settings.userMenuItems : [];
-
-            // Map builtins and order
-            const builtinMap = new Map(DEFAULT_MORE_MENU.filter(it => it.type === 'builtin').map(it => [it.id, it] as const));
-            const orderedBuiltins: MoreMenuItem[] = [];
-            for (const id of builtinOrder) {
-                const it = builtinMap.get(id);
-                if (it) orderedBuiltins.push(it);
-            }
-            for (const it of DEFAULT_MORE_MENU) {
-                if (it.type !== 'builtin') continue;
-                if (!orderedBuiltins.find(x => x.id === it.id)) orderedBuiltins.push(it);
-            }
-
-            const legacy = plugin?.settings?.moreMenuItems;
-            if ((!builtinOrder?.length && !(userItems?.length)) && Array.isArray(legacy) && legacy.length > 0) {
-                return legacy;
-            }
-            return [...orderedBuiltins, ...userItems];
-        } catch {
-            return DEFAULT_MORE_MENU;
-        }
-    }
-
-    // Type guard for show filter used above
-    private shouldShowFor(item: MoreMenuItem, kind: 'file' | 'folder' | 'virtual'): boolean {
-        const show = item?.showFor && item.showFor.length > 0 ? item.showFor : undefined;
-        if (!show) {
-            if (item?.type === 'builtin') return item.builtin === 'create-child' ? true : kind === 'file';
-            return kind === 'file';
-        }
-        return show.includes(kind);
-    }
+    // Menu configuration helpers moved to menuUtils.ts
 }

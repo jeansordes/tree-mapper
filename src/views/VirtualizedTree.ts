@@ -1,16 +1,15 @@
-/* eslint max-lines: ["warn", { "max": 500, "skipBlankLines": true, "skipComments": true }] */
 import { App } from 'obsidian';
 import { VirtualTree } from '../virtualTree';
 import type { VirtualTreeOptions } from '../types';
 import { logger } from '../utils/logger';
 import type { VItem } from '../core/virtualData';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
-import { createActionButtons, createFolderIcon, createIndentGuides, createTitleElement, createToggleButton, maybeCreateExtension, createFileIconOrBadge } from './rowDom';
-import { handleActionButtonClick, handleTitleClick } from './rowEvents';
-import { ensurePoolCapacity, logRenderWindow, scheduleWidthAdjust } from './renderUtils';
+import { renderRow } from './rowRender';
+import { logRenderWindow, scheduleWidthAdjust } from './renderUtils';
 import { computeDendronParentId, expandAllInData, renamePathInPlace } from './treeOps';
 import { setupAttachment, attachToViewBodyImpl } from './attachUtils';
 import { collapseAll as collapseAllAction, revealPath as revealAction, scrollToIndex as scrollToIndexAction, selectPath as selectPathAction } from './treeActions';
+import { bindRowHandlers, onRowClick as handleRowClick, onRowContextMenu as handleRowContextMenu } from './rowHandlers';
 
 export class ComplexVirtualTree extends VirtualTree {
   private app: App;
@@ -211,95 +210,11 @@ export class ComplexVirtualTree extends VirtualTree {
   public scrollToIndex(index: number): void { scrollToIndexAction(this.virtualTree, index); }
 
   // Row rendering (Obsidian-like DOM)
-  private _renderRow(row: HTMLElement, item: RowItem, itemIndex: number): void {
-    const isFocused = itemIndex === this.virtualTree.focusedIndex;
-    const isSelected = itemIndex === this.virtualTree.selectedIndex;
-    const isExpanded = this.virtualTree.expanded.get(item.id) ?? false;
-    const hasChildren = !!item.hasChildren;
-
-    row.style.display = 'flex';
-    row.style.position = 'absolute';
-    row.style.transform = `translateY(${itemIndex * this.virtualTree.rowHeight}px)`;
-    // Content height equals CSS var(--tm_button-size); extra space is the row gap.
-    row.style.height = 'var(--tm_button-size)';
-    row.style.lineHeight = 'var(--tm_button-size)';
-    // Keep a visual gap using the CSS variable directly
-    row.style.setProperty('padding-bottom', 'var(--tm_gap)');
-    // Add an extra gap between the rightmost guide and the node content
-    row.style.paddingLeft = `calc(${item.level * 20 + 8}px + var(--tm_gap))`;
-
-    row.className = 'tree-row';
-
-    // Track collapsed for CSS (triangle rotation) when item has children
-    if (hasChildren && !isExpanded) {
-      row.classList.add('collapsed');
-    } else {
-      row.classList.remove('collapsed');
-    }
-
-    row.innerHTML = '';
-    // Build row DOM pieces
-    if (item.level && item.level > 0) row.appendChild(createIndentGuides(item.level));
-    if (hasChildren) row.appendChild(createToggleButton());
-    if (item.kind === 'folder') row.appendChild(createFolderIcon());
-    else if (item.kind === 'file') {
-      const ic = createFileIconOrBadge(item);
-      if (ic) row.appendChild(ic);
-    }
-    row.appendChild(createTitleElement(item));
-    const extEl = maybeCreateExtension(item);
-    if (extEl) row.appendChild(extEl);
-    row.appendChild(createActionButtons(item, this.app));
-
-    // Highlight selected file's title using is-active class for CSS styling
-    const titleEl = row.querySelector('.tm_tree-item-title');
-    if (titleEl) {
-      if (isSelected) titleEl.classList.add('is-active');
-      else titleEl.classList.remove('is-active');
-    }
-
-    row.dataset.id = item.id;
-    row.dataset.index = String(itemIndex);
-    row.setAttribute('role', 'treeitem');
-    row.setAttribute('aria-level', String(item.level + 1));
-    row.setAttribute('tabindex', isFocused ? '0' : '-1');
-    row.setAttribute('aria-selected', String(isSelected));
-    if (hasChildren) row.setAttribute('aria-expanded', String(isExpanded));
-  }
+  private _renderRow(row: HTMLElement, item: RowItem, itemIndex: number): void { renderRow(this.virtualTree, row, item, itemIndex, this.app); }
 
   // Override row click handling to support toggle/create/open
   public _onRowClick(e: MouseEvent, row: HTMLElement): void {
-    const id = row.dataset.id!;
-    const idx = Number(row.dataset.index!);
-    const item: RowItem = this.virtualTree.visible[idx];
-
-    // Always move focus to the clicked row, but do not auto-select
-    this.virtualTree.focusedIndex = idx;
-    this.virtualTree.container.focus();
-
-    const target = e.target;
-    if (!(target instanceof Element)) {
-      logger.error('[DotNavigator] Error handling row click:', e);
-      return;
-    }
-
-    // Only react to explicit clickable elements: action buttons or clickable title
-    const buttonEl = target.closest('.tm_button-icon');
-    if (buttonEl) {
-      const action = buttonEl.getAttribute('data-action');
-      if (action && buttonEl instanceof HTMLElement) handleActionButtonClick(this.app, action, id, item.kind, this.virtualTree, buttonEl, e);
-      return;
-    }
-
-    const titleEl = target.closest('.tm_tree-item-title');
-    if (!titleEl) {
-      // Click happened outside title/buttons: do nothing (no implicit selection)
-      return;
-    }
-
-    // Only selecting/highlighting when clicking the title; behavior depends on kind
-    const kind = titleEl.getAttribute('data-node-kind');
-    if (kind) handleTitleClick(this.app, kind, id, idx, this.virtualTree, (sid) => { this._selectedId = sid; });
+    handleRowClick(this.app, this.virtualTree, e, row, (sid) => { this._selectedId = sid; });
   }
 
   // Forwarders that notify expansion changes so the header button stays in sync
@@ -321,41 +236,17 @@ export class ComplexVirtualTree extends VirtualTree {
 
   // Ensure we have enough pooled rows to fill the viewport plus buffer
   private _ensurePoolCapacity(): void {
-    if (!this._ctxMenuBound) this._ctxMenuBound = new WeakSet<HTMLElement>();
-    ensurePoolCapacity(this.virtualTree, (row) => {
-      row.addEventListener('click', (ev) => {
-        if (ev instanceof MouseEvent) this._onRowClick(ev, row);
-      });
-      row.addEventListener('contextmenu', (ev) => {
-        if (ev instanceof MouseEvent) this._onRowContextMenu(ev, row);
-      });
-    });
-
-    // Also ensure existing pooled rows have a context menu handler (initial pool from base class)
-    const boundSet = this._ctxMenuBound ?? (this._ctxMenuBound = new WeakSet<HTMLElement>());
-    for (const row of this.virtualTree.pool) {
-      if (!boundSet.has(row)) {
-        row.addEventListener('contextmenu', (ev) => {
-          if (ev instanceof MouseEvent) this._onRowContextMenu(ev, row);
-        });
-        boundSet.add(row);
-      }
-    }
+    this._ctxMenuBound = bindRowHandlers(
+      this.virtualTree,
+      (ev, row) => this._onRowClick(ev, row),
+      (ev, row) => this._onRowContextMenu(ev, row),
+      this._ctxMenuBound
+    );
   }
 
   // Right-click handler: open the More menu for the row
   private _onRowContextMenu(e: MouseEvent, row: HTMLElement): void {
-    e.preventDefault();
-    e.stopPropagation();
-    const id = row.dataset.id!;
-    const idx = Number(row.dataset.index!);
-    const item: RowItem = this.virtualTree.visible[idx];
-
-    // Keep focus consistent with interaction
-    this.virtualTree.focusedIndex = idx;
-    this.virtualTree.container.focus();
-
-    handleActionButtonClick(this.app, 'more', id, item.kind, this.virtualTree, row, e);
+    handleRowContextMenu(this.app, this.virtualTree, e, row);
   }
 
   // Override render to use the correct scroll container and windowing math

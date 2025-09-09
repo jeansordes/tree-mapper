@@ -18,7 +18,8 @@ export class DotNavigatorSettingTab extends PluginSettingTab {
     containerEl.createEl('h2', { text: 'Dot Navigator Settings' });
 
     // More menu section
-    containerEl.createEl('h3', { text: 'More Menu' });
+    const moreMenuHeader = containerEl.createEl('h3', { text: 'More Menu' });
+    moreMenuHeader.id = 'dotnav-more-menu';
     containerEl.createEl('p', { text: 'Customize the three-dots menu. Built-in items cannot be removed; you can reorder them. You can add, remove, and reorder custom commands.' });
 
     // Built-in items ordering
@@ -190,8 +191,8 @@ export class DotNavigatorSettingTab extends PluginSettingTab {
   private describeItem(item: MoreMenuItem): string {
     if (item.type === 'builtin') {
       if (item.builtin === 'create-child') return 'Builtin: Add child note';
-      if (item.builtin === 'delete-file') return 'Builtin: Delete file (danger)';
-      if (item.builtin === 'delete-folder') return 'Builtin: Delete folder (danger)';
+      if (item.builtin === 'delete-file') return 'Builtin: Delete file';
+      if (item.builtin === 'delete-folder') return 'Builtin: Delete folder';
       if (item.builtin === 'open-closest-parent') return 'Builtin: Open closest parent note';
       return 'Builtin';
     }

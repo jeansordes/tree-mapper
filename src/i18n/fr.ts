@@ -41,6 +41,9 @@ export default {
     // Ribbon
     ribbonTooltip: 'Ouvrir Dot Navigator',
 
+    // Settings
+    settingsAddCustomCommandLink: 'Personnaliser le menu…',
+
     // Untitled
     untitledPath: 'sans-titre',
 }; 

@@ -35,7 +35,7 @@ export default [
 					allow: ["warn", "error"],
 				},
 			],
-			"max-lines": ["warn", { "max": 300, "skipBlankLines": true, "skipComments": true }],
+			"max-lines": ["error", { "max": 300, "skipBlankLines": true, "skipComments": true }],
 		},
 	},
 	{

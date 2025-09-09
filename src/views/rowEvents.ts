@@ -1,4 +1,4 @@
-import { App, Menu, TFile, TFolder } from 'obsidian';
+import { App, Menu, TFile, TFolder, Platform } from 'obsidian';
 import { FileUtils } from '../utils/FileUtils';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
 import type { MenuItemKind, MoreMenuItem, MoreMenuItemCommand } from '../types';
@@ -31,9 +31,13 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
     const file = fileOrFolder instanceof TFile ? fileOrFolder : null;
     const folder = fileOrFolder instanceof TFolder ? fileOrFolder : null;
 
+    let hasAddedBuiltinItems = false;
+    let hasAddedSeparator = false;
+
     for (const it of items) {
       if (!shouldShowFor(it, kind)) continue;
       if (it.type === 'builtin') {
+        hasAddedBuiltinItems = true;
         if (it.builtin === 'create-child') {
           menu.addItem((mi) => {
             mi.setTitle(t('commandCreateChildNote'))
@@ -47,17 +51,22 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
           menu.addItem((mi) => {
             mi.setTitle(t('menuDeleteFile'))
               .setIcon(it.icon || 'trash-2')
-              .setSection(it.section === 'danger' ? 'danger' : 'default')
               .onClick(async () => {
                 await app.fileManager.trashFile(file);
               });
+            try {
+              if (Platform.isMobile) {
+                const maybeDom = Reflect.get(mi, 'dom');
+                const el = maybeDom instanceof HTMLElement ? maybeDom : undefined;
+                if (el) el.classList.add('tappable', 'is-warning');
+              }
+            } catch { /* ignore */ }
           });
         } else if (it.builtin === 'delete-folder') {
           if (!folder) continue; // only for folders
           menu.addItem((mi) => {
             mi.setTitle(t('menuDeleteFolder'))
               .setIcon(it.icon || 'trash-2')
-              .setSection(it.section === 'danger' ? 'danger' : 'default')
               .onClick(async () => {
                 try {
                   await app.vault.trash(folder, true);
@@ -65,6 +74,13 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
                   try { await app.vault.delete(folder, true); } catch { /* ignore */ }
                 }
               });
+            try {
+              if (Platform.isMobile) {
+                const maybeDom = Reflect.get(mi, 'dom');
+                const el = maybeDom instanceof HTMLElement ? maybeDom : undefined;
+                if (el) el.classList.add('tappable', 'is-warning');
+              }
+            } catch { /* ignore */ }
           });
         } else if (it.builtin === 'open-closest-parent') {
           if (!file) continue; // only for files
@@ -77,10 +93,14 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
           });
         }
       } else if (it.type === 'command') {
+        // Add separator before first custom command if we have built-in items
+        if (hasAddedBuiltinItems && !hasAddedSeparator) {
+          menu.addSeparator();
+          hasAddedSeparator = true;
+        }
         const label = it.label || it.commandId || 'Custom command';
         menu.addItem((mi) => {
           mi.setTitle(label)
-            .setIcon(it.icon || 'dot')
             .onClick(async () => {
               try {
                 if (it.openBeforeExecute !== false && file) {
@@ -96,6 +116,34 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
       }
     }
 
+    // Final section: quick link to customize the menu in settings
+    menu.addSeparator();
+    menu.addItem((mi) => {
+      mi.setTitle(t('settingsAddCustomCommandLink') || 'Customize menu…')
+        .onClick(async () => {
+          try {
+            const plugins = Reflect.get(app, 'plugins');
+            const plugin = plugins?.getPlugin?.('dot-navigator');
+            if (plugin && typeof plugin === 'object') {
+              const settingsTab = Reflect.get(plugin, 'settingTab') ?? Reflect.get(plugin, 'settingsTab');
+              if (settingsTab && typeof settingsTab.open === 'function') {
+                settingsTab.open();
+              } else {
+                const settingObj = Reflect.get(app, 'setting');
+                if (settingObj && typeof settingObj.open === 'function') {
+                  settingObj.open();
+                }
+              }
+
+              setTimeout(() => {
+                const el = document.getElementById('dotnav-more-menu');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 100);
+            }
+          } catch { /* ignore */ }
+        });
+    });
+
     if (ev instanceof MouseEvent) menu.showAtMouseEvent(ev);
     else if (anchorEl instanceof HTMLElement) {
       const r = anchorEl.getBoundingClientRect();
@@ -105,7 +153,7 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
 }
 
 // Intentionally typed to concrete return type for lint correctness
-function getConfiguredMenuItems(app: App): MoreMenuItem[] {
+export function getConfiguredMenuItems(app: App): MoreMenuItem[] {
   try {
     // @ts-expect-error - plugins registry exists at runtime
     const plugin = app?.plugins?.getPlugin?.('dot-navigator');
@@ -145,7 +193,7 @@ function getConfiguredMenuItems(app: App): MoreMenuItem[] {
   }
 }
 
-function shouldShowFor(item: MoreMenuItem, kind: MenuItemKind): boolean {
+export function shouldShowFor(item: MoreMenuItem, kind: MenuItemKind): boolean {
   const show = item.showFor && item.showFor.length > 0 ? item.showFor : undefined;
   if (!show) {
     // Defaults: builtin delete => files only; builtin create-child => all; command => files only
