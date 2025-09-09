@@ -272,6 +272,12 @@
     }
 }
 
+/* Mobile dark mode */
+.theme-dark .tm_view.tm_view-mobile {
+    --tm_bg-hover: var(--bg1);
+    --tm_bg: var(--bg2);
+}
+
 /* macOS specific scrollbar behavior */
 @media (hover: hover) {
     .tm_view .tm_view-body::-webkit-scrollbar {
