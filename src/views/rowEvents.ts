@@ -1,7 +1,7 @@
 import { App, Menu, TFile, TFolder } from 'obsidian';
 import { FileUtils } from '../utils/FileUtils';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
-import type { MenuItemKind, MoreMenuItem } from '../types';
+import type { MenuItemKind, MoreMenuItem, MoreMenuItemCommand } from '../types';
 import { DEFAULT_MORE_MENU } from '../types';
 import { t } from '../i18n';
 
@@ -66,6 +66,15 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
                 }
               });
           });
+        } else if (it.builtin === 'open-closest-parent') {
+          if (!file) continue; // only for files
+          menu.addItem((mi) => {
+            mi.setTitle(t('commandOpenClosestParent'))
+              .setIcon(it.icon || 'chevron-up')
+              .onClick(async () => {
+                await FileUtils.openClosestParentNote(app, file);
+              });
+          });
         }
       } else if (it.type === 'command') {
         const label = it.label || it.commandId || 'Custom command';
@@ -95,15 +104,42 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
   }
 }
 
-// Intentionally loose typing here due to runtime plugin API shape variations
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-function getConfiguredMenuItems(app: App) {
+// Intentionally typed to concrete return type for lint correctness
+function getConfiguredMenuItems(app: App): MoreMenuItem[] {
   try {
     // @ts-expect-error - plugins registry exists at runtime
     const plugin = app?.plugins?.getPlugin?.('dot-navigator');
-    const list = plugin?.settings?.moreMenuItems;
-    if (Array.isArray(list) && list.length > 0) return list;
-    return DEFAULT_MORE_MENU;
+    // New model: builtins order + user items
+    const builtinOrder: string[] = Array.isArray(plugin?.settings?.builtinMenuOrder)
+      ? plugin.settings.builtinMenuOrder
+      : [];
+    const userItems: MoreMenuItemCommand[] = Array.isArray(plugin?.settings?.userMenuItems)
+      ? plugin.settings.userMenuItems
+      : [];
+
+    // Build map of default builtins by id
+    const builtinMap = new Map(DEFAULT_MORE_MENU.filter(it => it.type === 'builtin').map(it => [it.id, it] as const));
+    // Start with ordered builtins from settings
+    const orderedBuiltins: MoreMenuItem[] = [];
+    for (const id of builtinOrder) {
+      const it = builtinMap.get(id);
+      if (it) orderedBuiltins.push(it);
+    }
+    // Append any new/missing builtins not in order (e.g., after plugin update)
+    for (const it of DEFAULT_MORE_MENU) {
+      if (it.type !== 'builtin') continue;
+      if (!orderedBuiltins.find(x => x.id === it.id)) orderedBuiltins.push(it);
+    }
+
+    // If legacy combined list exists and new fields are empty, fallback to it for this session
+    const legacyItems: MoreMenuItem[] = Array.isArray(plugin?.settings?.moreMenuItems)
+      ? plugin.settings.moreMenuItems
+      : [];
+    if (!builtinOrder.length && !userItems.length && legacyItems.length > 0) {
+      return legacyItems;
+    }
+
+    return [...orderedBuiltins, ...userItems];
   } catch {
     return DEFAULT_MORE_MENU;
   }

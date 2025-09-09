@@ -19,35 +19,53 @@ export class DotNavigatorSettingTab extends PluginSettingTab {
 
     // More menu section
     containerEl.createEl('h3', { text: 'More Menu' });
-    containerEl.createEl('p', { text: 'Customize the items shown when clicking the three-dots menu. You can add custom commands from other plugins, remove items, and reorder them.' });
+    containerEl.createEl('p', { text: 'Customize the three-dots menu. Built-in items cannot be removed; you can reorder them. You can add, remove, and reorder custom commands.' });
 
-    // Actions row
-    const actions = new Setting(containerEl).setName('Manage');
-    actions.addButton((btn: ButtonComponent) => {
-      btn.setButtonText('Add custom command')
-        .setCta()
-        .onClick(async () => {
-          const list = this.getMenuItems();
-          list.push(this.newCommandItem());
-          await this.updateMenuItems(list);
-        });
+    // Built-in items ordering
+    containerEl.createEl('h4', { text: 'Built-in Items' });
+    const builtinList = this.getBuiltinItems();
+    const builtinOrder = this.getBuiltinOrder();
+    const builtinWrap = containerEl.createEl('div');
+    builtinOrder.forEach((id, index) => {
+      const item = builtinList.find((x) => x.id === id) || builtinList[index];
+      const card = builtinWrap.createEl('div', { cls: 'tm_settings-card' });
+      const header = new Setting(card)
+        .setName(`${index + 1}. ${this.describeItem(item)}`);
+      header.addExtraButton((btn) => {
+        btn.setIcon('arrow-up')
+          .setTooltip('Move up')
+          .setDisabled(index === 0)
+          .onClick(async () => {
+            if (index === 0) return;
+            const order = this.getBuiltinOrder();
+            const tmp = order[index - 1];
+            order[index - 1] = order[index];
+            order[index] = tmp;
+            await this.updateBuiltinOrder(order);
+          });
+      });
+      header.addExtraButton((btn) => {
+        btn.setIcon('arrow-down')
+          .setTooltip('Move down')
+          .setDisabled(index === builtinOrder.length - 1)
+          .onClick(async () => {
+            if (index >= builtinOrder.length - 1) return;
+            const order = this.getBuiltinOrder();
+            const tmp = order[index + 1];
+            order[index + 1] = order[index];
+            order[index] = tmp;
+            await this.updateBuiltinOrder(order);
+          });
+      });
+      // No delete button for builtins
     });
-    actions.addButton((btn) => {
-      btn.setButtonText('Restore defaults')
-        .onClick(async () => {
-          await this.updateMenuItems(DEFAULT_MORE_MENU.slice());
-        });
-    });
 
-    const items = this.getMenuItems();
-
-    const listEl = containerEl.createEl('div');
-
-    items.forEach((item, index) => {
-      // Card wrapper
-      const card = listEl.createEl('div', { cls: 'tm_settings-card' });
-
-      // Header row with move/remove and title
+    // Custom commands
+    containerEl.createEl('h4', { text: 'Custom Commands' });
+    const customItems = this.getUserItems();
+    const customWrap = containerEl.createEl('div');
+    customItems.forEach((item, index) => {
+      const card = customWrap.createEl('div', { cls: 'tm_settings-card' });
       const header = new Setting(card)
         .setName(`${index + 1}. ${this.describeItem(item)}`);
 
@@ -57,106 +75,115 @@ export class DotNavigatorSettingTab extends PluginSettingTab {
           .setDisabled(index === 0)
           .onClick(async () => {
             if (index === 0) return;
-            const list = this.getMenuItems();
+            const list = this.getUserItems();
             const tmp = list[index - 1];
             list[index - 1] = list[index];
             list[index] = tmp;
-            await this.updateMenuItems(list);
+            await this.updateUserItems(list);
           });
       });
       header.addExtraButton((btn) => {
         btn.setIcon('arrow-down')
           .setTooltip('Move down')
-          .setDisabled(index === items.length - 1)
+          .setDisabled(index === customItems.length - 1)
           .onClick(async () => {
-            if (index >= items.length - 1) return;
-            const list = this.getMenuItems();
+            if (index >= customItems.length - 1) return;
+            const list = this.getUserItems();
             const tmp = list[index + 1];
             list[index + 1] = list[index];
             list[index] = tmp;
-            await this.updateMenuItems(list);
+            await this.updateUserItems(list);
           });
       });
       header.addExtraButton((btn) => {
         btn.setIcon('trash')
           .setTooltip('Remove')
           .onClick(async () => {
-            const list = this.getMenuItems();
+            const list = this.getUserItems();
             list.splice(index, 1);
-            await this.updateMenuItems(list);
+            await this.updateUserItems(list);
           });
       });
 
-      // Command-specific fields inside the card
-      if (item.type === 'command') {
-        new Setting(card)
-          .setName('Label')
-          .setDesc('Text shown in the menu')
-          .addText((text) => {
-            text.setValue(item.label || '')
-              .onChange(async (v) => {
-                const list = this.getMenuItems();
-                const cur = list[index];
-                if (cur.type === 'command') {
-                  cur.label = v;
-                  await this.updateMenuItems(list, false);
-                }
-              });
-          });
-
-        const cmdSetting = new Setting(card)
-          .setName('Command')
-          .setDesc('Pick a command from the palette');
-        cmdSetting.addText((text) => {
-          const updateDisplay = () => {
-            const value = item.commandId ? `${item.label || ''} (${item.commandId})` : '';
-            text.setValue(value);
-          };
-          updateDisplay();
-          const inputEl = text.inputEl;
-          if (inputEl instanceof HTMLInputElement) {
-            inputEl.readOnly = true;
-            inputEl.placeholder = 'Select command…';
-            inputEl.style.cursor = 'pointer';
-          }
-
-          const openPicker = () => {
-            const modal = new CommandSuggestModal(this.app, async (opt) => {
-              const list = this.getMenuItems();
-              const current = list[index];
-              if (current.type === 'command') {
-                current.commandId = opt.id;
-                if (!current.label) current.label = opt.name;
-                await this.updateMenuItems(list, false);
-                updateDisplay();
-              }
+      // Fields for command item
+      new Setting(card)
+        .setName('Label')
+        .setDesc('Text shown in the menu')
+        .addText((text) => {
+          text.setValue(item.label || '')
+            .onChange(async (v) => {
+              const list = this.getUserItems();
+              const cur = list[index];
+              cur.label = v;
+              await this.updateUserItems(list, false);
             });
-            modal.open();
-          };
-          const el = text.inputEl;
-          el.addEventListener('click', openPicker);
-          el.addEventListener('focus', (e) => {
-            const tgt = e.target;
-            if (tgt instanceof HTMLInputElement) tgt.blur();
-            openPicker();
-          });
         });
-
-        new Setting(card)
-          .setName('Open file before executing')
-          .setDesc('Opens the clicked file before running the command (recommended)')
-          .addToggle((tg) => {
-            tg.setValue(item.openBeforeExecute !== false)
-              .onChange(async (v) => {
-                const list = this.getMenuItems();
-                const cur = list[index];
-                if (cur.type === 'command') {
-                  cur.openBeforeExecute = v;
-                  await this.updateMenuItems(list, false);
-                }
-              });
+      const cmdSetting = new Setting(card)
+        .setName('Command')
+        .setDesc('Pick a command from the palette');
+      cmdSetting.addText((text) => {
+        const updateDisplay = () => {
+          const value = item.commandId ? `${item.label || ''} (${item.commandId})` : '';
+          text.setValue(value);
+        };
+        updateDisplay();
+        const inputEl = text.inputEl;
+        if (inputEl instanceof HTMLInputElement) {
+          inputEl.readOnly = true;
+          inputEl.placeholder = 'Select command…';
+          inputEl.style.cursor = 'pointer';
+        }
+        const openPicker = () => {
+          const modal = new CommandSuggestModal(this.app, async (opt) => {
+            const list = this.getUserItems();
+            const current = list[index];
+            current.commandId = opt.id;
+            if (!current.label) current.label = opt.name;
+            await this.updateUserItems(list, false);
+            updateDisplay();
           });
-      }
+          modal.open();
+        };
+        const el = text.inputEl;
+        el.addEventListener('click', openPicker);
+        el.addEventListener('focus', (e) => {
+          const tgt = e.target;
+          if (tgt instanceof HTMLInputElement) tgt.blur();
+          openPicker();
+        });
+      });
+      new Setting(card)
+        .setName('Open file before executing')
+        .setDesc('Opens the clicked file before running the command (recommended)')
+        .addToggle((tg) => {
+          tg.setValue(item.openBeforeExecute !== false)
+            .onChange(async (v) => {
+              const list = this.getUserItems();
+              const cur = list[index];
+              cur.openBeforeExecute = v;
+              await this.updateUserItems(list, false);
+            });
+        });
+    });
+
+    // Actions row
+    const actions = new Setting(containerEl);
+    actions.addButton((btn: ButtonComponent) => {
+      btn.setButtonText('Add custom command')
+        .setCta()
+        .onClick(async () => {
+          const list = this.getUserItems();
+          list.push(this.newCommandItem());
+          await this.updateUserItems(list);
+        });
+    });
+    actions.addButton((btn) => {
+      btn.setButtonText('Restore defaults')
+        .onClick(async () => {
+          await this.updateBuiltinOrder(DEFAULT_MORE_MENU.filter(i => i.type === 'builtin').map(i => i.id));
+          await this.updateUserItems([]);
+          this.display();
+        });
     });
   }
 
@@ -165,19 +192,42 @@ export class DotNavigatorSettingTab extends PluginSettingTab {
       if (item.builtin === 'create-child') return 'Builtin: Add child note';
       if (item.builtin === 'delete-file') return 'Builtin: Delete file (danger)';
       if (item.builtin === 'delete-folder') return 'Builtin: Delete folder (danger)';
+      if (item.builtin === 'open-closest-parent') return 'Builtin: Open closest parent note';
       return 'Builtin';
     }
     return `Command: ${item.label || item.commandId || '(unnamed)'}`;
   }
 
-  private getMenuItems(): MoreMenuItem[] {
-    const items = this.plugin?.settings?.moreMenuItems;
-    if (Array.isArray(items) && items.length > 0) return items;
-    return DEFAULT_MORE_MENU.slice();
+  private getBuiltinItems(): MoreMenuItem[] {
+    // Always current builtins from code
+    return DEFAULT_MORE_MENU.filter(i => i.type === 'builtin');
   }
 
-  private async updateMenuItems(list: MoreMenuItem[], refreshView: boolean = true): Promise<void> {
-    this.plugin.settings.moreMenuItems = list;
+  private getBuiltinOrder(): string[] {
+    const order = this.plugin?.settings?.builtinMenuOrder;
+    if (Array.isArray(order) && order.length > 0) return order.slice();
+    return this.getBuiltinItems().map(i => i.id);
+  }
+
+  private async updateBuiltinOrder(order: string[]): Promise<void> {
+    this.plugin.settings.builtinMenuOrder = order;
+    await this.plugin.saveSettings();
+    this.display();
+  }
+
+  private getUserItems(): MoreMenuItemCommand[] {
+    const list = this.plugin?.settings?.userMenuItems;
+    if (Array.isArray(list)) return list.slice();
+    // Migration fallback if older combined list exists
+    const legacy = this.plugin?.settings?.moreMenuItems;
+    if (Array.isArray(legacy) && legacy.length > 0) {
+      return legacy.filter((x): x is MoreMenuItemCommand => x.type === 'command');
+    }
+    return [];
+  }
+
+  private async updateUserItems(list: MoreMenuItemCommand[], refreshView: boolean = true): Promise<void> {
+    this.plugin.settings.userMenuItems = list;
     await this.plugin.saveSettings();
     if (refreshView) this.display();
   }

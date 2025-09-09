@@ -37,6 +37,7 @@ Dot Navigator provides several commands that can be accessed via the Command Pal
 - **Show File in Tree View**: Highlights and reveals the current file in the tree view
 - **Collapse All Nodes in Tree**: Collapses all nodes in the tree view
 - **Expand All Nodes in Tree**: Expands all nodes in the tree view
+- **Open Closest Parent Note**: Opens the nearest existing parent note of the current file (checks dotted parents like `a.b.c` → `a.b` → `a`, then folder note `<folder>/<folder>.md`)
 
 ## Internationalization
 
@@ -57,7 +58,7 @@ You can assign keyboard shortcuts to any of the commands above through the Hotke
 - Other tools that inspired this one:
   - [Structured Tree](https://github.com/Rudtrack/structured-tree)
   - [Obsidian Structure](https://github.com/dobrovolsky/obsidian-structure)
-  - [Obsidian Dendron Tree](https://github.com/levirs565/obsidian-dendron-tree)
+  - [Obsidian Dot Navigator](https://github.com/levirs565/obsidian-dendron-tree)
 
 
 ## Virtual Tree Demo
@@ -71,4 +72,3 @@ The core implementation lives in `src/virtualTree.js` with helper utilities in `
 ```bash
 npm test
 ```
-

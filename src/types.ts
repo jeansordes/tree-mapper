@@ -7,13 +7,19 @@ export const TREE_VIEW_ICON = 'folder-git-2';
 export interface PluginSettings {
     mySetting: string;
     expandedNodes?: string[]; // Array of node paths that are expanded
+    // Deprecated: legacy combined list (builtins + custom). Kept for migration.
     moreMenuItems?: MoreMenuItem[];
+    // New: keep builtin items order separately so builtins are immutable and always present
+    builtinMenuOrder?: string[]; // array of builtin item ids
+    userMenuItems?: MoreMenuItemCommand[]; // only custom command items
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
     mySetting: 'default',
     expandedNodes: [],
-    moreMenuItems: undefined
+    moreMenuItems: undefined,
+    builtinMenuOrder: undefined,
+    userMenuItems: []
 }
 
 export enum TreeNodeType {
@@ -75,7 +81,7 @@ export interface MoreMenuItemBase {
 
 export interface MoreMenuItemBuiltin extends MoreMenuItemBase {
     type: 'builtin';
-    builtin: 'create-child' | 'delete-file' | 'delete-folder';
+    builtin: 'create-child' | 'delete-file' | 'delete-folder' | 'open-closest-parent';
 }
 
 export interface MoreMenuItemCommand extends MoreMenuItemBase {
@@ -93,6 +99,13 @@ export const DEFAULT_MORE_MENU: MoreMenuItem[] = [
         builtin: 'create-child',
         icon: 'rotate-cw-square',
         showFor: ['file', 'folder', 'virtual']
+    },
+    {
+        id: 'builtin-open-closest-parent',
+        type: 'builtin',
+        builtin: 'open-closest-parent',
+        icon: 'chevron-up',
+        showFor: ['file']
     },
     {
         id: 'builtin-delete-file',

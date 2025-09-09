@@ -1,6 +1,6 @@
 import { Plugin, TFile, WorkspaceLeaf } from 'obsidian';
 import { t } from './i18n';
-import { DEFAULT_SETTINGS, FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON } from './types';
+import { DEFAULT_SETTINGS, FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON, MoreMenuItemCommand } from './types';
 import { FileUtils } from './utils/FileUtils';
 import PluginMainPanel from './views/PluginMainPanel';
 import { logger } from './utils/logger';
@@ -60,7 +60,7 @@ export default class DotNavigatorPlugin extends Plugin {
             }
         });
 
-        // Add a command to show the current file in the Dendron Tree View
+        // Add a command to show the current file in the Dot Navigator View
         this.addCommand({
             id: 'show-file-in-dendron-tree',
             name: t('commandShowFile'),
@@ -115,6 +115,21 @@ export default class DotNavigatorPlugin extends Plugin {
                 return true;
             }
         });
+
+        // Add a command to open the closest existing parent note
+        this.addCommand({
+            id: 'open-closest-parent-note',
+            name: t('commandOpenClosestParent'),
+            checkCallback: (checking: boolean) => {
+                const activeFile = this.app.workspace.getActiveFile();
+                if (!activeFile) return false;
+
+                if (!checking) {
+                    FileUtils.openClosestParentNote(this.app, activeFile);
+                }
+                return true;
+            }
+        });
     }
 
 
@@ -155,13 +170,13 @@ export default class DotNavigatorPlugin extends Plugin {
     }
 
     /**
-     * Show the current file in the Dendron Tree View
+     * Show the current file in the Dot Navigator View
      */
     private async showFileInDendronTree(file: TFile): Promise<void> {
         // First, make sure the view is open
         await this.activateView();
 
-        // Get the Dendron Tree View instance
+        // Get the Dot Navigator View instance
         const leaves = this.app.workspace.getLeavesOfType(FILE_TREE_VIEW_TYPE);
         if (leaves.length === 0) return;
 
@@ -175,6 +190,29 @@ export default class DotNavigatorPlugin extends Plugin {
 
     async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+
+        // Migrate legacy moreMenuItems (combined list) to separate builtin order + user items
+        try {
+            const legacy = this.settings.moreMenuItems;
+            const hasNewFields = Array.isArray(this.settings.builtinMenuOrder) || Array.isArray(this.settings.userMenuItems);
+            if (Array.isArray(legacy) && legacy.length > 0 && !hasNewFields) {
+                const builtinOrder = legacy.filter(i => i.type === 'builtin').map(i => i.id);
+                const userItems = legacy.filter((i): i is MoreMenuItemCommand => i.type === 'command');
+                this.settings.builtinMenuOrder = builtinOrder;
+                this.settings.userMenuItems = userItems;
+                // Clear legacy field so future loads prefer the new structure
+                this.settings.moreMenuItems = undefined;
+                await this.saveData(this.settings);
+            }
+            // Ensure builtin order exists at least with defaults
+            if (!Array.isArray(this.settings.builtinMenuOrder) || this.settings.builtinMenuOrder.length === 0) {
+                // Import at runtime to avoid cycle
+                const { DEFAULT_MORE_MENU } = await import('./types');
+                this.settings.builtinMenuOrder = DEFAULT_MORE_MENU.filter(i => i.type === 'builtin').map(i => i.id);
+            }
+        } catch {
+            logger.log("[DotNavigator] Settings migration failed; proceeding with defaults");
+        }
 
         // Restore expanded nodes if available
         if (this.pluginMainPanel && this.settings.expandedNodes) {

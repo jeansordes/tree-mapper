@@ -1,14 +1,15 @@
 // French localization
 export default {
     // View
-    viewName: 'Arborescence Dendron',
+    viewName: 'Dot Navigator',
     
     // Commands
     commandOpenTree: 'Ouvrir l\'arborescence des fichiers',
-    commandShowFile: 'Afficher le fichier dans l\'arborescence Dendron',
-    commandCollapseAll: 'Réduire tous les nœuds dans l\'arborescence Dendron',
-    commandExpandAll: 'Développer tous les nœuds dans l\'arborescence Dendron',
+    commandShowFile: 'Afficher le fichier dans Dot Navigator',
+    commandCollapseAll: 'Réduire tous les nœuds dans Dot Navigator',
+    commandExpandAll: 'Développer tous les nœuds dans Dot Navigator',
     commandCreateChildNote: 'Créer une note enfant',
+    commandOpenClosestParent: 'Ouvrir la note parente la plus proche',
     
     // UI Elements
     buttonCollapseAll: 'Tout réduire',
@@ -35,9 +36,10 @@ export default {
     noticeFileExists: 'Un fichier existe déjà à : {{path}}',
     noticeRenamedFile: 'Renommé en : {{newPath}}',
     noticeFailedRenameFile: 'Échec du renommage : {{path}}',
+    noticeNoParentNote: 'Aucune note parente trouvée',
     
     // Ribbon
-    ribbonTooltip: 'Ouvrir l\'arborescence Dendron',
+    ribbonTooltip: 'Ouvrir Dot Navigator',
 
     // Untitled
     untitledPath: 'sans-titre',

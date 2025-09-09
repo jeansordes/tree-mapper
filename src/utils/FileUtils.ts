@@ -188,4 +188,46 @@ export class FileUtils {
     public static async deleteViaExplorer(app: App, file: TFile): Promise<boolean> {
         return this.executeExplorerCommand(app, 'file-explorer:delete-file', file);
     }
+
+    /** Find the closest existing parent note for a given file (Dendron-style). */
+    public static findClosestParentNote(app: App, file: TFile): TFile | null {
+        const folderPath = file.parent?.path ?? '';
+        const base = file.basename; // without extension
+
+        // 1) Dendron-style dotted parents in the same folder: a.b.c -> a.b -> a
+        if (base.includes('.')) {
+            const parts = base.split('.');
+            for (let i = parts.length - 1; i >= 1; i--) {
+                const parentBase = parts.slice(0, i).join('.');
+                const parentPath = (folderPath && folderPath !== '/')
+                    ? `${folderPath}/${parentBase}.md`
+                    : `${parentBase}.md`;
+                const af = app.vault.getAbstractFileByPath(parentPath);
+                if (af instanceof TFile) return af;
+            }
+        }
+
+        // 2) Folder note fallback: <folder>/<folder>.md
+        if (folderPath && folderPath !== '/') {
+            const segs = folderPath.split('/');
+            const folderName = segs[segs.length - 1] || '';
+            if (folderName) {
+                const folderNotePath = `${folderPath}/${folderName}.md`;
+                const af = app.vault.getAbstractFileByPath(folderNotePath);
+                if (af instanceof TFile) return af;
+            }
+        }
+
+        return null;
+    }
+
+    /** Open the closest existing parent note for the currently open file, with user feedback. */
+    public static async openClosestParentNote(app: App, file: TFile): Promise<void> {
+        const parent = this.findClosestParentNote(app, file);
+        if (!parent) {
+            new Notice(t('noticeNoParentNote'));
+            return;
+        }
+        await this.openFile(app, parent);
+    }
 }

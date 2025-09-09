@@ -1,14 +1,15 @@
 // English localization
 export default {
     // View
-    viewName: 'Dendron Tree',
+    viewName: 'Dot Navigator',
     
     // Commands
     commandOpenTree: 'Open File Tree View',
-    commandShowFile: 'Show File in Dendron Tree View',
-    commandCollapseAll: 'Collapse All Nodes in Dendron Tree',
-    commandExpandAll: 'Expand All Nodes in Dendron Tree',
+    commandShowFile: 'Show File in Dot Navigator View',
+    commandCollapseAll: 'Collapse All Nodes in Dot Navigator',
+    commandExpandAll: 'Expand All Nodes in Dot Navigator',
     commandCreateChildNote: 'Create Child Note',
+    commandOpenClosestParent: 'Open Closest Parent Note',
     
     // UI Elements
     buttonCollapseAll: 'Collapse All',
@@ -35,9 +36,10 @@ export default {
     noticeFileExists: 'A file already exists at: {{path}}',
     noticeRenamedFile: 'Renamed to: {{newPath}}',
     noticeFailedRenameFile: 'Failed to rename: {{path}}',
+    noticeNoParentNote: 'No parent note found',
     
     // Ribbon
-    ribbonTooltip: 'Open Dendron Tree',
+    ribbonTooltip: 'Open Dot Navigator',
 
     // Untitled
     untitledPath: 'untitled',

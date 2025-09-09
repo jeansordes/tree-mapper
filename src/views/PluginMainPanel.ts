@@ -7,7 +7,7 @@ import { ViewLayout } from '../core/ViewLayout';
 import { VirtualTreeManager } from '../core/VirtualTreeManager';
 import { logger } from '../utils/logger';
 
-// Dendron Tree View class
+// Dot Navigator View class
 export default class PluginMainPanel extends ItemView {
     private static instanceCounter = 0;
     private instanceId: number;

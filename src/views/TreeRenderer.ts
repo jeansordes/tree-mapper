@@ -420,6 +420,15 @@ export class TreeRenderer {
                                         await this.app.fileManager.trashFile(af);
                                     });
                             });
+                        } else if (it.builtin === 'open-closest-parent') {
+                            if (!(af instanceof TFile)) continue;
+                            menu.addItem((mi) => {
+                                mi.setTitle(t('commandOpenClosestParent'))
+                                    .setIcon(it.icon || 'chevron-up')
+                                    .onClick(async () => {
+                                        await FileUtils.openClosestParentNote(this.app, af);
+                                    });
+                            });
                         }
                     } else if (it.type === 'command') {
                         const label = it.label || it.commandId || 'Custom command';
@@ -486,9 +495,26 @@ export class TreeRenderer {
             // Attempt to read plugin settings if available at runtime
             // @ts-expect-error - Obsidian App has a plugins registry at runtime
             const plugin = this.app?.plugins?.getPlugin?.('dot-navigator');
-            const list = plugin?.settings?.moreMenuItems;
-            if (Array.isArray(list) && list.length > 0) return list;
-            return DEFAULT_MORE_MENU;
+            const builtinOrder: string[] = Array.isArray(plugin?.settings?.builtinMenuOrder) ? plugin.settings.builtinMenuOrder : [];
+            const userItems: MoreMenuItem[] = Array.isArray(plugin?.settings?.userMenuItems) ? plugin.settings.userMenuItems : [];
+
+            // Map builtins and order
+            const builtinMap = new Map(DEFAULT_MORE_MENU.filter(it => it.type === 'builtin').map(it => [it.id, it] as const));
+            const orderedBuiltins: MoreMenuItem[] = [];
+            for (const id of builtinOrder) {
+                const it = builtinMap.get(id);
+                if (it) orderedBuiltins.push(it);
+            }
+            for (const it of DEFAULT_MORE_MENU) {
+                if (it.type !== 'builtin') continue;
+                if (!orderedBuiltins.find(x => x.id === it.id)) orderedBuiltins.push(it);
+            }
+
+            const legacy = plugin?.settings?.moreMenuItems;
+            if ((!builtinOrder?.length && !(userItems?.length)) && Array.isArray(legacy) && legacy.length > 0) {
+                return legacy;
+            }
+            return [...orderedBuiltins, ...userItems];
         } catch {
             return DEFAULT_MORE_MENU;
         }
