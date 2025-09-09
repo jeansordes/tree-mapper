@@ -1,4 +1,5 @@
 import { App, setIcon } from 'obsidian';
+import { t } from '../i18n';
 import { FileUtils } from '../utils/FileUtils';
 import type { RowItem } from './viewTypes';
 import type { VItem } from '../core/virtualData';
@@ -64,19 +65,19 @@ export function createActionButtons(item: VItem, app: App): HTMLElement {
   if (item.kind === 'virtual') {
     const createNoteBtn = document.createElement('div');
     createNoteBtn.className = 'tm_button-icon';
-    createNoteBtn.title = 'Create note';
+    createNoteBtn.title = t('tooltipCreateNote', { path: item.id });
     createNoteBtn.setAttribute('data-action', 'create-note');
     setIcon(createNoteBtn, 'square-pen');
     container.appendChild(createNoteBtn);
   }
 
-  const createChildBtn = document.createElement('div');
-  createChildBtn.className = 'tm_button-icon rotate-180deg';
-  createChildBtn.title = `Create child (${FileUtils.getChildPath(item.id, app)})`;
-  createChildBtn.setAttribute('data-action', 'create-child');
-  setIcon(createChildBtn, 'rotate-cw-square');
-  container.appendChild(createChildBtn);
+  // Replace the single child button with a "more" menu trigger
+  const moreBtn = document.createElement('div');
+  moreBtn.className = 'tm_button-icon';
+  moreBtn.title = t('tooltipMoreActions');
+  moreBtn.setAttribute('data-action', 'more');
+  setIcon(moreBtn, 'more-vertical');
+  container.appendChild(moreBtn);
 
   return container;
 }
-

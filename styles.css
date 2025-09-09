@@ -283,6 +283,44 @@
         opacity: 1;
     }
 }
+
+/* Settings: cards for More Menu items */
+.tm_settings-card {
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-secondary);
+    border-radius: var(--radius-m);
+    padding: 12px;
+    margin: 10px 0;
+}
+
+.tm_settings-card .setting-item {
+    margin: 0;
+}
+
+.tm_settings-card .setting-item + .setting-item {
+    border-top: 1px solid var(--background-modifier-border);
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+/* Inline command suggest dropdown */
+.tm_cmd-suggest {
+    position: relative;
+    margin-top: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-secondary);
+    border-radius: var(--radius-s);
+    max-height: 180px;
+    overflow-y: auto;
+}
+.tm_cmd-suggest-item {
+    padding: 6px 8px;
+    cursor: pointer;
+}
+.tm_cmd-suggest-item:hover,
+.tm_cmd-suggest-item.is-selected {
+    background-color: var(--background-modifier-hover);
+}
 /* Virtual tree demo styles */
 #tree-demo-container,
 .vtree {

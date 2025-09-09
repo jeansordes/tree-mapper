@@ -19,11 +19,21 @@ export default {
     tooltipFolder: 'Folder',
     tooltipCreateNote: 'Create note: {{path}}',
     tooltipCreateChildNote: 'Create child note: {{path}}',
+    tooltipMoreActions: 'More actions',
+    menuRenameFile: 'Rename file',
+    menuDeleteFile: 'Delete file',
+    confirmDeleteFile: 'Delete this file?\n{{path}}',
     
     // Notices
     noticeCreatedNote: 'Created note: {{path}}',
     noticeFailedCreateNote: 'Failed to create note: {{path}}',
     noticeRenameNote: 'Press F2 to rename the note',
+    noticeDeletedFile: 'Deleted: {{path}}',
+    noticeFailedDeleteFile: 'Failed to delete: {{path}}',
+    promptRenameFile: 'Rename file: {{name}}',
+    noticeFileExists: 'A file already exists at: {{path}}',
+    noticeRenamedFile: 'Renamed to: {{newPath}}',
+    noticeFailedRenameFile: 'Failed to rename: {{path}}',
     
     // Ribbon
     ribbonTooltip: 'Open Dendron Tree',

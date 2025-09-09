@@ -1,6 +1,5 @@
-import { TFile, TFolder } from "obsidian";
-
-import { App, Notice } from "obsidian";
+import { App, TFile, TFolder } from "obsidian";
+import { Notice } from "obsidian";
 import { t } from "src/i18n";
 export class FileUtils {
     public static basename(path: string): string {
@@ -114,5 +113,78 @@ export class FileUtils {
         if (leaf) {
             await leaf.openFile(file);
         }
+    }
+
+    /**
+     * Best-effort: reveal and select a file in the core File Explorer so native commands act on it.
+     */
+    public static async selectInFileExplorer(app: App, file: TFile): Promise<boolean> {
+        try {
+            const leaves = app.workspace.getLeavesOfType('file-explorer');
+            if (!leaves || leaves.length === 0) return false;
+            const view: any = leaves[0].view;
+            if (!view) return false;
+            // Reveal in tree if API available
+            if (typeof view.revealFile === 'function') {
+                await view.revealFile(file);
+            }
+            // Try various selection APIs used across Obsidian versions
+            if (typeof view.setSelection === 'function') {
+                view.setSelection([file], true, true);
+            } else if (typeof view.setSelectedFile === 'function') {
+                view.setSelectedFile(file);
+            } else if (typeof view.selectFile === 'function') {
+                view.selectFile(file);
+            }
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /** Execute a File Explorer command after selecting a specific file. */
+    public static async executeExplorerCommand(app: App, cmdId: string, file?: TFile): Promise<boolean> {
+        if (file) await this.selectInFileExplorer(app, file);
+        try {
+            // Prefer official API name if available; fallback to ById
+            const anyApp = app as any;
+            const anyCmds = anyApp?.commands;
+            if (anyCmds && typeof anyCmds.executeCommand === 'function') {
+                const res = await anyCmds.executeCommand(cmdId);
+                return !!res;
+            }
+            if (anyCmds && typeof anyCmds.executeCommandById === 'function') {
+                return !!anyCmds.executeCommandById(cmdId);
+            }
+            return false;
+        } catch {
+            return false;
+        }
+    }
+
+    /** Execute an app command by id without changing focus/selection (better for editor commands). */
+    public static async executeAppCommand(app: App, cmdId: string): Promise<boolean> {
+        try {
+            const anyApp = app as any;
+            const anyCmds = anyApp?.commands;
+            if (anyCmds && typeof anyCmds.executeCommandById === 'function') {
+                return !!anyCmds.executeCommandById(cmdId);
+            }
+            if (anyCmds && typeof anyCmds.executeCommand === 'function') {
+                const res = await anyCmds.executeCommand(cmdId);
+                return !!res;
+            }
+            return false;
+        } catch {
+            return false;
+        }
+    }
+
+    public static async renameViaExplorer(app: App, file: TFile): Promise<boolean> {
+        return this.executeExplorerCommand(app, 'file-explorer:rename-file', file);
+    }
+
+    public static async deleteViaExplorer(app: App, file: TFile): Promise<boolean> {
+        return this.executeExplorerCommand(app, 'file-explorer:delete-file', file);
     }
 }

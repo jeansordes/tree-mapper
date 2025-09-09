@@ -279,7 +279,7 @@ export class ComplexVirtualTree extends VirtualTree {
 
       if (clickable.classList.contains('tm_button-icon')) {
         const action = clickable.getAttribute('data-action');
-        if (action) handleActionButtonClick(this.app, action, id, this.virtualTree);
+        if (action) handleActionButtonClick(this.app, action, id, item.kind, this.virtualTree, clickable as HTMLElement, e);
         return;
       }
 

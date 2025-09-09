@@ -1,6 +1,8 @@
-import { App, TFile } from 'obsidian';
+import { App, Menu, TFile, TFolder } from 'obsidian';
 import { FileUtils } from '../utils/FileUtils';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
+import type { MenuItemKind, MoreMenuItem } from '../types';
+import { t } from '../i18n';
 
 export function handleRowDefaultClick(vt: VirtualTreeLike, item: RowItem, idx: number, id: string, setSelectedId: (id: string) => void): void {
   if (item.kind === 'file') {
@@ -10,7 +12,7 @@ export function handleRowDefaultClick(vt: VirtualTreeLike, item: RowItem, idx: n
   vt._render();
 }
 
-export function handleActionButtonClick(app: App, action: string | null, id: string, vt: VirtualTreeLike): void {
+export function handleActionButtonClick(app: App, action: string | null, id: string, kind: MenuItemKind, vt: VirtualTreeLike, anchorEl?: HTMLElement, ev?: MouseEvent): void {
   if (!action) return;
   if (action === 'toggle') {
     vt.expanded.set(id, !(vt.expanded.get(id) ?? false));
@@ -20,7 +22,85 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
     FileUtils.createAndOpenNote(app, id);
   } else if (action === 'create-child') {
     FileUtils.createChildNote(app, id);
+  } else if (action === 'more') {
+    const menu = new Menu();
+
+    const items = getConfiguredMenuItems(app);
+    const fileOrFolder = app.vault.getAbstractFileByPath(id);
+    const file = fileOrFolder instanceof TFile ? fileOrFolder : null;
+
+    for (const it of items) {
+      if (!shouldShowFor(it, kind)) continue;
+      if (it.type === 'builtin') {
+        if (it.builtin === 'create-child') {
+          menu.addItem((mi) => {
+            mi.setTitle(t('commandCreateChildNote'))
+              .setIcon(it.icon || 'rotate-cw-square')
+              .onClick(async () => {
+                await FileUtils.createChildNote(app, id);
+              });
+          });
+        } else if (it.builtin === 'delete-file') {
+          if (!file) continue; // only for files
+          menu.addItem((mi) => {
+            mi.setTitle(t('menuDeleteFile'))
+              .setIcon(it.icon || 'trash-2')
+              .setSection(it.section === 'danger' ? 'danger' : 'default')
+              .onClick(async () => {
+                await app.fileManager.trashFile(file);
+              });
+          });
+        }
+      } else if (it.type === 'command') {
+        const label = it.label || it.commandId || 'Custom command';
+        menu.addItem((mi) => {
+          mi.setTitle(label)
+            .setIcon(it.icon || 'dot')
+            .onClick(async () => {
+              try {
+                if (it.openBeforeExecute !== false && file) {
+                  await FileUtils.openFile(app, file);
+                }
+                // Run the app command directly so editor commands work
+                await FileUtils.executeAppCommand(app, it.commandId);
+              } catch {
+                // Ignore failures to keep UX responsive
+              }
+            });
+        });
+      }
+    }
+
+    if (ev instanceof MouseEvent) menu.showAtMouseEvent(ev);
+    else if (anchorEl instanceof HTMLElement) {
+      const r = anchorEl.getBoundingClientRect();
+      menu.showAtPosition({ x: r.left, y: r.bottom });
+    }
   }
+}
+
+function getConfiguredMenuItems(app: App): MoreMenuItem[] {
+  try {
+    const anyApp = app as any;
+    const plugin = anyApp?.plugins?.getPlugin?.('tree-mapper');
+    const list = plugin?.settings?.moreMenuItems;
+    if (Array.isArray(list) && list.length > 0) return list;
+    const { DEFAULT_MORE_MENU } = require('../types');
+    return DEFAULT_MORE_MENU;
+  } catch {
+    const { DEFAULT_MORE_MENU } = require('../types');
+    return DEFAULT_MORE_MENU;
+  }
+}
+
+function shouldShowFor(item: MoreMenuItem, kind: MenuItemKind): boolean {
+  const show = item.showFor && item.showFor.length > 0 ? item.showFor : undefined;
+  if (!show) {
+    // Defaults: builtin delete => files only; builtin create-child => all; command => files only
+    if (item.type === 'builtin') return item.builtin === 'create-child' ? true : kind === 'file';
+    return kind === 'file';
+  }
+  return show.includes(kind);
 }
 
 export function handleTitleClick(app: App, kind: string | null, id: string, idx: number, vt: VirtualTreeLike, setSelectedId: (id: string) => void): void {
@@ -35,3 +115,4 @@ export function handleTitleClick(app: App, kind: string | null, id: string, idx:
   vt._render();
 }
 
+// Native rename/delete are executed via File Explorer commands through FileUtils.

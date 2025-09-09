@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS, FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON }
 import { FileUtils } from './utils/FileUtils';
 import PluginMainPanel from './views/PluginMainPanel';
 import { logger } from './utils/logger';
+import { TreeMapperSettingTab } from './settings/SettingsTab';
 
 export default class TreeMapperPlugin extends Plugin {
     settings: PluginSettings;
@@ -24,6 +25,9 @@ export default class TreeMapperPlugin extends Plugin {
         }
         
         await this.loadSettings();
+
+        // Settings tab
+        this.addSettingTab(new TreeMapperSettingTab(this.app, this));
 
         // Register the file tree view
         this.registerView(

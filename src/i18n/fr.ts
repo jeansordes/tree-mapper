@@ -19,11 +19,21 @@ export default {
     tooltipFolder: 'Dossier',
     tooltipCreateNote: 'Créer une note : {{path}}',
     tooltipCreateChildNote: 'Créer une note enfant : {{path}}',
+    tooltipMoreActions: 'Plus d’actions',
+    menuRenameFile: 'Renommer le fichier',
+    menuDeleteFile: 'Supprimer le fichier',
+    confirmDeleteFile: 'Supprimer ce fichier ?\n{{path}}',
     
     // Notices
     noticeCreatedNote: 'Note créée : {{path}}',
     noticeFailedCreateNote: 'Échec de création de la note : {{path}}',
     noticeRenameNote: 'Appuyez sur F2 pour renommer la note',
+    noticeDeletedFile: 'Supprimé : {{path}}',
+    noticeFailedDeleteFile: 'Échec de la suppression : {{path}}',
+    promptRenameFile: 'Renommer le fichier : {{name}}',
+    noticeFileExists: 'Un fichier existe déjà à : {{path}}',
+    noticeRenamedFile: 'Renommé en : {{newPath}}',
+    noticeFailedRenameFile: 'Échec du renommage : {{path}}',
     
     // Ribbon
     ribbonTooltip: 'Ouvrir l\'arborescence Dendron',
