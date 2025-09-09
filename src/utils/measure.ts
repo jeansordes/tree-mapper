@@ -3,7 +3,7 @@ import { logger } from './logger';
 export function computeRowHeight(rootContainer: HTMLElement): number | null {
   try {
     const viewBody = rootContainer.querySelector('.tm_view-body');
-    const host = (viewBody ?? rootContainer) as HTMLElement;
+    const host = viewBody instanceof HTMLElement ? viewBody : rootContainer;
 
     const toPx = (cssVar: string): number => {
       const probe = document.createElement('div');
@@ -31,7 +31,7 @@ export function computeRowHeight(rootContainer: HTMLElement): number | null {
 export function computeGap(rootContainer: HTMLElement): number | null {
   try {
     const viewBody = rootContainer.querySelector('.tm_view-body');
-    const host = (viewBody ?? rootContainer) as HTMLElement;
+    const host = viewBody instanceof HTMLElement ? viewBody : rootContainer;
     const probe = document.createElement('div');
     probe.style.position = 'absolute';
     probe.style.visibility = 'hidden';
@@ -46,4 +46,3 @@ export function computeGap(rootContainer: HTMLElement): number | null {
   }
   return null;
 }
-

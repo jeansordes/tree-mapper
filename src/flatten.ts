@@ -1,7 +1,7 @@
-import { VirtualTreeItem } from './types';
+import { VirtualTreeBaseItem, VirtualTreeItem } from './types';
 
 export function flattenTree(
-  nodes: VirtualTreeItem[] | undefined, 
+  nodes: VirtualTreeBaseItem[] | undefined, 
   expandedMap: Map<string, boolean> = new Map(), 
   level: number = 0, 
   out: VirtualTreeItem[] = []

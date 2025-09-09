@@ -48,7 +48,7 @@ export class DendronEventHandler {
     // Bound event handlers to ensure 'this' is preserved
     private handleFileCreate = (file: TAbstractFile) => {
         // Full rebuild safest for structural add; allow small debounce
-        this.queueRefresh((file as any)?.path, true, false);
+        this.queueRefresh(file?.path, true, false);
     };
     
     private handleFileModify = (_file: TAbstractFile) => {
@@ -59,17 +59,17 @@ export class DendronEventHandler {
     
     private handleFileDelete = (file: TAbstractFile) => {
         // Full rebuild safest for structural delete; allow small debounce
-        this.queueRefresh((file as any)?.path, true, false);
+        this.queueRefresh(file?.path, true, false);
     };
 
     private handleFileRename = (file: TAbstractFile, oldPath: string) => {
         // Renames should feel instant; bypass queue and notify with oldPath
         try {
-            const newPath = (file as any)?.path as string | undefined;
+            const newPath = file?.path;
             this.refreshCallback(newPath, false, oldPath);
         } catch {
             // Fallback to queued refresh
-            this.queueRefresh((file as any)?.path, false, true);
+            this.queueRefresh(file?.path, false, true);
         }
     };
     

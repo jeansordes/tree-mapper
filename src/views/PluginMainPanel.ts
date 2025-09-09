@@ -77,7 +77,7 @@ export default class PluginMainPanel extends ItemView {
 
         // Set up the view containers via layout helper
         this.layout = new ViewLayout(viewRoot);
-        const { tree } = this.layout.init();
+        this.layout.init();
 
         // Wait for CSS to be loaded by checking if the styles are applied
         await this.waitForCSSLoad();
@@ -92,7 +92,7 @@ export default class PluginMainPanel extends ItemView {
         });
         this.vtManager.init(viewRoot, this.settings?.expandedNodes);
         // Access internal instance for highlight calls
-        this.virtualTree = (this.vtManager as unknown as { vt?: ComplexVirtualTree }).vt ?? null;
+        this.virtualTree = this.vtManager.getInstance();
 
         // Header actions
         this.layout.onToggleClick(() => {
@@ -135,6 +135,7 @@ export default class PluginMainPanel extends ItemView {
             this.settings.expandedNodes = expanded;
             this._lastExpandedSnapshot = Array.isArray(expanded) ? [...expanded] : [];
             // Save through the plugin instance if available
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
             const plugin: any = (this.app as any)?.plugins?.getPlugin?.('tree-mapper');
             if (plugin && typeof plugin.saveSettings === 'function') {
                 // Fire and forget; Obsidian handles persistence
@@ -264,10 +265,8 @@ export default class PluginMainPanel extends ItemView {
     public getExpandedNodesForSettings(): string[] {
         try {
             // Prefer live data when VT is active
-            if (this.vtManager) {
-                if (typeof (this.vtManager as any).isActive === 'function' && (this.vtManager as any).isActive()) {
-                    return this.vtManager.getExpandedPaths();
-                }
+            if (this.vtManager?.isActive()) {
+                return this.vtManager.getExpandedPaths();
             }
             if (this.virtualTree) return this.virtualTree.getExpandedPaths();
         } catch {

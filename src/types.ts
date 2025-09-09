@@ -28,19 +28,24 @@ export interface TreeNode {
 }
 
 // Types for the virtual tree component
-export interface VirtualTreeItem {
+// Base item shape for input data (no computed fields)
+export interface VirtualTreeBaseItem {
     id: string;
     name: string;
-    kind: 'file' | 'folder';
+    kind: 'file' | 'folder' | 'virtual';
+    children?: VirtualTreeBaseItem[];
+    expanded?: boolean;
+}
+
+// Flattened item shape used by the renderer
+export interface VirtualTreeItem extends VirtualTreeBaseItem {
     level: number;
     hasChildren?: boolean;
-    children?: VirtualTreeItem[];
-    expanded?: boolean;
 }
 
 export interface VirtualTreeOptions {
     container: HTMLElement;
-    data?: VirtualTreeItem[];
+    data?: VirtualTreeBaseItem[];
     rowHeight?: number;
     buffer?: number;
     onOpen?: (item: VirtualTreeItem) => void;

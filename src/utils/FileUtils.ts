@@ -22,8 +22,7 @@ export class FileUtils {
             return `${prefix}${untitledBase}${suffix}.md`;
         };
 
-        // Helper to build a candidate as a dotted child of a file/virtual path
-        const buildDottedChild = (baseNoExt: string, suffix: string) => `${baseNoExt}.${untitledBase}${suffix}.md`;
+        // Note: dotted child naming is handled inline where needed
 
         // Decide whether target is a folder or file/virtual
         let isFolder = false;

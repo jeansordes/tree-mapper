@@ -2,7 +2,7 @@
 /* global document, requestAnimationFrame */
 import { flattenTree } from './flatten';
 import { computeWindow } from './utils';
-import { VirtualTreeItem, VirtualTreeOptions } from './types';
+import { VirtualTreeBaseItem, VirtualTreeItem, VirtualTreeOptions } from './types';
 import { logger } from './utils/logger';
 
 export class VirtualTree {
@@ -18,7 +18,7 @@ export class VirtualTree {
   private pool: HTMLElement[];
   private visibleCount: number;
   private poolSize: number;
-  private data: VirtualTreeItem[];
+  private data: VirtualTreeBaseItem[];
   private visible: VirtualTreeItem[];
   private total: number;
   private _onScroll: () => void;
@@ -96,7 +96,7 @@ export class VirtualTree {
     this.container.addEventListener('keydown', this._onKeyDown);
   }
 
-  setData(data: VirtualTreeItem[]): void {
+  setData(data: VirtualTreeBaseItem[]): void {
     this.data = data || [];
     this._recomputeVisible();
     // Reset scroll position when setting new data

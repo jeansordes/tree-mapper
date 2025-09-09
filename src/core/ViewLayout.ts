@@ -16,32 +16,36 @@ export class ViewLayout {
     container.addClass('tm_view');
     if (Platform.isMobile) container.addClass('tm_view-mobile');
 
-    // Reuse if already present
-    let header: HTMLElement | null = container.querySelector('.tm_view-header') as HTMLElement | null;
-    let body: HTMLElement | null = container.querySelector('.tm_view-body') as HTMLElement | null;
+    // Prepare or create header and body elements without type assertions
+    const existingHeader = container.querySelector('.tm_view-header');
+    const existingBody = container.querySelector('.tm_view-body');
+    let headerEl: HTMLElement;
+    let bodyEl: HTMLElement;
 
-    if (!(header instanceof HTMLElement) || !(body instanceof HTMLElement)) {
+    if (existingHeader instanceof HTMLElement && existingBody instanceof HTMLElement) {
+      headerEl = existingHeader;
+      bodyEl = existingBody;
+    } else {
       container.empty();
-      header = document.createElement('div');
-      header.className = 'tm_view-header';
-      container.appendChild(header as HTMLElement);
+      headerEl = document.createElement('div');
+      headerEl.className = 'tm_view-header';
+      container.appendChild(headerEl);
 
-      body = document.createElement('div');
-      body.className = 'tm_view-body';
-      container.appendChild(body as HTMLElement);
+      bodyEl = document.createElement('div');
+      bodyEl.className = 'tm_view-body';
+      container.appendChild(bodyEl);
     }
 
     // Ensure tree container exists under body
-    let tree = body.querySelector('.tm_view-tree');
-    if (!(tree instanceof HTMLElement)) {
-      tree = document.createElement('div');
-      tree.className = 'tm_view-tree';
-      (body as HTMLElement).appendChild(tree);
+    const existingTree = bodyEl.querySelector('.tm_view-tree');
+    let treeEl: HTMLElement;
+    if (existingTree instanceof HTMLElement) {
+      treeEl = existingTree;
+    } else {
+      treeEl = document.createElement('div');
+      treeEl.className = 'tm_view-tree';
+      bodyEl.appendChild(treeEl);
     }
-
-    // Narrow types after potential creation
-    const headerEl = header as HTMLElement;
-    const treeEl = tree as HTMLElement;
 
     // Ensure header controls exist
     this.ensureHeaderControls(headerEl);

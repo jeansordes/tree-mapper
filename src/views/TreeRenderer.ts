@@ -2,6 +2,7 @@ import { App, setIcon, TFile } from 'obsidian';
 import { t } from '../i18n';
 import { TreeNode, TreeNodeType } from '../types';
 import { FileUtils } from '../utils/FileUtils';
+import { createActionButton, createElement } from './domUtils';
 
 export class TreeRenderer {
     private fileItemsMap: Map<string, HTMLElement>;
@@ -36,12 +37,12 @@ export class TreeRenderer {
         const isMarkdownFile = childNode.path.endsWith('.md');
         const hasChildren = childNode.children.size > 0;
 
-        const item = this.createElement('div', {
+        const item = createElement('div', {
             className: `tm_tree-item-container${!expandedNodes.has(name) ? ' is-collapsed' : ''}`,
             attributes: { 'data-path': name }
         });
 
-        const itemSelf = this.createElement('div', {
+        const itemSelf = createElement('div', {
             className: [
                 'tm_tree-item-self',
                 hasChildren ? ' mod-collapsible' : '',
@@ -54,7 +55,7 @@ export class TreeRenderer {
 
         if (!isMarkdownFile) {
             const iconName = this.getNodeIconName(childNode);
-            const icon = this.createElement('div', {
+            const icon = createElement('div', {
                 className: 'tm_icon',
                 attributes: { 'data-icon-name': iconName }
             });
@@ -66,7 +67,7 @@ export class TreeRenderer {
 
         if (isFile && !isMarkdownFile) {
             const extension = childNode.path.split('.').pop() || '';
-            const extensionEl = this.createElement('div', {
+            const extensionEl = createElement('div', {
                 className: 'tm_extension',
                 textContent: extension
             });
@@ -75,7 +76,7 @@ export class TreeRenderer {
         this.addActionButtons(itemSelf, childNode);
 
         if (hasChildren) {
-            const childrenContainer = this.createElement('div', { className: 'tm_tree-item-children' });
+            const childrenContainer = createElement('div', { className: 'tm_tree-item-children' });
             item.appendChild(childrenContainer);
             this.renderDendronNode(childNode, childrenContainer, expandedNodes);
         }
@@ -86,32 +87,11 @@ export class TreeRenderer {
     /**
      * Create an HTML element with specified options
      */
-    private createElement(tag: string, options?: {
-        className?: string,
-        textContent?: string,
-        attributes?: Record<string, string>,
-        title?: string
-    }): HTMLElement {
-        const element = document.createElement(tag);
-
-        if (options?.className) element.className = options.className;
-        if (options?.textContent) element.textContent = options.textContent;
-        if (options?.title) element.setAttribute('title', options.title);
-
-        if (options?.attributes) {
-            Object.entries(options.attributes).forEach(([key, value]) => {
-                element.setAttribute(key, value);
-            });
-        }
-
-        return element;
-    }
-
     /**
      * Add toggle button or spacer for tree items
      */
     private addToggleButton(parent: HTMLElement, item: HTMLElement): void {
-        const toggleBtn = this.createElement('div', {
+        const toggleBtn = createElement('div', {
             className: 'tm_button-icon',
             attributes: {
                 'data-action': 'toggle',
@@ -136,7 +116,7 @@ export class TreeRenderer {
         ].filter(Boolean).join(' ');
 
         // Create and append the name element
-        const nameEl = this.createElement('div', {
+        const nameEl = createElement('div', {
             className,
             textContent: this.getNodeName(node),
             title: node.path,
@@ -211,14 +191,14 @@ export class TreeRenderer {
      */
     private addActionButtons(parent: HTMLElement, node: TreeNode): void {
         // Create a container for the action buttons
-        const actionButtonsContainer = this.createElement('div', {
+        const actionButtonsContainer = createElement('div', {
             className: 'tm_action-buttons-container'
         });
         parent.appendChild(actionButtonsContainer);
 
         // Add "create note" button for virtual nodes
         if (node.nodeType === TreeNodeType.VIRTUAL) {
-            const createNoteBtn = this.createActionButton({
+            const createNoteBtn = createActionButton({
                 icon: 'square-pen',
                 title: t('tooltipCreateNote', { path: node.path }),
                 attributes: {
@@ -230,7 +210,7 @@ export class TreeRenderer {
         }
 
         // Add "create child note" button for all nodes
-        const createChildBtn = this.createActionButton({
+        const createChildBtn = createActionButton({
             icon: 'rotate-cw-square',
             title: t('tooltipCreateChildNote', { path: FileUtils.getChildPath(node.path, this.app) }),
             className: 'rotate-180deg',
@@ -240,25 +220,6 @@ export class TreeRenderer {
             }
         });
         actionButtonsContainer.appendChild(createChildBtn);
-    }
-
-    /**
-     * Create an action button with icon
-     */
-    private createActionButton(options: {
-        icon: string,
-        title: string,
-        className?: string,
-        attributes?: Record<string, string>
-    }): HTMLElement {
-        const btn = this.createElement('div', {
-            className: `tm_button-icon ${options.className || ''}`,
-            title: options.title,
-            attributes: options.attributes || {}
-        });
-
-        setIcon(btn, options.icon);
-        return btn;
     }
 
     /**

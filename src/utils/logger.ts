@@ -18,6 +18,7 @@ class Logger {
   enable() {
     this.enabled = this.isDev; // only capture memory logs during dev
     if (this.isDev) {
+      // eslint-disable-next-line no-console
       try { console.clear(); } catch { /* ignore */ }
       this.info('[TreeMapper] Logging started');
     }

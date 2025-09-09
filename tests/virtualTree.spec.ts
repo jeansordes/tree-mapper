@@ -6,7 +6,7 @@
 // In a production environment, you would configure Jest for ES modules or
 // use a different test runner that supports them natively.
 
-import { VirtualTreeItem, WindowResult } from '../src/types';
+import { VirtualTreeBaseItem, VirtualTreeItem, WindowResult } from '../src/types';
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -28,9 +28,9 @@ function computeWindow(
 }
 
 function flattenTree(
-  nodes: VirtualTreeItem[], 
-  expandedMap: Map<string, boolean> = new Map(), 
-  level: number = 0, 
+  nodes: VirtualTreeBaseItem[],
+  expandedMap: Map<string, boolean> = new Map(),
+  level: number = 0,
   out: VirtualTreeItem[] = []
 ): VirtualTreeItem[] {
   for (const n of nodes) {
@@ -48,16 +48,15 @@ function flattenTree(
 
 describe('flattenTree', () => {
   test('respects expanded map and levels', () => {
-    const tree: VirtualTreeItem[] = [
+    const tree: VirtualTreeBaseItem[] = [
       {
         id: 'a',
         name: 'A',
         kind: 'folder',
-        level: 0,
         children: [
-          { id: 'a1', name: 'A1', kind: 'file', level: 1 },
-          { id: 'a2', name: 'A2', kind: 'folder', level: 1, children: [
-            { id: 'a2i', name: 'A2i', kind: 'file', level: 2 }
+          { id: 'a1', name: 'A1', kind: 'file' },
+          { id: 'a2', name: 'A2', kind: 'folder', children: [
+            { id: 'a2i', name: 'A2i', kind: 'file' }
           ] }
         ]
       }

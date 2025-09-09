@@ -1,4 +1,4 @@
-import { App, TFile } from 'obsidian';
+import { App } from 'obsidian';
 import { ComplexVirtualTree } from '../views/VirtualizedTree';
 import { TreeBuilder } from '../utils/TreeBuilder';
 import { buildVirtualizedData } from './virtualData';
@@ -91,4 +91,7 @@ export class VirtualTreeManager {
 
   // Expose whether the underlying virtual tree is present
   isActive(): boolean { return this.vt != null; }
+
+  // Expose the current ComplexVirtualTree instance (read-only access)
+  getInstance(): ComplexVirtualTree | null { return this.vt; }
 }
