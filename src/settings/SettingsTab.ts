@@ -15,7 +15,7 @@ export class TreeMapperSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl('h2', { text: 'Tree Mapper Settings' });
+    containerEl.createEl('h2', { text: 'Dot Navigator Settings' });
 
     // More menu section
     containerEl.createEl('h3', { text: 'More Menu' });
