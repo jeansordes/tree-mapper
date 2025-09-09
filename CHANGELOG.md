@@ -1,3 +1,9 @@
+# [1.11.0](https://github.com/jeansordes/dot-navigator/compare/1.10.1...1.11.0) (2025-09-09)
+
+### Features
+
+* add 'open closest parent note' command and update references ([0750a50](https://github.com/jeansordes/dot-navigator/commit/0750a50fd74067bec2662cb36ffc53544326fc82))
+
 ## [1.10.1](https://github.com/jeansordes/dot-navigator/compare/1.10.0...1.10.1) (2025-09-09)
 
 # [1.10.0](https://github.com/jeansordes/dot-navigator/compare/1.9.2...1.10.0) (2025-09-09)
