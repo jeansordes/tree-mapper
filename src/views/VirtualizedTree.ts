@@ -671,7 +671,7 @@ export class ComplexVirtualTree extends VirtualTree {
 
     const createChildBtn = document.createElement('div');
     createChildBtn.className = 'tm_button-icon rotate-180deg';
-    createChildBtn.title = 'Create child';
+    createChildBtn.title = `Create child (${FileUtils.getChildPath(item.id, this.app)})`;
     createChildBtn.setAttribute('data-action', 'create-child');
     setIcon(createChildBtn, 'rotate-cw-square');
     container.appendChild(createChildBtn);

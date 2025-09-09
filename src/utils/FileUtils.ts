@@ -1,4 +1,4 @@
-import { TFile } from "obsidian";
+import { TFile, TFolder } from "obsidian";
 
 import { App, Notice } from "obsidian";
 import { t } from "src/i18n";
@@ -10,25 +10,78 @@ export class FileUtils {
     }
     
     public static getChildPath(path: string, app?: App): string {
-        const extension = path.split('.').pop() || 'md';
-        const basePath = path.replace(/\.[^.]+$/, '');
+        // Normalize path separators and strip trailing slash (except root '/')
+        const normalized = path.replace(/\\/g, '/');
+        const trimmed = normalized !== '/' ? normalized.replace(/\/+$/g, '') : normalized;
+        const basename = this.basename(trimmed);
         const untitledBase = t('untitledPath');
-        
-        if (!app) {
-            return `${basePath}.${untitledBase}.${extension}`;
+
+        // Helper to build a candidate under a folder
+        const buildInFolder = (folderPath: string, suffix: string) => {
+            const prefix = folderPath === '/' || folderPath === '' ? '' : folderPath + '/';
+            return `${prefix}${untitledBase}${suffix}.md`;
+        };
+
+        // Helper to build a candidate as a dotted child of a file/virtual path
+        const buildDottedChild = (baseNoExt: string, suffix: string) => `${baseNoExt}.${untitledBase}${suffix}.md`;
+
+        // Decide whether target is a folder or file/virtual
+        let isFolder = false;
+        if (app) {
+            const af = app.vault.getAbstractFileByPath(trimmed);
+            if (af && af instanceof TFolder) isFolder = true;
         }
-        
-        // Check if untitled file already exists and increment number
-        let suffix = '';
+
+        // Fallback classification when we can't resolve via vault
+        if (!isFolder) {
+            if (trimmed === '/' || (!basename.includes('.') && !basename.toLowerCase().endsWith('.md'))) {
+                isFolder = true;
+            }
+        }
+
+        // Compute base (without extension) and target extension for dotted children
+        let baseNoExt = trimmed;
+        let targetExt = 'md';
+        if (!isFolder) {
+            const lastDot = basename.lastIndexOf('.');
+            const hasDot = lastDot > -1;
+            if (app) {
+                const af = app.vault.getAbstractFileByPath(trimmed);
+                if (af instanceof TFile) {
+                    // Real file on disk: preserve its extension (md or others)
+                    targetExt = basename.slice(lastDot + 1) || 'md';
+                    baseNoExt = trimmed.replace(/\.[^/.]+$/, '');
+                } else {
+                    // Virtual node or non-existing path: default to md and do not strip
+                    targetExt = 'md';
+                    baseNoExt = trimmed.replace(/\.[Mm][Dd]$/, '');
+                }
+            } else if (hasDot) {
+                // No app available: best-effort guess using the apparent extension
+                targetExt = basename.slice(lastDot + 1) || 'md';
+                baseNoExt = trimmed.replace(/\.[^/.]+$/, '');
+            } else {
+                targetExt = 'md';
+            }
+        }
+
+        // Generate a unique candidate path
         let index = 0;
-        let candidatePath = `${basePath}.${untitledBase}${suffix}.${extension}`;
-        
+        let suffix = '';
+        let candidatePath = isFolder
+            ? buildInFolder(trimmed, suffix)
+            : `${baseNoExt}.${untitledBase}${suffix}.${targetExt}`;
+
+        if (!app) return candidatePath;
+
         while (app.vault.getAbstractFileByPath(candidatePath)) {
             index++;
             suffix = `.${index}`;
-            candidatePath = `${basePath}.${untitledBase}${suffix}.${extension}`;
+            candidatePath = isFolder
+                ? buildInFolder(trimmed, suffix)
+                : `${baseNoExt}.${untitledBase}${suffix}.${targetExt}`;
         }
-        
+
         return candidatePath;
     }
     
