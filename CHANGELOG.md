@@ -1,3 +1,9 @@
+## [1.9.1](https://github.com/jeansordes/tree-mapper/compare/1.9.0...1.9.1) (2025-09-09)
+
+### Bug Fixes
+
+* **styles:** add mobile dark mode styles for improved user experience ([cee9b23](https://github.com/jeansordes/tree-mapper/commit/cee9b23eae40f2524ab88e5e3519a9f8c52b608b))
+
 # [1.9.0](https://github.com/jeansordes/tree-mapper/compare/1.8.9...1.9.0) (2025-09-09)
 
 ### Features
