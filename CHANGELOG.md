@@ -1,3 +1,9 @@
+## [1.8.8](https://github.com/jeansordes/tree-mapper/compare/1.8.7...1.8.8) (2025-09-09)
+
+### Bug Fixes
+
+* **fileutils:** correct child note path generation for folders ([61f0ad8](https://github.com/jeansordes/tree-mapper/commit/61f0ad890cf6eaa72ed9d166eee643077e951437)), closes [#6](https://github.com/jeansordes/tree-mapper/issues/6)
+
 ## [1.8.7](https://github.com/jeansordes/tree-mapper/compare/1.8.6...1.8.7) (2025-09-07)
 
 ### Bug Fixes
