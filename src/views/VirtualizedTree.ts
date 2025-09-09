@@ -266,30 +266,33 @@ export class ComplexVirtualTree extends VirtualTree {
     const idx = Number(row.dataset.index!);
     const item: RowItem = this.virtualTree.visible[idx];
 
+    // Always move focus to the clicked row, but do not auto-select
     this.virtualTree.focusedIndex = idx;
     this.virtualTree.container.focus();
 
     const target = e.target;
-    if (target instanceof Element) {
-      const clickable = target.closest('.tm_button-icon, .tm_tree-item-title');
-      if (!clickable) {
-        handleRowDefaultClick(this.virtualTree, item, idx, id, (sid) => { this._selectedId = sid; });
-        return;
-      }
-
-      if (clickable.classList.contains('tm_button-icon')) {
-        const action = clickable.getAttribute('data-action');
-        if (action) handleActionButtonClick(this.app, action, id, item.kind, this.virtualTree, clickable as HTMLElement, e);
-        return;
-      }
-
-      if (clickable.classList.contains('tm_tree-item-title')) {
-        const kind = clickable.getAttribute('data-node-kind');
-        if (kind) handleTitleClick(this.app, kind, id, idx, this.virtualTree, (sid) => { this._selectedId = sid; });
-      }
-    } else {
+    if (!(target instanceof Element)) {
       logger.error('[TreeMapper] Error handling row click:', e);
+      return;
     }
+
+    // Only react to explicit clickable elements: action buttons or clickable title
+    const buttonEl = target.closest('.tm_button-icon');
+    if (buttonEl) {
+      const action = buttonEl.getAttribute('data-action');
+      if (action) handleActionButtonClick(this.app, action, id, item.kind, this.virtualTree, buttonEl as HTMLElement, e);
+      return;
+    }
+
+    const titleEl = target.closest('.tm_tree-item-title');
+    if (!titleEl) {
+      // Click happened outside title/buttons: do nothing (no implicit selection)
+      return;
+    }
+
+    // Only selecting/highlighting when clicking the title; behavior depends on kind
+    const kind = titleEl.getAttribute('data-node-kind');
+    if (kind) handleTitleClick(this.app, kind, id, idx, this.virtualTree, (sid) => { this._selectedId = sid; });
   }
 
   // Forwarders that notify expansion changes so the header button stays in sync
@@ -315,7 +318,35 @@ export class ComplexVirtualTree extends VirtualTree {
       row.addEventListener('click', (ev) => {
         if (ev instanceof MouseEvent) this._onRowClick(ev, row);
       });
+      row.addEventListener('contextmenu', (ev) => {
+        if (ev instanceof MouseEvent) this._onRowContextMenu(ev, row);
+      });
     });
+
+    // Also ensure existing pooled rows have a context menu handler (initial pool from base class)
+    for (const row of this.virtualTree.pool) {
+      if (!(row as any)._tmCtxMenuBound) {
+        row.addEventListener('contextmenu', (ev) => {
+          if (ev instanceof MouseEvent) this._onRowContextMenu(ev, row);
+        });
+        (row as any)._tmCtxMenuBound = true;
+      }
+    }
+  }
+
+  // Right-click handler: open the More menu for the row
+  private _onRowContextMenu(e: MouseEvent, row: HTMLElement): void {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = row.dataset.id!;
+    const idx = Number(row.dataset.index!);
+    const item: RowItem = this.virtualTree.visible[idx];
+
+    // Keep focus consistent with interaction
+    this.virtualTree.focusedIndex = idx;
+    this.virtualTree.container.focus();
+
+    handleActionButtonClick(this.app, 'more', id, item.kind, this.virtualTree, row, e);
   }
 
   // Override render to use the correct scroll container and windowing math
