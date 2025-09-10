@@ -1,7 +1,9 @@
 import { App } from 'obsidian';
 import { VirtualTree } from '../virtualTree';
 import type { VirtualTreeOptions } from '../types';
-import { logger } from '../utils/logger';
+import createDebug from 'debug';
+const debug = createDebug('dot-navigator:views:virtualized-tree');
+const debugError = debug.extend('error');
 import type { VItem } from '../core/virtualData';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
 import { renderRow } from './rowRender';
@@ -10,6 +12,7 @@ import { computeDendronParentId, expandAllInData, renamePathInPlace } from './tr
 import { setupAttachment, attachToViewBodyImpl } from './attachUtils';
 import { collapseAll as collapseAllAction, revealPath as revealAction, scrollToIndex as scrollToIndexAction, selectPath as selectPathAction } from './treeActions';
 import { bindRowHandlers, onRowClick as handleRowClick, onRowContextMenu as handleRowContextMenu } from './rowHandlers';
+// import { updateInstanceStyles } from './styleSheet';
 
 export class ComplexVirtualTree extends VirtualTree {
   private app: App;
@@ -35,7 +38,6 @@ export class ComplexVirtualTree extends VirtualTree {
   // Cast this to access VirtualTree properties with proper typing
   private get virtualTree(): VirtualTreeLike {
     // We need to cast to access VirtualTree properties
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return this as unknown as VirtualTreeLike;
   }
 
@@ -46,11 +48,7 @@ export class ComplexVirtualTree extends VirtualTree {
       data: options.data,
       rowHeight: options.rowHeight ?? 32,
       // Default overscan buffer
-      buffer: options.buffer ?? 100,
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      onOpen: () => { },
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      onSelect: () => { }
+      buffer: options.buffer ?? 100
     };
     super(constructorOptions);
     this.app = options.app;
@@ -68,7 +66,7 @@ export class ComplexVirtualTree extends VirtualTree {
 
   private _attachToViewBody(host: HTMLElement, viewBody: HTMLElement): void {
     if (this._isAttached) {
-      logger.log('[DotNavigator] Already attached to view body, skipping');
+      debug('Already attached to view body, skipping');
       return;
     }
     // Delegate detailed logic to utility to reduce file size
@@ -93,7 +91,7 @@ export class ComplexVirtualTree extends VirtualTree {
     try {
       this.virtualTree._render();
     } catch (error) {
-      logger.error(`[DotNavigator] Error in ${context}:`, error);
+      debugError(`Error in ${context}:`, error);
     }
   }
 
@@ -276,11 +274,12 @@ export class ComplexVirtualTree extends VirtualTree {
       const itemIndex = startIndex + i;
       const row: HTMLElement = this.virtualTree.pool[i];
       if (itemIndex >= endIndex || itemIndex >= total) {
-        row.style.display = 'none';
+        row.classList.add('is-hidden');
         continue;
       }
       const item = this.virtualTree.visible[itemIndex];
       this._renderRow(row, item, itemIndex);
+      row.classList.remove('is-hidden');
       // Apply cached width immediately for smooth scrolling
       if (appliedWidthPx) row.style.width = appliedWidthPx;
       else row.style.removeProperty('width');

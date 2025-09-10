@@ -1,5 +1,8 @@
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { execSync } from "child_process";
+import debug from "debug";
+import process from "process";
+
+const log = debug("dot-navigator:version-bump");
 
 // Get version type from command line arguments (patch, minor, major)
 // Default to patch if not specified
@@ -17,7 +20,7 @@ const validTypes = [
 ];
 
 if (!validTypes.includes(versionType)) {
-	console.error(
+	log(
 		`Error: Invalid version type "${versionType}". Valid types are: ${validTypes.join(
 			", "
 		)}`
@@ -69,7 +72,7 @@ const targetVersion =
 		? `${major}.${minor}.${patch}-beta.${betaNumber}`
 		: `${major}.${minor}.${patch}`;
 
-console.log(`Bumping version from ${currentVersion} to ${targetVersion}...`);
+log(`Bumping version from ${currentVersion} to ${targetVersion}...`);
 
 // Update package.json
 packageJson.version = targetVersion;
@@ -104,12 +107,12 @@ if (versionType === "beta") {
 		"beta-manifest.json",
 		JSON.stringify(betaManifest, null, "\t") + "\n"
 	);
-	console.log(`Updated beta-manifest.json with version ${targetVersion}`);
+	log(`Updated beta-manifest.json with version ${targetVersion}`);
 } else {
 	// For regular releases, update manifest.json
 	manifest.version = targetVersion;
 	writeFileSync("manifest.json", JSON.stringify(manifest, null, "\t") + "\n");
-	console.log(`Updated manifest.json with version ${targetVersion}`);
+	log(`Updated manifest.json with version ${targetVersion}`);
 }
 
 // Update versions.json with target version and minAppVersion
@@ -117,7 +120,7 @@ let versions = JSON.parse(readFileSync("versions.json", "utf8"));
 versions[targetVersion] = minAppVersion;
 writeFileSync("versions.json", JSON.stringify(versions, null, "\t") + "\n");
 
-console.log(
+log(
 	`Updated version to ${targetVersion} in package.json, package-lock.json and versions.json`
 );
-console.log(`Min app version is set to ${minAppVersion}`);
+log(`Min app version is set to ${minAppVersion}`);

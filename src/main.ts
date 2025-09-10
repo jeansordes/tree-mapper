@@ -3,25 +3,39 @@ import { t } from './i18n';
 import { DEFAULT_SETTINGS, FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON, MoreMenuItemCommand } from './types';
 import { FileUtils } from './utils/FileUtils';
 import PluginMainPanel from './views/PluginMainPanel';
-import { logger } from './utils/logger';
+import createDebug from 'debug';
 import { DotNavigatorSettingTab } from './settings/SettingsTab';
+
+const debug = createDebug('dot-navigator:main');
 
 export default class DotNavigatorPlugin extends Plugin {
     settings: PluginSettings;
     private pluginMainPanel: PluginMainPanel | null = null;
 
     async onload() {
-        logger.enable();
-        logger.log("[DotNavigator] Plugin loading");
+        // Toggle debug output dynamically using debug.enable/disable
+        // Dev: enable our namespaces; Prod: disable all
+        try {
+            const isProd = process.env.NODE_ENV === 'production';
+            if (isProd) {
+                createDebug.disable();
+            } else {
+                createDebug.enable('dot-navigator:*');
+            }
+        } catch {
+            debug("Debug toggling failed");
+        }
+
+        debug("Plugin loading");
 
         // Force Obsidian to detach our previous views which should clean up attached event handlers
-        logger.log("[DotNavigator] Detaching any existing tree views");
+        debug("Detaching any existing tree views");
         try {
             // This ensures any existing views are properly closed, triggering onClose() for cleanup
             this.app.workspace.detachLeavesOfType(FILE_TREE_VIEW_TYPE);
         } catch {
             // This is normal if it's the first load
-            logger.log("[DotNavigator] No existing views to detach");
+            debug("No existing views to detach");
         }
         
         await this.loadSettings();
@@ -211,7 +225,7 @@ export default class DotNavigatorPlugin extends Plugin {
                 this.settings.builtinMenuOrder = DEFAULT_MORE_MENU.filter(i => i.type === 'builtin').map(i => i.id);
             }
         } catch {
-            logger.log("[DotNavigator] Settings migration failed; proceeding with defaults");
+            debug("Settings migration failed; proceeding with defaults");
         }
 
         // Restore expanded nodes if available
@@ -230,14 +244,14 @@ export default class DotNavigatorPlugin extends Plugin {
     }
 
     onunload() {
-        logger.log("[DotNavigator] Plugin unloading, cleaning up resources");
+        debug("Plugin unloading, cleaning up resources");
         
         // Save settings before unloading
         this.saveSettings();
         
         // Clean up plugin panel resources
         if (this.pluginMainPanel) {
-            logger.log("[DotNavigator] Cleaning up pluginMainPanel resources");
+            debug("Cleaning up pluginMainPanel resources");
             this.pluginMainPanel = null;
         }
     }

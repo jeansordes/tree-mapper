@@ -1,4 +1,6 @@
-import { logger } from '../utils/logger';
+import createDebug from 'debug';
+const debug = createDebug('dot-navigator:views:attach');
+const debugError = debug.extend('error');
 
 export function setupAttachment(opts: {
   container: HTMLElement;
@@ -10,7 +12,7 @@ export function setupAttachment(opts: {
   const { container, isAttached, attachToViewBody, safeRender, observeResize } = opts;
 
   const findAndAttachViewBody = () => {
-    logger.log('[DotNavigator] Looking for view body in container:', {
+    debug('Looking for view body in container:', {
       containerClass: container.className,
       children: Array.from(container.children).map(child => ({
         tagName: child.tagName,
@@ -21,7 +23,7 @@ export function setupAttachment(opts: {
     if (container.classList.contains('view-content')) {
       const viewBody = container.querySelector('.dotn_view-body');
       if (viewBody instanceof HTMLElement && !isAttached()) {
-        logger.log('[DotNavigator] View body found in view-content, attaching now');
+        debug('View body found in view-content, attaching now');
         attachToViewBody(container, viewBody);
         safeRender('first render');
         requestAnimationFrame(() => safeRender('deferred render'));
@@ -32,7 +34,7 @@ export function setupAttachment(opts: {
 
     const viewBody = container.querySelector('.dotn_view-body');
     if (viewBody instanceof HTMLElement && !isAttached()) {
-      logger.log('[DotNavigator] View body found, attaching now');
+      debug('View body found, attaching now');
       attachToViewBody(container, viewBody);
       safeRender('first render');
       requestAnimationFrame(() => safeRender('deferred render'));
@@ -49,13 +51,12 @@ export function setupAttachment(opts: {
     const retry = () => {
       retryCount++;
       if (retryCount >= maxRetries) {
-        logger.error('[DotNavigator] Error: Could not find .dotn_view-body after maximum retries. Container structure:', {
+        debugError('[DotNavigator] Error: Could not find .dotn_view-body after maximum retries. Container structure:', {
           container: container,
           containerClass: container.className,
           children: Array.from(container.children).map(child => ({
             tagName: child.tagName,
-            className: child.className,
-            innerHTML: child instanceof HTMLElement ? child.innerHTML.substring(0, 100) + '...' : undefined
+            className: child.className
           }))
         });
         return;
@@ -79,7 +80,7 @@ export function attachToViewBodyImpl(ctx: {
 }): void {
   const { virtualTree, host, viewBody, getLastScrollTop, setLastScrollTop, setAttached, setBoundScroll } = ctx;
 
-  logger.log('[DotNavigator] Attaching to view body, current structure:', {
+  debug('Attaching to view body, current structure:', {
     hostClass: host.className,
     viewBodyClass: viewBody.className,
     hostChildren: Array.from(host.children).map(c => (c instanceof HTMLElement ? c.className : '')),
@@ -90,28 +91,28 @@ export function attachToViewBodyImpl(ctx: {
   try {
     const isChildOfHost = Array.from(host.children).includes(virtualTree.virtualizer);
     if (isChildOfHost) {
-      logger.log('[DotNavigator] Removing virtualizer from host');
+      debug('Removing virtualizer from host');
       host.removeChild(virtualTree.virtualizer);
     } else {
-      logger.log('[DotNavigator] Virtualizer is not a child of host, skipping removal');
+      debug('Virtualizer is not a child of host, skipping removal');
     }
   } catch (error) {
-    logger.error('[DotNavigator] Error removing virtualizer:', error);
+    debugError('Error removing virtualizer:', error);
   }
 
   const isChildOfViewBody = Array.from(viewBody.children).includes(virtualTree.virtualizer);
   if (!isChildOfViewBody) {
-    logger.log('[DotNavigator] Appending virtualizer to view body');
+    debug('Appending virtualizer to view body');
     const treeContainer = viewBody.querySelector('.dotn_view-tree');
     if (treeContainer instanceof HTMLElement) {
-      logger.log('[DotNavigator] Found existing dotn_view-tree, using it as target');
+      debug('Found existing dotn_view-tree, using it as target');
       while (treeContainer.firstChild) treeContainer.removeChild(treeContainer.firstChild);
       treeContainer.appendChild(virtualTree.virtualizer);
     } else {
       viewBody.appendChild(virtualTree.virtualizer);
     }
   } else {
-    logger.log('[DotNavigator] Virtualizer is already a child of view body, skipping append');
+    debug('Virtualizer is already a child of view body, skipping append');
   }
 
   host.removeEventListener('scroll', virtualTree._onScroll);
@@ -137,7 +138,7 @@ export function attachToViewBodyImpl(ctx: {
   } catch { /* ignore width init errors */ }
 
   setTimeout(() => {
-    logger.log('[DotNavigator] Forcing render after attachment');
-    try { virtualTree._render(); } catch (error) { logger.error('[DotNavigator] Error in post-attachment render:', error); }
+    debug('[DotNavigator] Forcing render after attachment');
+    try { virtualTree._render(); } catch (error) { debugError('[DotNavigator] Error in post-attachment render:', error); }
   }, 100);
 }

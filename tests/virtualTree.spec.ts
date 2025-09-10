@@ -1,5 +1,4 @@
-/* eslint-env jest */
-/* global describe, test, expect */
+// Jest globals are configured via ESLint flat config
 
 // NOTE: These functions are duplicated from src/flatten.ts and src/utils.ts
 // because Jest doesn't support ES modules out of the box in this project setup.

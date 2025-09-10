@@ -2,7 +2,8 @@ import { TFile, TFolder } from 'obsidian';
 import { TreeBuilder } from '../src/utils/TreeBuilder';
 import { TreeNodeType } from '../src/types';
 import { createMockFile, createMockFolder } from './setup';
-import { logger } from '../src/utils/logger';
+import createDebug from 'debug';
+const debug = createDebug('dot-navigator:tests');
 
 describe('TreeBuilder', () => {
     let treeBuilder: TreeBuilder;
@@ -114,8 +115,8 @@ describe('TreeBuilder', () => {
             const rootNode = treeBuilder.buildDendronStructure([rootFolder], [file]);
 
             // Log the actual structure for debugging
-            logger.logToConsole('\nDebug tree structure:');
-            logger.logToConsole('Root node:', {
+            debug('\nDebug tree structure:');
+            debug('Root node:', {
                 path: rootNode.path,
                 children: Array.from(rootNode.children.entries()).map(([key, node]) => ({
                     key,
@@ -130,8 +131,8 @@ describe('TreeBuilder', () => {
             });
 
             // Log the internal state
-            logger.logToConsole('Internal nodeTypeByPath:', Array.from(treeBuilder['nodeTypeByPath'].entries()));
-            logger.logToConsole('Internal pathsByDepthLevel:', Array.from(treeBuilder['pathsByDepthLevel'].entries()).map(([depth, paths]) => ({
+            debug('Internal nodeTypeByPath:', Array.from(treeBuilder['nodeTypeByPath'].entries()));
+            debug('Internal pathsByDepthLevel:', Array.from(treeBuilder['pathsByDepthLevel'].entries()).map(([depth, paths]) => ({
                 depth,
                 paths: Array.from(paths)
             })));
@@ -162,9 +163,9 @@ describe('TreeBuilder', () => {
             const rootNode = treeBuilder.buildDendronStructure([rootFolder], files);
 
             // Log the actual structure and internal state
-            logger.logToConsole('\nDebug tree structure for duplicate paths:');
-            logger.logToConsole('Internal nodeTypeByPath:', Array.from(treeBuilder['nodeTypeByPath'].entries()));
-            logger.logToConsole('Internal pathsByDepthLevel:', Array.from(treeBuilder['pathsByDepthLevel'].entries()).map(([depth, paths]) => ({
+            debug('\nDebug tree structure for duplicate paths:');
+            debug('Internal nodeTypeByPath:', Array.from(treeBuilder['nodeTypeByPath'].entries()));
+            debug('Internal pathsByDepthLevel:', Array.from(treeBuilder['pathsByDepthLevel'].entries()).map(([depth, paths]) => ({
                 depth,
                 paths: Array.from(paths)
             })));
@@ -201,9 +202,9 @@ describe('TreeBuilder', () => {
             const rootNode = treeBuilder.buildDendronStructure([rootFolder, xFolder, yFolder], [file]);
 
             // Log the actual structure and internal state
-            logger.logToConsole('\nDebug tree structure for nested paths:');
-            logger.logToConsole('Internal nodeTypeByPath:', Array.from(treeBuilder['nodeTypeByPath'].entries()));
-            logger.logToConsole('Internal pathsByDepthLevel:', Array.from(treeBuilder['pathsByDepthLevel'].entries()).map(([depth, paths]) => ({
+            debug('\nDebug tree structure for nested paths:');
+            debug('Internal nodeTypeByPath:', Array.from(treeBuilder['nodeTypeByPath'].entries()));
+            debug('Internal pathsByDepthLevel:', Array.from(treeBuilder['pathsByDepthLevel'].entries()).map(([depth, paths]) => ({
                 depth,
                 paths: Array.from(paths)
             })));
@@ -241,9 +242,9 @@ describe('TreeBuilder', () => {
             const rootNode = treeBuilder.buildDendronStructure([rootFolder], [file]);
 
             // Log the actual structure and internal state
-            logger.logToConsole('\nDebug tree structure for circular paths:');
-            logger.logToConsole('Internal nodeTypeByPath:', Array.from(treeBuilder['nodeTypeByPath'].entries()));
-            logger.logToConsole('Internal pathsByDepthLevel:', Array.from(treeBuilder['pathsByDepthLevel'].entries()).map(([depth, paths]) => ({
+            debug('\nDebug tree structure for circular paths:');
+            debug('Internal nodeTypeByPath:', Array.from(treeBuilder['nodeTypeByPath'].entries()));
+            debug('Internal pathsByDepthLevel:', Array.from(treeBuilder['pathsByDepthLevel'].entries()).map(([depth, paths]) => ({
                 depth,
                 paths: Array.from(paths)
             })));
@@ -284,8 +285,8 @@ describe('TreeBuilder', () => {
                 parent: yFolder
             } as TFile;
 
-            logger.logToConsole('\n=== Test: should handle file paths ===');
-            logger.logToConsole('Input structure:', {
+            debug('\n=== Test: should handle file paths ===');
+            debug('Input structure:', {
                 folders: [
                     { path: rootFolder.path, name: rootFolder.name, parent: rootFolder.parent?.path },
                     { path: xFolder.path, name: xFolder.name, parent: xFolder.parent?.path },
@@ -296,8 +297,8 @@ describe('TreeBuilder', () => {
 
             treeBuilder.buildDendronStructure([rootFolder, xFolder, yFolder], [file]);
 
-            logger.logToConsole('getParentPath result:', treeBuilder['getParentPath']('x/y/test.ts'));
-            logger.logToConsole('nodeType for x/y/test.ts:', treeBuilder['nodeTypeByPath'].get('x/y/test.ts'));
+            debug('getParentPath result:', treeBuilder['getParentPath']('x/y/test.ts'));
+            debug('nodeType for x/y/test.ts:', treeBuilder['nodeTypeByPath'].get('x/y/test.ts'));
 
             expect(treeBuilder['getParentPath']('x/y/test.ts')).toBe('x/y');
         });
@@ -314,8 +315,8 @@ describe('TreeBuilder', () => {
                 parent: yFolder
             } as TFile;
 
-            logger.logToConsole('\n=== Test: should handle virtual paths ===');
-            logger.logToConsole('Input structure:', {
+            debug('\n=== Test: should handle virtual paths ===');
+            debug('Input structure:', {
                 folders: [
                     { path: rootFolder.path, name: rootFolder.name, parent: rootFolder.parent?.path },
                     { path: xFolder.path, name: xFolder.name, parent: xFolder.parent?.path },
@@ -326,9 +327,9 @@ describe('TreeBuilder', () => {
 
             treeBuilder.buildDendronStructure([rootFolder, xFolder, yFolder], [file]);
 
-            logger.logToConsole('getParentPath result:', treeBuilder['getParentPath']('x/y/test.spec.ts'));
-            logger.logToConsole('nodeType for x/y/test.spec.ts:', treeBuilder['nodeTypeByPath'].get('x/y/test.spec.ts'));
-            logger.logToConsole('nodeType for x/y/test.ts:', treeBuilder['nodeTypeByPath'].get('x/y/test.ts'));
+            debug('getParentPath result:', treeBuilder['getParentPath']('x/y/test.spec.ts'));
+            debug('nodeType for x/y/test.spec.ts:', treeBuilder['nodeTypeByPath'].get('x/y/test.spec.ts'));
+            debug('nodeType for x/y/test.ts:', treeBuilder['nodeTypeByPath'].get('x/y/test.ts'));
 
             // For virtual paths, getParentPath should return the path with .md extension
             expect(treeBuilder['getParentPath']('x/y/test.spec.ts')).toBe('x/y/test.md');

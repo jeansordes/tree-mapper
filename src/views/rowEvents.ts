@@ -69,7 +69,7 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
               .setIcon(it.icon || 'trash-2')
               .onClick(async () => {
                 try {
-                  await app.vault.trash(folder, true);
+                  await app.fileManager.trashFile(folder);
                 } catch {
                   try { await app.vault.delete(folder, true); } catch { /* ignore */ }
                 }

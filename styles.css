@@ -126,10 +126,13 @@
         padding: 0 0.5rem;
         /* Default: no extra margin; context rules below add it when needed */
         margin-left: 0;
+        border-radius: var(--dotn_border-radius);
+        background-color: var(--dotn_bg-hover);
     }
-
+    
     .dotn_tree-item-title[data-node-kind="folder"] {
         padding-left: 0;
+        background-color: unset;
     }
 
     .dotn_extension {
@@ -156,7 +159,6 @@
         bottom: var(--dotn_gap);
         width: 1px;
         background-color: var(--dotn_border-color);
-        transition: background-color 0.1s ease;
     }
 
     /* Hover effect for the vertical line (clickable area) */
@@ -180,7 +182,6 @@
     .dotn_button-icon[data-action="toggle"].dotn_last-collapsed {
         border: 2px solid var(--dotn_accent-color);
         border-radius: var(--dotn_border-radius);
-        transition: border-color 0.2s ease;
     }
 
     .dotn_tree-item-container.is-collapsed>.dotn_tree-item-children {
@@ -219,7 +220,6 @@
         width: 10px;
         height: 10px;
         stroke-width: 4px;
-        transition: transform 100ms ease-in-out;
     }
 
     .is-collapsed svg.right-triangle:first-of-type {
@@ -267,10 +267,6 @@
         margin-left: var(--dotn_gap);
     }
     /* When there is no icon/badge, keep some space between toggle/indent and title */
-    .tree-row .dotn_button-icon + .dotn_tree-item-title,
-    .tree-row .dotn_indent + .dotn_tree-item-title {
-        margin-left: var(--dotn_gap);
-    }
     .dotn_tree-item-self .dotn_icon,
     .dotn_tree-item-self .dotn_file-badge,
     .tree-row .dotn_icon,
@@ -279,7 +275,7 @@
     }
 
     /* Buttons */
-    .dotn_button-icon, .is-clickable {
+    .dotn_button-icon {
         cursor: pointer;
         color: var(--dotn_color-text-clickable);
         min-width: var(--dotn_button-size);
@@ -288,6 +284,12 @@
         border-radius: var(--dotn_border-radius);
         background-color: var(--dotn_bg-hover);
         position: relative;
+    }
+    .dotn_button-icon[data-action="toggle"] {
+        margin-right: var(--dotn_gap);
+    }
+    .is-clickable {
+        cursor: pointer;
     }
 
     .dotn_action-buttons-container > .dotn_button-icon::before {
@@ -384,6 +386,17 @@
 .dotn_cmd-suggest-item.is-selected {
     background-color: var(--background-modifier-hover);
 }
+
+/* Utilities and VT enhancements injected by tooling */
+.is-hidden { display: none !important; }
+.dotn_cursor-pointer { cursor: pointer; }
+.dotn_auto-width { width: auto !important; }
+.dotn_view .dotn_view-tree { position: relative; }
+.tree-row { height: var(--dotn_button-size); line-height: var(--dotn_button-size); padding-bottom: var(--dotn_gap); }
+.dotn_probe { position: absolute; visibility: hidden; pointer-events: none; }
+.dotn_probe-row { height: var(--dotn_button-size); }
+.dotn_probe-gap { height: var(--dotn_gap); }
+.vt-spacer { width: 1px; }
 /* Virtual tree demo styles */
 #tree-demo-container,
 .vtree {
@@ -396,30 +409,7 @@
     position: relative;
 }
 
-.row {
-    position: absolute;
-    height: var(--row-h, 20px);
-    line-height: var(--row-h, 20px);
-    width: 100%;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    contain: layout style paint;
-    cursor: pointer;
-    transition: background-color 0.15s ease;
-}
-
-.row:hover {
-    background-color: rgba(0, 0, 0, 0.04);
-}
-
-.row[aria-expanded="true"]::before {
-    content: "▼ ";
-}
-
-.row[aria-expanded="false"]::before {
-    content: "▶ ";
-}
+/* Removed ARIA-based toggle triangles for legacy rows */
 
 /* Indent guide styles for virtual tree rows */
 .tree-row {
@@ -427,6 +417,9 @@
     display: flex;
     align-items: center;
     width: 100%;
+    /* Use layout containment only so indent guides can paint across row bounds */
+    contain: layout;
+    will-change: transform; /* hint compositor for smoother scroll */
 }
 
 .tree-row .dotn_indent {
@@ -448,12 +441,6 @@
     border-left: 1px solid var(--dotn_border-color);
 }
 /* Space between triangle button and folder icon */
-.tree-row .dotn_button-icon + .dotn_icon {
-    margin-left: var(--dotn_gap);
-}
-.tree-row .dotn_button-icon + .dotn_file-badge {
-    margin-left: var(--dotn_gap);
-}
 .tree-row .dotn_indent-click {
     position: absolute;
     right: 0;
@@ -462,3 +449,27 @@
     height: 100%;
     pointer-events: auto;
 }
+
+/* Indentation by level without inline styles */
+/* For Obsidian view rows */
+.tree-row.dotn_level-0 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 0px); }
+.tree-row.dotn_level-1 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 20px); }
+.tree-row.dotn_level-2 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 40px); }
+.tree-row.dotn_level-3 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 60px); }
+.tree-row.dotn_level-4 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 80px); }
+.tree-row.dotn_level-5 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 100px); }
+.tree-row.dotn_level-6 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 120px); }
+.tree-row.dotn_level-7 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 140px); }
+.tree-row.dotn_level-8 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 160px); }
+.tree-row.dotn_level-9 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 180px); }
+.tree-row.dotn_level-10 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 200px); }
+.tree-row.dotn_level-11 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 220px); }
+.tree-row.dotn_level-12 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 240px); }
+.tree-row.dotn_level-13 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 260px); }
+.tree-row.dotn_level-14 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 280px); }
+.tree-row.dotn_level-15 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 300px); }
+.tree-row.dotn_level-16 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 320px); }
+.tree-row.dotn_level-17 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 340px); }
+.tree-row.dotn_level-18 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 360px); }
+.tree-row.dotn_level-19 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 380px); }
+.tree-row.dotn_level-20 { padding-left: calc(var(--dotn_view-padding) + var(--dotn_gap) + 400px); }

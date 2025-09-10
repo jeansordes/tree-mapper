@@ -2,7 +2,8 @@ import type { App } from 'obsidian';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
 import { ensurePoolCapacity } from './renderUtils';
 import { handleActionButtonClick, handleTitleClick } from './rowEvents';
-import { logger } from '../utils/logger';
+import createDebug from 'debug';
+const debugError = createDebug('dot-navigator:views:row-handlers:error');
 
 export function bindRowHandlers(
   vt: VirtualTreeLike,
@@ -47,7 +48,7 @@ export function onRowClick(
 
   const target = e.target;
   if (!(target instanceof Element)) {
-    logger.error('[DotNavigator] Error handling row click:', e);
+    debugError('Error handling row click:', e);
     return;
   }
 
@@ -77,5 +78,3 @@ export function onRowContextMenu(app: App, vt: VirtualTreeLike, e: MouseEvent, r
 
   handleActionButtonClick(app, 'more', id, item.kind, vt, row, e);
 }
-
-

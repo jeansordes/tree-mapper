@@ -8,15 +8,15 @@ export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, 
   const isExpanded = vt.expanded.get(item.id) ?? false;
   const hasChildren = !!item.hasChildren;
 
-  row.style.display = 'flex';
-  row.style.position = 'absolute';
+  // Only set transform in JS; all other styling comes from CSS classes
   row.style.transform = `translateY(${itemIndex * vt.rowHeight}px)`;
-  row.style.height = 'var(--dotn_button-size)';
-  row.style.lineHeight = 'var(--dotn_button-size)';
-  row.style.setProperty('padding-bottom', 'var(--dotn_gap)');
-  row.style.paddingLeft = `calc(${item.level * 20 + 8}px + var(--dotn_gap))`;
 
-  row.className = 'tree-row';
+  // Normalize previous level classes and remove generic demo class
+  for (const cls of Array.from(row.classList)) {
+    if (cls.startsWith('dotn_level-')) row.classList.remove(cls);
+  }
+  row.classList.remove('row');
+  row.classList.add('tree-row', `dotn_level-${item.level}`);
 
   if (hasChildren && !isExpanded) {
     row.classList.add('collapsed');
@@ -24,7 +24,7 @@ export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, 
     row.classList.remove('collapsed');
   }
 
-  row.innerHTML = '';
+  while (row.firstChild) row.removeChild(row.firstChild);
   if (item.level && item.level > 0) row.appendChild(createIndentGuides(item.level));
   if (hasChildren) row.appendChild(createToggleButton());
   if (item.kind === 'folder') row.appendChild(createFolderIcon());
@@ -51,5 +51,3 @@ export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, 
   row.setAttribute('aria-selected', String(isSelected));
   if (hasChildren) row.setAttribute('aria-expanded', String(isExpanded));
 }
-
-

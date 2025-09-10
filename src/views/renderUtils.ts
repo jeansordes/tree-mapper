@@ -1,5 +1,6 @@
 import type { VirtualTreeLike } from './viewTypes';
-import { logger } from '../utils/logger';
+import createDebug from 'debug';
+const debug = createDebug('dot-navigator:views:render-utils');
 
 export function ensurePoolCapacity(vt: VirtualTreeLike, onRowInit?: (row: HTMLElement) => void): void {
   const scrollContainer = vt.scrollContainer;
@@ -24,7 +25,7 @@ export function ensurePoolCapacity(vt: VirtualTreeLike, onRowInit?: (row: HTMLEl
         pool.push(row);
       }
       vt.poolSize = desired;
-      logger.info('[DotNavigator][VT] grow pool', {
+      debug('grow pool', {
         clientHeight: sc.clientHeight,
         rowHeight,
         visibleCount,
@@ -57,7 +58,7 @@ export function logRenderWindow(vt: VirtualTreeLike, sc: HTMLElement, startIndex
       sc.dataset.tmLastStart = String(startIndex);
       sc.dataset.tmLastScroll = String(scrollTop);
       sc.dataset.tmLastLog = String(now);
-      logger.info('[DotNavigator][VT] render window', {
+      debug('render window', {
         scrollTop,
         rowHeight,
         clientHeight,
@@ -83,7 +84,7 @@ export function scheduleWidthAdjust(
   const timerId = window.setTimeout(() => {
     state.setTimer(undefined);
     try {
-      const rows: HTMLElement[] = vt.pool.filter(r => r.style.display !== 'none');
+      const rows: HTMLElement[] = vt.pool.filter(r => !r.classList.contains('is-hidden'));
       if (rows.length === 0) return;
 
       let max = 0;

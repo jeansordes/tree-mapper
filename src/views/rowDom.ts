@@ -29,7 +29,6 @@ export function createToggleButton(): HTMLElement {
 export function createFolderIcon(): HTMLElement {
   const icon = document.createElement('div');
   icon.className = 'dotn_icon';
-  icon.setAttribute('aria-hidden', 'true');
   setIcon(icon, 'folder');
   return icon;
 }
@@ -53,7 +52,6 @@ export function createFileIconOrBadge(item: RowItem): HTMLElement | null {
   if (iconName) {
     const icon = document.createElement('div');
     icon.className = 'dotn_icon';
-    icon.setAttribute('aria-hidden', 'true');
     icon.setAttribute('data-icon-name', iconName);
     setIcon(icon, iconName);
     return icon;
@@ -62,7 +60,6 @@ export function createFileIconOrBadge(item: RowItem): HTMLElement | null {
   // Unknown extension: show a small badge in the icon slot
   const badge = document.createElement('div');
   badge.className = 'dotn_file-badge';
-  badge.setAttribute('aria-hidden', 'true');
   badge.textContent = (ext || '?').slice(0, 4).toUpperCase();
   return badge;
 }

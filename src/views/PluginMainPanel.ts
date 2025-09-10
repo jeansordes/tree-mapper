@@ -5,7 +5,9 @@ import { DendronEventHandler } from '../utils/EventHandler';
 import { ComplexVirtualTree } from './VirtualizedTree';
 import { ViewLayout } from '../core/ViewLayout';
 import { VirtualTreeManager } from '../core/VirtualTreeManager';
-import { logger } from '../utils/logger';
+import createDebug from 'debug';
+const debug = createDebug('dot-navigator:views:plugin-main-panel');
+const debugError = debug.extend('error');
 
 // Dot Navigator View class
 export default class PluginMainPanel extends ItemView {
@@ -53,12 +55,12 @@ export default class PluginMainPanel extends ItemView {
     async onOpen() {
         // Track if onOpen has been called before to detect multiple calls
         if (this._onOpenCalled) {
-            logger.log('[DotNavigator] WARNING: onOpen called multiple times!');
+            debug('WARNING: onOpen called multiple times!');
             return;
         }
         this._onOpenCalled = true;
 
-        logger.log('[DotNavigator] onOpen called with containerEl:', {
+        debug('onOpen called with containerEl:', {
             containerEl: this.containerEl,
             containerClass: this.containerEl?.className,
             containerType: typeof this.containerEl,
@@ -71,7 +73,7 @@ export default class PluginMainPanel extends ItemView {
         // Use containerEl directly as the root container
         const viewRoot = this.containerEl;
         if (!(viewRoot instanceof HTMLElement)) {
-            logger.error('[DotNavigator] Error: containerEl is not an HTMLElement:', { containerEl: this.containerEl });
+            debugError('Error: containerEl is not an HTMLElement:', { containerEl: this.containerEl });
             return;
         }
 
@@ -111,7 +113,7 @@ export default class PluginMainPanel extends ItemView {
 
         // Sync header initial state
         this._syncHeaderToggle();
-        logger.log('[DotNavigator] onOpen completed successfully');
+        debug('onOpen completed successfully');
     }
 
     /**
@@ -135,14 +137,14 @@ export default class PluginMainPanel extends ItemView {
             this.settings.expandedNodes = expanded;
             this._lastExpandedSnapshot = Array.isArray(expanded) ? [...expanded] : [];
             // Save through the plugin instance if available
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-            const plugin: any = (this.app as any)?.plugins?.getPlugin?.('dot-navigator');
-            if (plugin && typeof plugin.saveSettings === 'function') {
+            const pluginsObj = (this.app as unknown as { plugins?: { getPlugin?: (id: string) => unknown } })?.plugins;
+            const plugin = pluginsObj?.getPlugin?.('dot-navigator');
+            if (plugin && typeof (plugin as { saveSettings?: () => unknown }).saveSettings === 'function') {
                 // Fire and forget; Obsidian handles persistence
-                void plugin.saveSettings();
+                void (plugin as { saveSettings: () => unknown }).saveSettings();
             }
         } catch (e) {
-            logger.error('[DotNavigator] Failed to persist expanded nodes', e);
+            debugError('Failed to persist expanded nodes', e);
         }
     }
 
@@ -228,7 +230,7 @@ export default class PluginMainPanel extends ItemView {
             if (this.virtualTree) { this.virtualTree.revealPath(file.path); return; }
         } catch (e) {
             // Never let highlight errors break the app; just log
-            logger.error('[DotNavigator] highlightActiveFile failed:', e);
+            debugError('highlightActiveFile failed:', e);
         }
     }
 
@@ -305,7 +307,7 @@ export default class PluginMainPanel extends ItemView {
      * Clean up resources when the view is closed
      */
     async onClose() {
-        logger.log('[DotNavigator] onClose called, cleaning up resources');
+        debug('onClose called, cleaning up resources');
 
         // Remove all event listeners through the event handler
         if (this.eventHandler) {
@@ -322,6 +324,6 @@ export default class PluginMainPanel extends ItemView {
         if (this.vtManager) this.vtManager.destroy();
         this.activeFile = null;
 
-        logger.log('[DotNavigator] onClose cleanup completed');
+        debug('onClose cleanup completed');
     }
 } 

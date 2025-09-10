@@ -2,7 +2,9 @@ import { App } from 'obsidian';
 import { ComplexVirtualTree } from '../views/VirtualizedTree';
 import { TreeBuilder } from '../utils/TreeBuilder';
 import { buildVirtualizedData } from './virtualData';
-import { logger } from '../utils/logger';
+import createDebug from 'debug';
+const debug = createDebug('dot-navigator:core:virtual-tree-manager');
+const debugError = debug.extend('error');
 import { computeGap, computeRowHeight } from '../utils/measure';
 
 export class VirtualTreeManager {
@@ -28,7 +30,7 @@ export class VirtualTreeManager {
     const rowHeight = computeRowHeight(rootContainer) || (24 + gap);
 
     if (this.vt) {
-      try { this.vt.destroy(); } catch (e) { logger.error('[DotNavigator] Error destroying previous VT:', e); }
+      try { this.vt.destroy(); } catch (e) { debugError('Error destroying previous VT:', e); }
       this.vt = null;
     }
 
@@ -45,7 +47,7 @@ export class VirtualTreeManager {
     this.vt.setParentMap(parentMap);
     if (expanded && expanded.length) this.vt.setExpanded(expanded);
     // Debug init metrics
-    logger.info('[DotNavigator][VT] init', {
+    debug('Virtual Tree init', {
       rowHeight,
       gap,
       buffer: 100,
@@ -63,7 +65,7 @@ export class VirtualTreeManager {
           return;
         }
       } catch (e) {
-        logger.error('[DotNavigator] In-place rename failed, will rebuild data:', e);
+        debugError('In-place rename failed, will rebuild data:', e);
       }
     }
 
@@ -76,7 +78,7 @@ export class VirtualTreeManager {
       this.vt.updateData(data, parentMap);
       this.onExpansionChange?.();
     } catch (e) {
-      logger.error('[DotNavigator] Error updating VT data, rebuilding fully:', e);
+      debugError('Error updating VT data, rebuilding fully:', e);
       if (this.rootContainer) this.init(this.rootContainer, this.getExpandedPaths());
     }
   }

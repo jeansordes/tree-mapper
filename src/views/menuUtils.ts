@@ -43,7 +43,7 @@ export function buildMoreMenu(app: App, path: string, items?: MoreMenuItem[]): M
           mi.setTitle(t('menuDeleteFolder'))
             .setIcon(it.icon || 'trash-2')
             .onClick(async () => {
-              try { await app.vault.trash(af, true); }
+              try { await app.fileManager.trashFile(af); }
               catch { try { await app.vault.delete(af, true); } catch { /* ignore */ } }
             });
           try {
@@ -143,5 +143,4 @@ export function shouldShowFor(item: MoreMenuItem, kind: 'file' | 'folder' | 'vir
   }
   return show.includes(kind);
 }
-
 

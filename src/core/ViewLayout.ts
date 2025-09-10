@@ -1,6 +1,8 @@
 import { Platform, setIcon } from 'obsidian';
 import { t } from '../i18n';
-import { logger } from '../utils/logger';
+import createDebug from 'debug';
+const debug = createDebug('dot-navigator:core:view-layout');
+const debugError = debug.extend('error');
 
 export class ViewLayout {
   private root: HTMLElement;
@@ -94,7 +96,7 @@ export class ViewLayout {
         toggleButton.setAttribute('title', t('tooltipCollapseAll'));
       }
     } catch (error) {
-      logger.error('[DotNavigator] Error updating header toggle icon:', error);
+      debugError('Error updating header toggle icon:', error);
     }
   }
 

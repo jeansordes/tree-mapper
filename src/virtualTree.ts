@@ -1,9 +1,11 @@
-/* eslint-env browser */
-/* global document, requestAnimationFrame */
+// Browser globals are provided by Obsidian runtime
 import { flattenTree } from './flatten';
+// import { updateInstanceStyles } from './views/styleSheet';
 import { computeWindow } from './utils';
 import { VirtualTreeBaseItem, VirtualTreeItem, VirtualTreeOptions } from './types';
-import { logger } from './utils/logger';
+import createDebug from 'debug';
+const debug = createDebug('dot-navigator:virtual-tree');
+const debugError = debug.extend('error');
 
 export class VirtualTree {
   private container: HTMLElement;
@@ -39,8 +41,6 @@ export class VirtualTree {
     
     // Set up container attributes
     this.container.setAttribute('tabindex', '0');
-    this.container.setAttribute('role', 'tree');
-    this.container.style.outline = 'none';
     
     // Create a wrapper div to contain all virtualizer content
     // Look for .dotn_view-tree within the provided container first, then globally as fallback
@@ -52,7 +52,7 @@ export class VirtualTree {
     }
 
     if (!viewTree) {
-      logger.error('[DotNavigator] No view tree found - DOM element with class .dotn_view-tree does not exist. Container structure:', {
+      debugError('No view tree found - DOM element with class .dotn_view-tree does not exist. Container structure:', {
         container: container,
         containerChildren: Array.from(container.children).map(child => ({
           tagName: child.tagName,
@@ -62,17 +62,17 @@ export class VirtualTree {
       return;
     }
     this.virtualizer = viewTree;
-    this.virtualizer.style.position = 'relative';
+    // Height may be updated later; rely on CSS for positioning
     this.virtualizer.style.height = '0px'; // Will be updated based on content
     
     // Don't append the virtualizer if it's already a child of the container
     // This prevents duplicate appending which can cause issues
     const isAlreadyChild = Array.from(this.container.children).includes(this.virtualizer);
     if (!isAlreadyChild) {
-      logger.log('[DotNavigator] Appending virtualizer to container');
+      debug('Appending virtualizer to container');
       this.container.appendChild(this.virtualizer);
     } else {
-      logger.log('[DotNavigator] Virtualizer is already a child of container, skipping append');
+      debug('Virtualizer is already a child of container, skipping append');
     }
 
     this.pool = [];
@@ -270,47 +270,35 @@ export class VirtualTree {
     for (let i = 0; i < this.poolSize; i++) {
       const itemIndex = startIndex + i;
       const row = this.pool[i];
-      if (itemIndex >= endIndex) { 
-        row.style.display = 'none'; 
+      if (itemIndex >= endIndex) {
+        row.classList.add('is-hidden');
         row.removeAttribute('tabindex');
-        continue; 
+        continue;
       }
       
       const item = this.visible[itemIndex];
-      row.style.display = 'block';
+      row.classList.remove('is-hidden');
+      // Only transform in JS (allowed); other layout via CSS classes
       row.style.transform = `translateY(${itemIndex * this.rowHeight}px)`;
-      row.style.paddingLeft = `${item.level * 20 + 8}px`;
-      
-      // Create icon and text content
-      if (item.kind === 'folder') {
-        const isExpanded = this.expanded.get(item.id) ?? false;
-        const icon = isExpanded ? '📂' : '📁';
-        row.innerHTML = `<span class="icon">${icon}</span>${item.name}`;
-      } else {
-        row.innerHTML = `<span class="icon">📄</span>${item.name}`;
+      // Normalize previous level classes
+      for (const cls of Array.from(row.classList)) {
+        if (cls.startsWith('dotn_level-')) row.classList.remove(cls);
       }
+      row.classList.add(`dotn_level-${item.level}`);
+      
+      // Minimal data attributes for interactions
       row.dataset.id = item.id;
       row.dataset.index = String(itemIndex);
       
-      // Accessibility attributes
-      row.setAttribute('role', 'treeitem');
-      row.setAttribute('aria-level', String(item.level + 1));
-      if (item.kind === 'folder') {
-        const isExpanded = this.expanded.get(item.id) ?? false;
-        row.setAttribute('aria-expanded', String(isExpanded));
-      } else {
-        row.removeAttribute('aria-expanded');
-      }
-      
-      // Focus and selection states
+      // Focus and selection states (visual only)
       const isFocused = itemIndex === this.focusedIndex;
       const isSelected = itemIndex === this.selectedIndex;
       
       row.setAttribute('tabindex', isFocused ? '0' : '-1');
       row.setAttribute('aria-selected', String(isSelected));
-      row.style.backgroundColor = isSelected ? '#e3f2fd' : 
-                                   isFocused ? '#f5f5f5' : 'transparent';
-      row.style.outline = isFocused ? '2px solid #2196f3' : 'none';
+      // Toggle CSS classes instead of inline styles
+      if (isSelected) row.classList.add('is-selected'); else row.classList.remove('is-selected');
+      if (isFocused) row.classList.add('is-focused'); else row.classList.remove('is-focused');
     }
   }
 
@@ -346,7 +334,7 @@ export class VirtualTree {
     }
     // Only clear our own rows; do not wipe the whole view container
     if (this.virtualizer) {
-      this.virtualizer.innerHTML = '';
+      while (this.virtualizer.firstChild) this.virtualizer.removeChild(this.virtualizer.firstChild);
     }
   }
 }

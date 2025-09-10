@@ -9,4 +9,5 @@ alwaysApply: true
 - Don't try to create commits on your own, let the user handle this
 - For icons, use the setIcons function (setIcon(parent: HTMLElement, iconId: IconName): void), and the iconId is the name of the icon in the Lucide icon library
 - You don't need to run tests or build, simply use the linting to check for errors
-- Use the logger.log method instead of console.log to log messages to the console
+- Use debug module instead of console.log to log messages to the console
+- Don't add accessibility attributes to the DOM, it's not needed for this plugin

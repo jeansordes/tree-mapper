@@ -29,7 +29,7 @@
 		"lint": "eslint .",
 		"lint:ls": "npm run lint | grep -E '^[^ ]+\\.js|^[^ ]+\\.ts' | awk '{print $1}' | sort | uniq",
 		"lint:open": "scripts/lint-open.sh",
-		"prepare": "husky install"
+		"prepare": "husky"
 	},
 	"config": {
 		"commitizen": {
@@ -45,15 +45,16 @@
 	"author": "Jean Sordes",
 	"license": "MIT",
 	"devDependencies": {
+		"@types/debug": "^4.1.12",
 		"@types/jest": "^29.5.14",
 		"@types/node": "^20.10.5",
 		"@typescript-eslint/eslint-plugin": "^8.31.0",
 		"@typescript-eslint/parser": "^8.31.0",
 		"builtin-modules": "^3.3.0",
-		"commitizen": "^4.3.0",
+		"commitizen": "^4.3.1",
 		"conventional-changelog-cli": "^4.1.0",
-		"cz-conventional-changelog": "^3.3.0",
-		"esbuild": "^0.19.10",
+		"cz-conventional-changelog": "^3.0.1",
+		"esbuild": "^0.25.9",
 		"eslint": "^8.57.0",
 		"husky": "^9.1.7",
 		"jest": "^29.7.0",
@@ -64,5 +65,13 @@
 		"tslib": "^2.6.2",
 		"typescript": "^5.8.2",
 		"typescript-eslint": "^8.31.0"
+	},
+	"dependencies": {
+		"debug": "^4.4.1"
+	},
+	"overrides": {
+		"tmp": ">=0.2.4",
+		"external-editor": ">=4.0.0",
+		"inquirer": ">=9.0.0"
 	}
 }

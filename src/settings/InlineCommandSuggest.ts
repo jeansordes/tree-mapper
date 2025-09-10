@@ -99,7 +99,8 @@ export class InlineCommandSuggest {
       row.addEventListener('mousedown', (e) => { e.preventDefault(); this.pick(opt); });
       el.appendChild(row);
     });
-    el.style.display = options.length ? 'block' : 'none';
+    if (options.length) el.classList.remove('is-hidden');
+    else el.classList.add('is-hidden');
   }
 
   private pick(opt: CommandEntry): void {
@@ -114,6 +115,6 @@ export class InlineCommandSuggest {
   }
 
   public hide(): void {
-    if (this.listEl) this.listEl.style.display = 'none';
+    if (this.listEl) this.listEl.classList.add('is-hidden');
   }
 }

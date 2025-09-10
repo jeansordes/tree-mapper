@@ -132,7 +132,7 @@ export class DotNavigatorSettingTab extends PluginSettingTab {
         if (inputEl instanceof HTMLInputElement) {
           inputEl.readOnly = true;
           inputEl.placeholder = 'Select command…';
-          inputEl.style.cursor = 'pointer';
+          inputEl.classList.add('dotn_cursor-pointer');
         }
         const openPicker = () => {
           const modal = new CommandSuggestModal(this.app, async (opt) => {
