@@ -1,6 +1,6 @@
 # Dot Navigator
 
-![CleanShot 2025-03-17 at 00 25 39@2x](https://github.com/user-attachments/assets/2aa914d7-3602-4b9d-8cba-9c50840438b3)
+<img width="1878" height="1316" alt="CleanShot 2025-09-10 at 03 02 33@2x" src="https://github.com/user-attachments/assets/34114bbf-de6c-49ab-8d19-db82b8ebb027" />
 
 A hierarchical note management system with Dendron-like features.
 
@@ -14,20 +14,16 @@ This tool brings hierarchical note management capabilities to your vault, inspir
 - Create child notes directly from the hierarchy view
 - Support all file types
 - Works on mobile as well as desktop
+- Allow you to customize the menu with any command you want
+
+<img width="2810" height="2339" alt="CleanShot 2025-09-10 at 03 15 52@2x" src="https://github.com/user-attachments/assets/f7528d55-758f-4656-a54b-d828614e86bb" />
+
 
 ## Installation
 
 Until the plugin is officially released, you can install it through BRAT (Beta Review and Testing)
-1. [Install the BRAT plugin](obsidian://show-plugin?id=obsidian42-brat) if you don't have it already
-2. [Install Dot Navigator using BRAT](obsidian://brat?plugin=jeansordes/dot-navigator)
-
-## Usage
-
-1. Open the Dot Navigator view from the left sidebar by clicking the folder icon
-2. Navigate through your hierarchical notes
-3. Click on a note to open it
-4. Use the collapse/expand buttons to manage the tree view
-5. Create new child notes directly from the hierarchy
+1. <a href="https://www.jzs.fr/redirect?to=obsidian://show-plugin?id=obsidian42-brat" target="_blank">Install the BRAT plugin</a> if you don't have it already
+2. <a href="https://www.jzs.fr/redirect?to=obsidian://brat?plugin=jeansordes/dot-navigator" target="_blank">Install Dot Navigator using BRAT</a>
 
 ## Available Commands
 
@@ -47,10 +43,6 @@ Dot Navigator supports multiple languages:
 
 The interface language will automatically match your vault language settings.
 
-## Keyboard Shortcuts
-
-You can assign keyboard shortcuts to any of the commands above through the Hotkeys settings.
-
 ## Acknowledgments
 
 - [Dendron](https://www.dendron.so/) for the inspiration on hierarchical note management
@@ -58,17 +50,5 @@ You can assign keyboard shortcuts to any of the commands above through the Hotke
 - Other tools that inspired this one:
   - [Structured Tree](https://github.com/Rudtrack/structured-tree)
   - [Obsidian Structure](https://github.com/dobrovolsky/obsidian-structure)
-  - [Obsidian Dot Navigator](https://github.com/levirs565/obsidian-dendron-tree)
+  - [Obsidian Dendron Tree](https://github.com/levirs565/obsidian-dendron-tree)
 
-
-## Virtual Tree Demo
-
-A small demo showcasing a high-performance virtualized tree is available in `demo/index.html`. Open it in a modern browser to view a generated tree of thousands of nodes rendered with DOM virtualization and row reuse.
-
-### Development
-
-The core implementation lives in `src/virtualTree.js` with helper utilities in `src/flatten.js` and `src/utils.js`. Basic unit tests for the flattening logic and window calculations can be run with:
-
-```bash
-npm test
-```
