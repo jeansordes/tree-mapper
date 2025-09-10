@@ -1,3 +1,9 @@
+## [1.11.4](https://github.com/jeansordes/dot-navigator/compare/1.11.3...1.11.4) (2025-09-10)
+
+### Bug Fixes
+
+* repair dark mode colors ([edab298](https://github.com/jeansordes/dot-navigator/commit/edab298076ed99ff1dcf94cf6bea4d67e476c391))
+
 ## [1.11.3](https://github.com/jeansordes/dot-navigator/compare/1.11.2...1.11.3) (2025-09-10)
 
 ### Bug Fixes
