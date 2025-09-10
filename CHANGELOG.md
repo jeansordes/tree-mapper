@@ -1,3 +1,9 @@
+## [1.11.3](https://github.com/jeansordes/dot-navigator/compare/1.11.2...1.11.3) (2025-09-10)
+
+### Bug Fixes
+
+* **styles:** update background color variable --bg2 to a specific hex value ([b2414a0](https://github.com/jeansordes/dot-navigator/commit/b2414a03632efe49410c954f78908ce33b8fb636)), closes [#f5f5f5](https://github.com/jeansordes/dot-navigator/issues/f5f5f5)
+
 ## [1.11.2](https://github.com/jeansordes/dot-navigator/compare/1.11.1...1.11.2) (2025-09-10)
 
 ## [1.11.1](https://github.com/jeansordes/dot-navigator/compare/1.11.0...1.11.1) (2025-09-10)
