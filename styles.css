@@ -124,6 +124,7 @@
         line-height: var(--dotn_button-size);
         white-space: nowrap;
         padding: 0 0.5rem;
+        margin-right: var(--dotn_view-padding);
         /* Default: no extra margin; context rules below add it when needed */
         margin-left: 0;
         border-radius: var(--dotn_border-radius);
