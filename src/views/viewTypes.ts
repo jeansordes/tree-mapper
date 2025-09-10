@@ -22,5 +22,8 @@ export interface VirtualTreeLike {
   _recomputeVisible: () => void;
   _onScroll: () => void;
   scrollToIndex: (index: number) => void;
+  // Tree expansion controls
+  toggle: (id: string) => void;
+  expand: (id: string) => void;
+  collapse: (id: string) => void;
 }
-

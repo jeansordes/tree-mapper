@@ -16,9 +16,14 @@ export function handleRowDefaultClick(vt: VirtualTreeLike, item: RowItem, idx: n
 export function handleActionButtonClick(app: App, action: string | null, id: string, kind: MenuItemKind, vt: VirtualTreeLike, anchorEl?: HTMLElement, ev?: MouseEvent): void {
   if (!action) return;
   if (action === 'toggle') {
-    vt.expanded.set(id, !(vt.expanded.get(id) ?? false));
-    vt._recomputeVisible();
-    vt._render();
+    // Use the VirtualTree's toggle so selection/focus and scroll are preserved
+    try { vt.toggle(id); }
+    catch {
+      // Fallback to legacy behavior if toggle is unavailable at runtime
+      vt.expanded.set(id, !(vt.expanded.get(id) ?? false));
+      vt._recomputeVisible();
+      vt._render();
+    }
   } else if (action === 'create-note') {
     FileUtils.createAndOpenNote(app, id);
   } else if (action === 'create-child') {

@@ -191,29 +191,87 @@ export class VirtualTree {
 
   toggle(id: string): void { 
     const wasExpanded = this.expanded.get(id);
-    
-    // Save scroll state before toggling
+
+    // Save scroll state and current focus/selection by id before toggling
     const oldScrollTop = this.container.scrollTop;
     const oldVisible = this.visible.slice();
-    
-    this.expanded.set(id, !wasExpanded); 
-    this._recomputeVisible(); 
-    
+    const prevSelectedId = this.selectedIndex >= 0 ? oldVisible[this.selectedIndex]?.id : undefined;
+    const prevFocusedId = this.focusedIndex >= 0 ? oldVisible[this.focusedIndex]?.id : undefined;
+
+    // Toggle expansion and recompute visible list
+    this.expanded.set(id, !wasExpanded);
+    this._recomputeVisible();
+
+    // Re-map selection and focus to their items' new indices
+    if (prevSelectedId) {
+      let newSel = this.visible.findIndex(it => it.id === prevSelectedId);
+      if (newSel < 0) {
+        // If selection became hidden due to collapsing the toggled branch,
+        // move selection to the toggled folder itself if visible
+        newSel = this.visible.findIndex(it => it.id === id);
+      }
+      this.selectedIndex = newSel;
+    }
+    if (prevFocusedId) {
+      let newFocus = this.visible.findIndex(it => it.id === prevFocusedId);
+      if (newFocus < 0) newFocus = this.visible.findIndex(it => it.id === id);
+      this.focusedIndex = newFocus;
+      this._clampFocus();
+    }
+
     // Try to maintain scroll position relative to focused item
     this._maintainScrollPosition(oldVisible, oldScrollTop);
-    this._render(); 
+    this._render();
   }
 
   expand(id: string): void { 
-    this.expanded.set(id, true); 
-    this._recomputeVisible(); 
-    this._render(); 
+    // Preserve scroll/selection/focus across expansion
+    const oldScrollTop = this.container.scrollTop;
+    const oldVisible = this.visible.slice();
+    const prevSelectedId = this.selectedIndex >= 0 ? oldVisible[this.selectedIndex]?.id : undefined;
+    const prevFocusedId = this.focusedIndex >= 0 ? oldVisible[this.focusedIndex]?.id : undefined;
+
+    this.expanded.set(id, true);
+    this._recomputeVisible();
+
+    if (prevSelectedId) {
+      const newSel = this.visible.findIndex(it => it.id === prevSelectedId);
+      this.selectedIndex = newSel;
+    }
+    if (prevFocusedId) {
+      const newFocus = this.visible.findIndex(it => it.id === prevFocusedId);
+      this.focusedIndex = newFocus;
+      this._clampFocus();
+    }
+
+    this._maintainScrollPosition(oldVisible, oldScrollTop);
+    this._render();
   }
 
   collapse(id: string): void { 
-    this.expanded.set(id, false); 
-    this._recomputeVisible(); 
-    this._render(); 
+    // Preserve scroll/selection/focus across collapse
+    const oldScrollTop = this.container.scrollTop;
+    const oldVisible = this.visible.slice();
+    const prevSelectedId = this.selectedIndex >= 0 ? oldVisible[this.selectedIndex]?.id : undefined;
+    const prevFocusedId = this.focusedIndex >= 0 ? oldVisible[this.focusedIndex]?.id : undefined;
+
+    this.expanded.set(id, false);
+    this._recomputeVisible();
+
+    if (prevSelectedId) {
+      let newSel = this.visible.findIndex(it => it.id === prevSelectedId);
+      if (newSel < 0) newSel = this.visible.findIndex(it => it.id === id);
+      this.selectedIndex = newSel;
+    }
+    if (prevFocusedId) {
+      let newFocus = this.visible.findIndex(it => it.id === prevFocusedId);
+      if (newFocus < 0) newFocus = this.visible.findIndex(it => it.id === id);
+      this.focusedIndex = newFocus;
+      this._clampFocus();
+    }
+
+    this._maintainScrollPosition(oldVisible, oldScrollTop);
+    this._render();
   }
 
   // legacy scrollToIndex implementation removed; see public scrollToIndex below

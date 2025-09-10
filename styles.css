@@ -132,6 +132,10 @@
     
     .dotn_tree-item-title[data-node-kind="folder"] {
         padding-left: 0;
+    }
+    
+    .dotn_tree-item-title[data-node-kind="folder"],
+    .dotn_tree-item-title[data-node-kind="virtual"] {
         background-color: unset;
     }
 
