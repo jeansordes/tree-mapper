@@ -177,13 +177,13 @@ export class DendronEventHandler {
             }
             
             // Find the DOM element for this path
-            const parentElement: HTMLElement | null = container.querySelector(`.tm_tree-item-container[data-path="${parentPath}"]`);
+            const parentElement: HTMLElement | null = container.querySelector(`.dotn_tree-item-container[data-path="${parentPath}"]`);
             if (!parentElement) {
                 return false;
             }
             
             // Find the children container
-            const childrenContainer: HTMLElement | null = parentElement.querySelector('.tm_tree-item-children');
+            const childrenContainer: HTMLElement | null = parentElement.querySelector('.dotn_tree-item-children');
             if (!childrenContainer) {
                 return false;
             }

@@ -171,10 +171,10 @@ export default class PluginMainPanel extends ItemView {
     private waitForCSSLoad(): Promise<void> {
         return new Promise((resolve) => {
             const checkCSS = () => {
-                // Check if the main container has the tm_view class and CSS is loaded
-                if (this.containerEl && this.containerEl.classList.contains('tm_view')) {
+                // Check if the main container has the dotn_view class and CSS is loaded
+                if (this.containerEl && this.containerEl.classList.contains('dotn_view')) {
                     const computedStyle = window.getComputedStyle(this.containerEl);
-                    if (computedStyle.getPropertyValue('--tm_css-is-loaded')) {
+                    if (computedStyle.getPropertyValue('--dotn_css-is-loaded')) {
                         resolve();
                         return;
                     }

@@ -43,16 +43,16 @@ export class VirtualTree {
     this.container.style.outline = 'none';
     
     // Create a wrapper div to contain all virtualizer content
-    // Look for .tm_view-tree within the provided container first, then globally as fallback
-    let viewTree: HTMLElement | null = container.querySelector('.tm_view-tree');
+    // Look for .dotn_view-tree within the provided container first, then globally as fallback
+    let viewTree: HTMLElement | null = container.querySelector('.dotn_view-tree');
 
     // If not found in container, try global search (backward compatibility)
     if (!viewTree) {
-      viewTree = document.querySelector('.tm_view-tree');
+      viewTree = document.querySelector('.dotn_view-tree');
     }
 
     if (!viewTree) {
-      logger.error('[DotNavigator] No view tree found - DOM element with class .tm_view-tree does not exist. Container structure:', {
+      logger.error('[DotNavigator] No view tree found - DOM element with class .dotn_view-tree does not exist. Container structure:', {
         container: container,
         containerChildren: Array.from(container.children).map(child => ({
           tagName: child.tagName,

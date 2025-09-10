@@ -82,7 +82,7 @@ export class InlineCommandSuggest {
   private ensureList(): HTMLElement {
     if (!this.listEl) {
       const el = document.createElement('div');
-      el.className = 'tm_cmd-suggest';
+      el.className = 'dotn_cmd-suggest';
       this.container.appendChild(el);
       this.listEl = el;
     }
@@ -94,7 +94,7 @@ export class InlineCommandSuggest {
     el.empty();
     options.forEach((opt, idx) => {
       const row = document.createElement('div');
-      row.className = 'tm_cmd-suggest-item' + (idx === this.selectedIndex ? ' is-selected' : '');
+      row.className = 'dotn_cmd-suggest-item' + (idx === this.selectedIndex ? ' is-selected' : '');
       row.textContent = `${opt.name} (${opt.id})`;
       row.addEventListener('mousedown', (e) => { e.preventDefault(); this.pick(opt); });
       el.appendChild(row);

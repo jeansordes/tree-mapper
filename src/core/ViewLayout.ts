@@ -13,12 +13,12 @@ export class ViewLayout {
 
   init(): { header: HTMLElement; tree: HTMLElement } {
     const container = this.root;
-    container.addClass('tm_view');
-    if (Platform.isMobile) container.addClass('tm_view-mobile');
+    container.addClass('dotn_view');
+    if (Platform.isMobile) container.addClass('dotn_view-mobile');
 
     // Prepare or create header and body elements without type assertions
-    const existingHeader = container.querySelector('.tm_view-header');
-    const existingBody = container.querySelector('.tm_view-body');
+    const existingHeader = container.querySelector('.dotn_view-header');
+    const existingBody = container.querySelector('.dotn_view-body');
     let headerEl: HTMLElement;
     let bodyEl: HTMLElement;
 
@@ -28,22 +28,22 @@ export class ViewLayout {
     } else {
       container.empty();
       headerEl = document.createElement('div');
-      headerEl.className = 'tm_view-header';
+      headerEl.className = 'dotn_view-header';
       container.appendChild(headerEl);
 
       bodyEl = document.createElement('div');
-      bodyEl.className = 'tm_view-body';
+      bodyEl.className = 'dotn_view-body';
       container.appendChild(bodyEl);
     }
 
     // Ensure tree container exists under body
-    const existingTree = bodyEl.querySelector('.tm_view-tree');
+    const existingTree = bodyEl.querySelector('.dotn_view-tree');
     let treeEl: HTMLElement;
     if (existingTree instanceof HTMLElement) {
       treeEl = existingTree;
     } else {
       treeEl = document.createElement('div');
-      treeEl.className = 'tm_view-tree';
+      treeEl.className = 'dotn_view-tree';
       bodyEl.appendChild(treeEl);
     }
 
@@ -57,7 +57,7 @@ export class ViewLayout {
 
   onToggleClick(handler: () => void): void {
     const header = this.headerEl;
-    const btn = header?.querySelector('.tm_tree-toggle-button');
+    const btn = header?.querySelector('.dotn_tree-toggle-button');
     if (btn instanceof HTMLElement) {
       const cloned = btn.cloneNode(true);
       if (cloned instanceof HTMLElement) {
@@ -69,7 +69,7 @@ export class ViewLayout {
 
   onRevealClick(handler: () => void): void {
     const header = this.headerEl;
-    const btn = header?.querySelector('.tm_reveal-active');
+    const btn = header?.querySelector('.dotn_reveal-active');
     if (btn instanceof HTMLElement) {
       const cloned = btn.cloneNode(true);
       if (cloned instanceof HTMLElement) {
@@ -81,8 +81,8 @@ export class ViewLayout {
 
   updateToggleDisplay(anyExpanded: boolean): void {
     const header = this.headerEl;
-    const toggleButton: HTMLElement | null = header?.querySelector('.tm_tree-toggle-button') || null;
-    const iconContainer: HTMLElement | null = toggleButton?.querySelector('.tm_tree-toggle-icon') || null;
+    const toggleButton: HTMLElement | null = header?.querySelector('.dotn_tree-toggle-button') || null;
+    const iconContainer: HTMLElement | null = toggleButton?.querySelector('.dotn_tree-toggle-icon') || null;
     if (!toggleButton || !iconContainer) return;
 
     try {
@@ -102,11 +102,11 @@ export class ViewLayout {
 
   private ensureHeaderControls(header: HTMLElement): void {
     // Toggle button
-    if (!header.querySelector('.tm_tree-toggle-button')) {
+    if (!header.querySelector('.dotn_tree-toggle-button')) {
       const toggleButton = document.createElement('div');
-      toggleButton.className = 'tm_tree-toggle-button';
+      toggleButton.className = 'dotn_tree-toggle-button';
       const iconContainer = document.createElement('div');
-      iconContainer.className = 'tm_tree-toggle-icon tm_button-icon';
+      iconContainer.className = 'dotn_tree-toggle-icon dotn_button-icon';
       toggleButton.appendChild(iconContainer);
       header.appendChild(toggleButton);
       // initial state
@@ -115,9 +115,9 @@ export class ViewLayout {
     }
 
     // Reveal active button
-    if (!header.querySelector('.tm_reveal-active')) {
+    if (!header.querySelector('.dotn_reveal-active')) {
       const revealBtn = document.createElement('div');
-      revealBtn.className = 'tm_button-icon tm_reveal-active';
+      revealBtn.className = 'dotn_button-icon dotn_reveal-active';
       setIcon(revealBtn, 'locate-fixed');
       revealBtn.setAttribute('title', t('tooltipRevealActiveFile'));
       header.appendChild(revealBtn);

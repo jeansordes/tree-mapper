@@ -1,35 +1,41 @@
-.tm_view {
+
+.dotn_view {
     /* DO NOT REMOVE THIS LINE */
-    --tm_css-is-loaded: true;
+    --dotn_css-is-loaded: true;
     /* This is a hack to ensure the styles are loaded */
+    
+    /* Background colors extracted from the Minimal Theme */
+    --bg1: white;
+    --bg2: hsl(var(--base-h), var(--base-s), var(--base-l));
+    --bg3: hsla( 0, 0%, calc(96% - 50%), 0.12 );
 
     /* Colors */
-    --tm_bg2-5: hsla(0, 0%, calc(96% - 50%), 0.06);
-    --tm_bg-clickable: var(--tm_bg2-5);
-    --tm_bg-hover: var(--bg3);
-    --tm_bg: var(--bg2);
-    --tm_accent-color: var(--ax3);
-    --tm_text-on-accent: var(--text-on-accent);
-    --tm_color-text-clickable: var(--tx2);
-    --tm_color-text-hover: var(--tx1);
-    --tm_border-color: var(--background-modifier-border);
-    --tm_text-faint: var(--text-faint);
+    --dotn_bg2-5: hsla(0, 0%, calc(96% - 50%), 0.06);
+    --dotn_bg-clickable: var(--dotn_bg2-5);
+    --dotn_bg-hover: var(--bg3);
+    --dotn_bg: var(--bg2);
+    --dotn_accent-color: var(--interactive-accent);
+    --dotn_text-on-accent: var(--text-on-accent);
+    --dotn_color-text-clickable: var(--tx2);
+    --dotn_color-text-hover: var(--tx1);
+    --dotn_border-color: var(--background-modifier-border);
+    --dotn_text-faint: var(--text-faint);
 
     /* Sizes */
-    --tm_square-size: 1.5rem;
-    --tm_button-icon-size: 14px;
-    --tm_button-size: calc(var(--tm_square-size));
-    --tm_border-radius: 3px;
-    --tm_gap: 4px;
-    --tm_view-padding: 8px;
-    --tm_font-size: var(--font-ui-small);
-    --tm_font-size-small: 0.6rem;
+    --dotn_square-size: 1.5rem;
+    --dotn_button-icon-size: 14px;
+    --dotn_button-size: calc(var(--dotn_square-size));
+    --dotn_border-radius: 3px;
+    --dotn_gap: 4px;
+    --dotn_view-padding: 8px;
+    --dotn_font-size: var(--font-ui-small);
+    --dotn_font-size-small: 0.6rem;
 }
 
-.tm_view {
+.dotn_view {
     user-select: none;
-    color: var(--tm_color-text-clickable);
-    font-size: var(--tm_font-size);
+    color: var(--dotn_color-text-clickable);
+    font-size: var(--dotn_font-size);
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -37,21 +43,21 @@
     overflow: hidden;
     position: relative; /* Create positioning context for the entire view */
 
-    .tm_view-header {
+    .dotn_view-header {
         display: flex;
-        gap: var(--tm_gap);
-        border-bottom: 1px solid var(--tm_border-color);
+        gap: var(--dotn_gap);
+        border-bottom: 1px solid var(--dotn_border-color);
         flex-shrink: 0;
         position: sticky;
         top: 0;
         z-index: 10;
     }
 
-    .tm_spacer {
+    .dotn_spacer {
         flex-grow: 1;
     }
 
-    .tm_view-body {
+    .dotn_view-body {
         flex-grow: 1;
         overflow-y: auto;
         overflow-x: auto; /* Allow horizontal scrolling */
@@ -79,76 +85,76 @@
         }
     }
 
-    .tm_view-header, .tm_view-tree {
-        padding: var(--tm_view-padding);
+    .dotn_view-header, .dotn_view-tree {
+        padding: var(--dotn_view-padding);
         min-width: fit-content;
     }
 
-    .tm_view-tree {
+    .dotn_view-tree {
         padding-left: 0;
         padding-right: 0;
     }
 
-    .tm_tree-item-container {
+    .dotn_tree-item-container {
         display: flex;
         flex-direction: column;
         position: relative; /* Create positioning context for descendants */
     }
 
-    .tm_tree-item-self {
+    .dotn_tree-item-self {
         display: flex;
         width: max-content; /* Allow container to grow based on content */
         min-width: 100%; /* Ensure it's at least as wide as the parent */
-        gap: var(--tm_gap);
+        gap: var(--dotn_gap);
         position: relative; /* For positioning the action buttons */
-        margin-bottom: var(--tm_gap);
+        margin-bottom: var(--dotn_gap);
     }
 
-    .tm_tree-item-title {
+    .dotn_tree-item-title {
         flex: 1 1 auto;
         min-width: 0; /* allow flex item to shrink and fill */
         display: block;
-        height: var(--tm_button-size); /* constant row content height */
-        line-height: var(--tm_button-size);
+        height: var(--dotn_button-size); /* constant row content height */
+        line-height: var(--dotn_button-size);
         white-space: nowrap;
         padding: 0 0.5rem;
         /* Default: no extra margin; context rules below add it when needed */
         margin-left: 0;
     }
 
-    .tm_tree-item-title[data-node-kind="folder"] {
+    .dotn_tree-item-title[data-node-kind="folder"] {
         padding-left: 0;
     }
 
-    .tm_extension {
-        line-height: var(--tm_button-size);
+    .dotn_extension {
+        line-height: var(--dotn_button-size);
         text-transform: uppercase;
-        color: var(--tm_text-faint);
-        font-size: var(--tm_font-size-small);
+        color: var(--dotn_text-faint);
+        font-size: var(--dotn_font-size-small);
         padding: 0 0.2rem;
     }
 
     /* Children */
-    .tm_tree-item-children {
-        padding-left: calc(var(--tm_gap) + var(--tm_button-size) / 2);
-        margin-left: calc((var(--tm_button-size) / 2));
+    .dotn_tree-item-children {
+        padding-left: calc(var(--dotn_gap) + var(--dotn_button-size) / 2);
+        margin-left: calc((var(--dotn_button-size) / 2));
         position: relative;
     }
 
     /* Create a shorter border line using a pseudo-element */
-    .tm_tree-item-children::after {
+    .dotn_tree-item-children::after {
         content: '';
         position: absolute;
         left: -1px;
-        top: var(--tm_gap);
-        bottom: var(--tm_gap);
+        top: var(--dotn_gap);
+        bottom: var(--dotn_gap);
         width: 1px;
-        background-color: var(--tm_border-color);
+        background-color: var(--dotn_border-color);
         transition: background-color 0.1s ease;
     }
 
     /* Hover effect for the vertical line (clickable area) */
-    .tm_tree-item-children::before {
+    .dotn_tree-item-children::before {
         content: '';
         position: absolute;
         left: -11px;
@@ -160,23 +166,23 @@
     }
 
     /* Class to be applied via JavaScript when hovering the line */
-    .tm_tree-item-children.tm_line-hover::after {
-        background-color: var(--tm_accent-color);
+    .dotn_tree-item-children.dotn_line-hover::after {
+        background-color: var(--dotn_accent-color);
     }
 
     /* Highlight for the last collapsed toggle arrow */
-    .tm_button-icon[data-action="toggle"].tm_last-collapsed {
-        border: 2px solid var(--tm_accent-color);
-        border-radius: var(--tm_border-radius);
+    .dotn_button-icon[data-action="toggle"].dotn_last-collapsed {
+        border: 2px solid var(--dotn_accent-color);
+        border-radius: var(--dotn_border-radius);
         transition: border-color 0.2s ease;
     }
 
-    .tm_tree-item-container.is-collapsed>.tm_tree-item-children {
+    .dotn_tree-item-container.is-collapsed>.dotn_tree-item-children {
         display: none;
     }
 
     /* Icons */
-    .tm_icon, .tm_button-icon {
+    .dotn_icon, .dotn_button-icon {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -184,22 +190,22 @@
     }
 
     /* Action buttons container */
-    .tm_action-buttons-container {
+    .dotn_action-buttons-container {
         position: sticky;
         top: 0;
-        right: var(--tm_view-padding);
+        right: var(--dotn_view-padding);
         display: flex;
-        gap: var(--tm_gap);
+        gap: var(--dotn_gap);
         z-index: 5; /* Keep above text, but let highlight extend underneath */
         background-color: transparent;
         box-shadow: none;
-        margin-left: var(--tm_gap);
+        margin-left: var(--dotn_gap);
     }
     /* Remove the extra overlay that clipped highlight */
 
-    .tm_icon svg, .tm_button-icon svg {
-        width: var(--tm_button-icon-size);
-        height: var(--tm_button-icon-size);
+    .dotn_icon svg, .dotn_button-icon svg {
+        width: var(--dotn_button-icon-size);
+        height: var(--dotn_button-icon-size);
         display: block; /* fix baseline offset to center icons vertically */
     }
 
@@ -223,120 +229,120 @@
         transform: rotate(180deg);
     }
 
-    .tm_icon[data-icon-name="folder"] {
+    .dotn_icon[data-icon-name="folder"] {
         margin-right: 0; /* keep icon from overlapping the toggle */
     }
 
     /* Ensure icons reserve consistent space and align with row height */
-    .tm_icon, .tm_file-badge {
-        min-width: var(--tm_button-size);
-        height: var(--tm_button-size);
+    .dotn_icon, .dotn_file-badge {
+        min-width: var(--dotn_button-size);
+        height: var(--dotn_button-size);
         box-sizing: border-box;
     }
 
     /* Badge for unknown file extensions shown in place of an icon */
-    .tm_file-badge {
+    .dotn_file-badge {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: var(--tm_font-size-small);
-        color: var(--tm_text-faint);
-        background-color: var(--tm_bg-clickable);
-        border-radius: var(--tm_border-radius);
+        font-size: var(--dotn_font-size-small);
+        color: var(--dotn_text-faint);
+        background-color: var(--dotn_bg-clickable);
+        border-radius: var(--dotn_border-radius);
         text-transform: uppercase;
         padding: 0 4px;
     }
 
     /* Even spacing between toggle ⇄ icon ⇄ title in both renderers */
-    .tm_tree-item-self .tm_button-icon + .tm_icon,
-    .tm_tree-item-self .tm_button-icon + .tm_file-badge,
-    .tree-row .tm_button-icon + .tm_icon,
-    .tree-row .tm_button-icon + .tm_file-badge {
-        margin-left: var(--tm_gap);
+    .dotn_tree-item-self .dotn_button-icon + .dotn_icon,
+    .dotn_tree-item-self .dotn_button-icon + .dotn_file-badge,
+    .tree-row .dotn_button-icon + .dotn_icon,
+    .tree-row .dotn_button-icon + .dotn_file-badge {
+        margin-left: var(--dotn_gap);
     }
     /* When there is no icon/badge, keep some space between toggle/indent and title */
-    .tree-row .tm_button-icon + .tm_tree-item-title,
-    .tree-row .tm_indent + .tm_tree-item-title {
-        margin-left: var(--tm_gap);
+    .tree-row .dotn_button-icon + .dotn_tree-item-title,
+    .tree-row .dotn_indent + .dotn_tree-item-title {
+        margin-left: var(--dotn_gap);
     }
-    .tm_tree-item-self .tm_icon,
-    .tm_tree-item-self .tm_file-badge,
-    .tree-row .tm_icon,
-    .tree-row .tm_file-badge {
-        margin-right: var(--tm_gap);
+    .dotn_tree-item-self .dotn_icon,
+    .dotn_tree-item-self .dotn_file-badge,
+    .tree-row .dotn_icon,
+    .tree-row .dotn_file-badge {
+        margin-right: var(--dotn_gap);
     }
 
     /* Buttons */
-    .tm_button-icon, .is-clickable {
+    .dotn_button-icon, .is-clickable {
         cursor: pointer;
-        color: var(--tm_color-text-clickable);
-        min-width: var(--tm_button-size);
-        height: var(--tm_button-size);
-        line-height: var(--tm_button-size);
-        border-radius: var(--tm_border-radius);
-        background-color: var(--tm_bg-hover);
+        color: var(--dotn_color-text-clickable);
+        min-width: var(--dotn_button-size);
+        height: var(--dotn_button-size);
+        line-height: var(--dotn_button-size);
+        border-radius: var(--dotn_border-radius);
+        background-color: var(--dotn_bg-hover);
         position: relative;
     }
 
-    .tm_action-buttons-container > .tm_button-icon::before {
+    .dotn_action-buttons-container > .dotn_button-icon::before {
         content: "";
-        background-color: var(--tm_bg);
-        width: calc(var(--tm_button-size) + var(--tm_gap) + var(--tm_view-padding));
+        background-color: var(--dotn_bg);
+        width: calc(var(--dotn_button-size) + var(--dotn_gap) + var(--dotn_view-padding));
         height: 100%;
         position: absolute;
         z-index: -1;
-        left: calc(-1 * var(--tm_gap));
+        left: calc(-1 * var(--dotn_gap));
     }
 
-    .tm_button-icon:hover, .is-clickable:hover {
-        color: var(--tm_color-text-hover);
+    .dotn_button-icon:hover, .is-clickable:hover {
+        color: var(--dotn_color-text-hover);
     }
 
     /* Style for the currently active file */
-    .tm_tree-item-title.is-active,
-    .tm_tree-item-title.is-active:hover {
-        color: var(--tm_text-on-accent);
-        background-color: var(--tm_accent-color);
+    .dotn_tree-item-title.is-active,
+    .dotn_tree-item-title.is-active:hover {
+        color: var(--dotn_text-on-accent);
+        background-color: var(--dotn_accent-color);
     }
 } 
 
 /* Mobile */
-.tm_view.tm_view-mobile {
-    --tm_square-size: 2rem;
-    --tm_font-size: var(--font-text-size);
-    --tm_bg-hover: var(--bg2);
-    --tm_bg: var(--bg1);
+.dotn_view.dotn_view-mobile {
+    --dotn_square-size: 2rem;
+    --dotn_font-size: var(--font-text-size);
+    --dotn_bg-hover: var(--bg2);
+    --dotn_bg: var(--bg1);
 
     flex-direction: column-reverse;
 
-    .tm_view-header {
-        border-top: 1px solid var(--tm_border-color);
+    .dotn_view-header {
+        border-top: 1px solid var(--dotn_border-color);
         border-bottom: none;
-        padding: var(--tm_button-size);
+        padding: var(--dotn_button-size);
         flex-direction: row-reverse;
     }
 }
 
 /* Mobile dark mode */
-.theme-dark .tm_view.tm_view-mobile {
-    --tm_bg-hover: var(--bg1);
-    --tm_bg: var(--bg2);
+.theme-dark .dotn_view.dotn_view-mobile {
+    --dotn_bg-hover: var(--bg1);
+    --dotn_bg: var(--bg2);
 }
 
 /* macOS specific scrollbar behavior */
 @media (hover: hover) {
-    .tm_view .tm_view-body::-webkit-scrollbar {
+    .dotn_view .dotn_view-body::-webkit-scrollbar {
         opacity: 0;
         transition: opacity 0.3s;
     }
     
-    .tm_view .tm_view-body:hover::-webkit-scrollbar {
+    .dotn_view .dotn_view-body:hover::-webkit-scrollbar {
         opacity: 1;
     }
 }
 
 /* Settings: cards for More Menu items */
-.tm_settings-card {
+.dotn_settings-card {
     border: 1px solid var(--background-modifier-border);
     background-color: var(--background-secondary);
     border-radius: var(--radius-m);
@@ -344,18 +350,18 @@
     margin: 10px 0;
 }
 
-.tm_settings-card .setting-item {
+.dotn_settings-card .setting-item {
     margin: 0;
 }
 
-.tm_settings-card .setting-item + .setting-item {
+.dotn_settings-card .setting-item + .setting-item {
     border-top: 1px solid var(--background-modifier-border);
     margin-top: 8px;
     padding-top: 8px;
 }
 
 /* Inline command suggest dropdown */
-.tm_cmd-suggest {
+.dotn_cmd-suggest {
     position: relative;
     margin-top: 6px;
     border: 1px solid var(--background-modifier-border);
@@ -364,12 +370,12 @@
     max-height: 180px;
     overflow-y: auto;
 }
-.tm_cmd-suggest-item {
+.dotn_cmd-suggest-item {
     padding: 6px 8px;
     cursor: pointer;
 }
-.tm_cmd-suggest-item:hover,
-.tm_cmd-suggest-item.is-selected {
+.dotn_cmd-suggest-item:hover,
+.dotn_cmd-suggest-item.is-selected {
     background-color: var(--background-modifier-hover);
 }
 /* Virtual tree demo styles */
@@ -417,32 +423,32 @@
     width: 100%;
 }
 
-.tree-row .tm_indent {
+.tree-row .dotn_indent {
     position: absolute;
     /* Align guide columns centered under the toggle triangle, including the gap offset */
-    left: calc(var(--tm_view-padding) + var(--tm_gap) + (var(--tm_button-size) / 2));
+    left: calc(var(--dotn_view-padding) + var(--dotn_gap) + (var(--dotn_button-size) / 2));
     /* Extend slightly above and below to maintain continuous look between rows */
-    top: calc(-1 * var(--tm_gap) + 1px);
-    height: calc(var(--tm_button-size) + (var(--tm_gap) * 2) - 2px);
+    top: calc(-1 * var(--dotn_gap) + 1px);
+    height: calc(var(--dotn_button-size) + (var(--dotn_gap) * 2) - 2px);
     pointer-events: none;
 }
 
-.tree-row .tm_indent-col {
+.tree-row .dotn_indent-col {
     position: relative;
     display: inline-block;
     width: 20px;
     height: 100%;
     box-sizing: border-box;
-    border-left: 1px solid var(--tm_border-color);
+    border-left: 1px solid var(--dotn_border-color);
 }
 /* Space between triangle button and folder icon */
-.tree-row .tm_button-icon + .tm_icon {
-    margin-left: var(--tm_gap);
+.tree-row .dotn_button-icon + .dotn_icon {
+    margin-left: var(--dotn_gap);
 }
-.tree-row .tm_button-icon + .tm_file-badge {
-    margin-left: var(--tm_gap);
+.tree-row .dotn_button-icon + .dotn_file-badge {
+    margin-left: var(--dotn_gap);
 }
-.tree-row .tm_indent-click {
+.tree-row .dotn_indent-click {
     position: absolute;
     right: 0;
     top: 0;

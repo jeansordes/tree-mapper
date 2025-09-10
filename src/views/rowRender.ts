@@ -11,10 +11,10 @@ export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, 
   row.style.display = 'flex';
   row.style.position = 'absolute';
   row.style.transform = `translateY(${itemIndex * vt.rowHeight}px)`;
-  row.style.height = 'var(--tm_button-size)';
-  row.style.lineHeight = 'var(--tm_button-size)';
-  row.style.setProperty('padding-bottom', 'var(--tm_gap)');
-  row.style.paddingLeft = `calc(${item.level * 20 + 8}px + var(--tm_gap))`;
+  row.style.height = 'var(--dotn_button-size)';
+  row.style.lineHeight = 'var(--dotn_button-size)';
+  row.style.setProperty('padding-bottom', 'var(--dotn_gap)');
+  row.style.paddingLeft = `calc(${item.level * 20 + 8}px + var(--dotn_gap))`;
 
   row.className = 'tree-row';
 
@@ -37,7 +37,7 @@ export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, 
   if (extEl) row.appendChild(extEl);
   row.appendChild(createActionButtons(item, app));
 
-  const titleEl = row.querySelector('.tm_tree-item-title');
+  const titleEl = row.querySelector('.dotn_tree-item-title');
   if (titleEl) {
     if (isSelected) titleEl.classList.add('is-active');
     else titleEl.classList.remove('is-active');

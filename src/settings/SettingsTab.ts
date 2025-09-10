@@ -29,7 +29,7 @@ export class DotNavigatorSettingTab extends PluginSettingTab {
     const builtinWrap = containerEl.createEl('div');
     builtinOrder.forEach((id, index) => {
       const item = builtinList.find((x) => x.id === id) || builtinList[index];
-      const card = builtinWrap.createEl('div', { cls: 'tm_settings-card' });
+      const card = builtinWrap.createEl('div', { cls: 'dotn_settings-card' });
       const header = new Setting(card)
         .setName(`${index + 1}. ${this.describeItem(item)}`);
       header.addExtraButton((btn) => {
@@ -66,7 +66,7 @@ export class DotNavigatorSettingTab extends PluginSettingTab {
     const customItems = this.getUserItems();
     const customWrap = containerEl.createEl('div');
     customItems.forEach((item, index) => {
-      const card = customWrap.createEl('div', { cls: 'tm_settings-card' });
+      const card = customWrap.createEl('div', { cls: 'dotn_settings-card' });
       const header = new Setting(card)
         .setName(`${index + 1}. ${this.describeItem(item)}`);
 

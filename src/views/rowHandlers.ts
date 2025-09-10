@@ -51,14 +51,14 @@ export function onRowClick(
     return;
   }
 
-  const buttonEl = target.closest('.tm_button-icon');
+  const buttonEl = target.closest('.dotn_button-icon');
   if (buttonEl) {
     const action = buttonEl.getAttribute('data-action');
     if (action && buttonEl instanceof HTMLElement) handleActionButtonClick(app, action, id, item.kind, vt, buttonEl, e);
     return;
   }
 
-  const titleEl = target.closest('.tm_tree-item-title');
+  const titleEl = target.closest('.dotn_tree-item-title');
   if (!titleEl) return;
 
   const kind = titleEl.getAttribute('data-node-kind');

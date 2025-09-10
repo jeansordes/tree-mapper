@@ -5,11 +5,11 @@ import type { VItem } from '../core/virtualData';
 
 export function createIndentGuides(level: number): HTMLElement {
   const indent = document.createElement('div');
-  indent.className = 'tm_indent';
+  indent.className = 'dotn_indent';
   indent.style.width = `${level * 20}px`;
   for (let i = 0; i < level; i++) {
     const col = document.createElement('span');
-    col.className = 'tm_indent-col';
+    col.className = 'dotn_indent-col';
     indent.appendChild(col);
   }
   return indent;
@@ -17,7 +17,7 @@ export function createIndentGuides(level: number): HTMLElement {
 
 export function createToggleButton(): HTMLElement {
   const toggleBtn = document.createElement('div');
-  toggleBtn.className = 'tm_button-icon';
+  toggleBtn.className = 'dotn_button-icon';
   toggleBtn.setAttribute('data-action', 'toggle');
   toggleBtn.title = 'Toggle';
   setIcon(toggleBtn, 'right-triangle');
@@ -28,7 +28,7 @@ export function createToggleButton(): HTMLElement {
 
 export function createFolderIcon(): HTMLElement {
   const icon = document.createElement('div');
-  icon.className = 'tm_icon';
+  icon.className = 'dotn_icon';
   icon.setAttribute('aria-hidden', 'true');
   setIcon(icon, 'folder');
   return icon;
@@ -52,7 +52,7 @@ export function createFileIconOrBadge(item: RowItem): HTMLElement | null {
 
   if (iconName) {
     const icon = document.createElement('div');
-    icon.className = 'tm_icon';
+    icon.className = 'dotn_icon';
     icon.setAttribute('aria-hidden', 'true');
     icon.setAttribute('data-icon-name', iconName);
     setIcon(icon, iconName);
@@ -61,7 +61,7 @@ export function createFileIconOrBadge(item: RowItem): HTMLElement | null {
 
   // Unknown extension: show a small badge in the icon slot
   const badge = document.createElement('div');
-  badge.className = 'tm_file-badge';
+  badge.className = 'dotn_file-badge';
   badge.setAttribute('aria-hidden', 'true');
   badge.textContent = (ext || '?').slice(0, 4).toUpperCase();
   return badge;
@@ -69,10 +69,10 @@ export function createFileIconOrBadge(item: RowItem): HTMLElement | null {
 
 export function createTitleElement(item: RowItem): HTMLElement {
   const titleClass = item.kind === 'virtual'
-    ? 'tm_tree-item-title mod-create-new'
+    ? 'dotn_tree-item-title mod-create-new'
     : item.kind === 'file'
-      ? 'tm_tree-item-title is-clickable'
-      : 'tm_tree-item-title';
+      ? 'dotn_tree-item-title is-clickable'
+      : 'dotn_tree-item-title';
   const title = document.createElement('div');
   title.className = titleClass;
   title.title = item.id;
@@ -89,11 +89,11 @@ export function maybeCreateExtension(_item: RowItem): HTMLElement | null {
 
 export function createActionButtons(item: VItem, _app: App): HTMLElement {
   const container = document.createElement('div');
-  container.className = 'tm_action-buttons-container';
+  container.className = 'dotn_action-buttons-container';
 
   if (item.kind === 'virtual') {
     const createNoteBtn = document.createElement('div');
-    createNoteBtn.className = 'tm_button-icon';
+    createNoteBtn.className = 'dotn_button-icon';
     createNoteBtn.title = t('tooltipCreateNote', { path: item.id });
     createNoteBtn.setAttribute('data-action', 'create-note');
     setIcon(createNoteBtn, 'square-pen');
@@ -102,7 +102,7 @@ export function createActionButtons(item: VItem, _app: App): HTMLElement {
 
   // Replace the single child button with a "more" menu trigger
   const moreBtn = document.createElement('div');
-  moreBtn.className = 'tm_button-icon';
+  moreBtn.className = 'dotn_button-icon';
   moreBtn.title = t('tooltipMoreActions');
   moreBtn.setAttribute('data-action', 'more');
   setIcon(moreBtn, 'more-vertical');

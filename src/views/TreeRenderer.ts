@@ -38,13 +38,13 @@ export class TreeRenderer {
         const hasChildren = childNode.children.size > 0;
 
         const item = createElement('div', {
-            className: `tm_tree-item-container${!expandedNodes.has(name) ? ' is-collapsed' : ''}`,
+            className: `dotn_tree-item-container${!expandedNodes.has(name) ? ' is-collapsed' : ''}`,
             attributes: { 'data-path': name }
         });
 
         const itemSelf = createElement('div', {
             className: [
-                'tm_tree-item-self',
+                'dotn_tree-item-self',
                 hasChildren ? ' mod-collapsible' : '',
                 isFolder ? ' mod-folder' : ''
             ].filter(Boolean).join(' '),
@@ -57,7 +57,7 @@ export class TreeRenderer {
             const iconName = this.getNodeIconName(childNode);
             if (iconName) {
                 const icon = createElement('div', {
-                    className: 'tm_icon',
+                    className: 'dotn_icon',
                     attributes: { 'data-icon-name': iconName }
                 });
                 setIcon(icon, iconName);
@@ -65,7 +65,7 @@ export class TreeRenderer {
             } else {
                 const ext = childNode.path.split('.').pop() || '';
                 const badge = createElement('div', {
-                    className: 'tm_file-badge',
+                    className: 'dotn_file-badge',
                     textContent: ext.slice(0, 4).toUpperCase()
                 });
                 itemSelf.appendChild(badge);
@@ -78,7 +78,7 @@ export class TreeRenderer {
         this.addActionButtons(itemSelf, childNode);
 
         if (hasChildren) {
-            const childrenContainer = createElement('div', { className: 'tm_tree-item-children' });
+            const childrenContainer = createElement('div', { className: 'dotn_tree-item-children' });
             item.appendChild(childrenContainer);
             this.renderDendronNode(childNode, childrenContainer, expandedNodes);
         }
@@ -94,7 +94,7 @@ export class TreeRenderer {
      */
     private addToggleButton(parent: HTMLElement, item: HTMLElement): void {
         const toggleBtn = createElement('div', {
-            className: 'tm_button-icon',
+            className: 'dotn_button-icon',
             attributes: {
                 'data-action': 'toggle',
                 'data-path': item.getAttribute('data-path') || ''
@@ -112,7 +112,7 @@ export class TreeRenderer {
 
         // Build class name and determine tooltip
         const className = [
-            'tm_tree-item-title',
+            'dotn_tree-item-title',
             node.nodeType === TreeNodeType.VIRTUAL ? 'mod-create-new' : '',
             isFile ? 'is-clickable' : ''
         ].filter(Boolean).join(' ');
@@ -169,7 +169,7 @@ export class TreeRenderer {
     private addActionButtons(parent: HTMLElement, node: TreeNode): void {
         // Create a container for the action buttons
         const actionButtonsContainer = createElement('div', {
-            className: 'tm_action-buttons-container'
+            className: 'dotn_action-buttons-container'
         });
         parent.appendChild(actionButtonsContainer);
 
@@ -224,24 +224,24 @@ export class TreeRenderer {
     private handleTreeMouseMove = (event: MouseEvent) => {
         const target = event.target;
 
-        if (target instanceof HTMLElement && target.classList.contains('tm_tree-item-children')) {
+        if (target instanceof HTMLElement && target.classList.contains('dotn_tree-item-children')) {
             const rect = target.getBoundingClientRect();
             const isOverLine = event.clientX - rect.left <= 10;
 
             if (isOverLine) {
                 // Add hover class only to the specific element
-                target.classList.add('tm_line-hover');
+                target.classList.add('dotn_line-hover');
             } else {
                 // Remove hover class when not over the line
-                target.classList.remove('tm_line-hover');
+                target.classList.remove('dotn_line-hover');
             }
         }
 
         // Remove hover class from all other elements
-        const allChildren = document.querySelectorAll('.tm_tree-item-children.tm_line-hover');
+        const allChildren = document.querySelectorAll('.dotn_tree-item-children.dotn_line-hover');
         allChildren.forEach(el => {
             if (el !== target) {
-                el.classList.remove('tm_line-hover');
+                el.classList.remove('dotn_line-hover');
             }
         });
     };
@@ -251,9 +251,9 @@ export class TreeRenderer {
      */
     private handleTreeMouseLeave = () => {
         // Remove all hover classes when mouse leaves the tree
-        const allChildren = document.querySelectorAll('.tm_tree-item-children.tm_line-hover');
+        const allChildren = document.querySelectorAll('.dotn_tree-item-children.dotn_line-hover');
         allChildren.forEach(el => {
-            el.classList.remove('tm_line-hover');
+            el.classList.remove('dotn_line-hover');
         });
     };
 
@@ -264,19 +264,19 @@ export class TreeRenderer {
     private handleTreeClick = async (event: MouseEvent) => {
         const target = event.target;
 
-        if (target instanceof HTMLElement && target.classList.contains('tm_tree-item-children')) {
+        if (target instanceof HTMLElement && target.classList.contains('dotn_tree-item-children')) {
             if (this.handleCollapseViaGuideClick(event, target)) return;
         }
 
-        const clickableElement: Element | null = target instanceof Element ? target.closest('.is-clickable, .tm_button-icon') : null;
+        const clickableElement: Element | null = target instanceof Element ? target.closest('.is-clickable, .dotn_button-icon') : null;
         if (!clickableElement) return;
 
-        if (clickableElement.classList.contains('tm_button-icon') && clickableElement instanceof HTMLElement) {
+        if (clickableElement.classList.contains('dotn_button-icon') && clickableElement instanceof HTMLElement) {
             await this.handleActionButtonClick(event, clickableElement);
             return;
         }
         
-        if (clickableElement.classList.contains('tm_tree-item-title') && clickableElement instanceof HTMLElement) {
+        if (clickableElement.classList.contains('dotn_tree-item-title') && clickableElement instanceof HTMLElement) {
             await this.handleTitleClick(clickableElement);
             return;
         }
@@ -289,9 +289,9 @@ export class TreeRenderer {
         const target = event.target;
         if (!(target instanceof Element)) return;
         // Limit to actual row content, not the children container area
-        const self = target.closest('.tm_tree-item-self');
+        const self = target.closest('.dotn_tree-item-self');
         if (!self) return;
-        const container = self.closest('.tm_tree-item-container');
+        const container = self.closest('.dotn_tree-item-container');
         const path = container instanceof HTMLElement ? container.getAttribute('data-path') : null;
         if (!path) return;
         event.preventDefault();
@@ -308,19 +308,19 @@ export class TreeRenderer {
         const rect = target.getBoundingClientRect();
         if (event.clientX - rect.left > 10) return false;
         const parent = target.parentElement;
-        if (!parent?.classList.contains('tm_tree-item-container')) return false;
+        if (!parent?.classList.contains('dotn_tree-item-container')) return false;
 
         const path = parent.getAttribute('data-path');
         const isCollapsed = parent.classList.toggle('is-collapsed');
 
-        const toggleBtn = parent.querySelector('.tm_button-icon[data-action="toggle"]');
+        const toggleBtn = parent.querySelector('.dotn_button-icon[data-action="toggle"]');
         const triangle = toggleBtn?.querySelector('.right-triangle');
         if (triangle) triangle.classList.toggle('is-collapsed');
 
         if (path) {
             if (isCollapsed) {
                 this.expandedNodes.delete(path);
-                const btn = parent.querySelector('.tm_button-icon[data-action="toggle"]');
+                const btn = parent.querySelector('.dotn_button-icon[data-action="toggle"]');
                 if (btn instanceof HTMLElement) this.highlightLastCollapsed(btn);
             } else {
                 this.expandedNodes.add(path);
@@ -337,7 +337,7 @@ export class TreeRenderer {
         event.stopPropagation();
         switch (action) {
             case 'toggle': {
-                const item = btn.closest('.tm_tree-item-container');
+                const item = btn.closest('.dotn_tree-item-container');
                 if (item instanceof HTMLElement) {
                     const isCollapsed = item.classList.toggle('is-collapsed');
                     if (isCollapsed) {
@@ -380,17 +380,17 @@ export class TreeRenderer {
      */
     private highlightLastCollapsed(toggleButton: HTMLElement): void {
         // Remove highlight from any previously highlighted toggle
-        const previousHighlighted = document.querySelector('.tm_button-icon[data-action="toggle"].tm_last-collapsed');
+        const previousHighlighted = document.querySelector('.dotn_button-icon[data-action="toggle"].dotn_last-collapsed');
         if (previousHighlighted) {
-            previousHighlighted.classList.remove('tm_last-collapsed');
+            previousHighlighted.classList.remove('dotn_last-collapsed');
         }
 
         // Add highlight to the current toggle button
-        toggleButton.classList.add('tm_last-collapsed');
+        toggleButton.classList.add('dotn_last-collapsed');
 
         // Remove the highlight after 3 seconds
         setTimeout(() => {
-            toggleButton.classList.remove('tm_last-collapsed');
+            toggleButton.classList.remove('dotn_last-collapsed');
         }, 10 * 1000);
     }
 

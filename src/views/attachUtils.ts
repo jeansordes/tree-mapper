@@ -19,7 +19,7 @@ export function setupAttachment(opts: {
     });
 
     if (container.classList.contains('view-content')) {
-      const viewBody = container.querySelector('.tm_view-body');
+      const viewBody = container.querySelector('.dotn_view-body');
       if (viewBody instanceof HTMLElement && !isAttached()) {
         logger.log('[DotNavigator] View body found in view-content, attaching now');
         attachToViewBody(container, viewBody);
@@ -30,7 +30,7 @@ export function setupAttachment(opts: {
       }
     }
 
-    const viewBody = container.querySelector('.tm_view-body');
+    const viewBody = container.querySelector('.dotn_view-body');
     if (viewBody instanceof HTMLElement && !isAttached()) {
       logger.log('[DotNavigator] View body found, attaching now');
       attachToViewBody(container, viewBody);
@@ -49,7 +49,7 @@ export function setupAttachment(opts: {
     const retry = () => {
       retryCount++;
       if (retryCount >= maxRetries) {
-        logger.error('[DotNavigator] Error: Could not find .tm_view-body after maximum retries. Container structure:', {
+        logger.error('[DotNavigator] Error: Could not find .dotn_view-body after maximum retries. Container structure:', {
           container: container,
           containerClass: container.className,
           children: Array.from(container.children).map(child => ({
@@ -102,9 +102,9 @@ export function attachToViewBodyImpl(ctx: {
   const isChildOfViewBody = Array.from(viewBody.children).includes(virtualTree.virtualizer);
   if (!isChildOfViewBody) {
     logger.log('[DotNavigator] Appending virtualizer to view body');
-    const treeContainer = viewBody.querySelector('.tm_view-tree');
+    const treeContainer = viewBody.querySelector('.dotn_view-tree');
     if (treeContainer instanceof HTMLElement) {
-      logger.log('[DotNavigator] Found existing tm_view-tree, using it as target');
+      logger.log('[DotNavigator] Found existing dotn_view-tree, using it as target');
       while (treeContainer.firstChild) treeContainer.removeChild(treeContainer.firstChild);
       treeContainer.appendChild(virtualTree.virtualizer);
     } else {

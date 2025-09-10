@@ -25,7 +25,7 @@ export function createActionButton(options: {
   attributes?: Record<string, string>
 }): HTMLElement {
   const btn = createElement('div', {
-    className: `tm_button-icon ${options.className || ''}`,
+    className: `dotn_button-icon ${options.className || ''}`,
     title: options.title,
     attributes: options.attributes || {}
   });
