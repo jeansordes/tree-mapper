@@ -67,6 +67,7 @@
 		"typescript-eslint": "^8.31.0"
 	},
 	"dependencies": {
+		"@tanstack/virtual-core": "^3.13.12",
 		"debug": "^4.4.1"
 	},
 	"overrides": {

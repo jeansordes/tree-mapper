@@ -2,27 +2,43 @@ import type { App } from 'obsidian';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
 import { createActionButtons, createFolderIcon, createIndentGuides, createTitleElement, createToggleButton, maybeCreateExtension, createFileIconOrBadge } from './rowDom';
 
-export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, itemIndex: number, app: App): void {
+export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, itemIndex: number, app: App, startPx?: number): void {
   const isFocused = itemIndex === vt.focusedIndex;
   const isSelected = itemIndex === vt.selectedIndex;
   const isExpanded = vt.expanded.get(item.id) ?? false;
   const hasChildren = !!item.hasChildren;
 
   // Only set transform in JS; all other styling comes from CSS classes
-  row.style.transform = `translateY(${itemIndex * vt.rowHeight}px)`;
+  const y = typeof startPx === 'number' ? startPx : (itemIndex * vt.rowHeight);
+  row.style.transform = `translateY(${y}px)`;
 
-  // Normalize previous level classes and remove generic demo class
+  // Fast path: if same item id, avoid rebuilding children; just update state
+  if (row.dataset.id === item.id) {
+    // Update level class if changed
+    for (const cls of Array.from(row.classList)) {
+      if (cls.startsWith('dotn_level-')) { row.classList.remove(cls); }
+    }
+    row.classList.add(`dotn_level-${item.level}`);
+    if (hasChildren && !isExpanded) row.classList.add('collapsed'); else row.classList.remove('collapsed');
+    const titleEl = row.querySelector('.dotn_tree-item-title');
+    if (titleEl) {
+      if (isSelected) titleEl.classList.add('is-active'); else titleEl.classList.remove('is-active');
+    }
+    row.dataset.index = String(itemIndex);
+    row.setAttribute('tabindex', isFocused ? '0' : '-1');
+    row.setAttribute('aria-selected', String(isSelected));
+    if (hasChildren) row.setAttribute('aria-expanded', String(isExpanded)); else row.removeAttribute('aria-expanded');
+    return;
+  }
+
+  // Full (re)build for a new item
   for (const cls of Array.from(row.classList)) {
     if (cls.startsWith('dotn_level-')) row.classList.remove(cls);
   }
   row.classList.remove('row');
   row.classList.add('tree-row', `dotn_level-${item.level}`);
 
-  if (hasChildren && !isExpanded) {
-    row.classList.add('collapsed');
-  } else {
-    row.classList.remove('collapsed');
-  }
+  if (hasChildren && !isExpanded) row.classList.add('collapsed'); else row.classList.remove('collapsed');
 
   while (row.firstChild) row.removeChild(row.firstChild);
   if (item.level && item.level > 0) row.appendChild(createIndentGuides(item.level));
@@ -39,8 +55,7 @@ export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, 
 
   const titleEl = row.querySelector('.dotn_tree-item-title');
   if (titleEl) {
-    if (isSelected) titleEl.classList.add('is-active');
-    else titleEl.classList.remove('is-active');
+    if (isSelected) titleEl.classList.add('is-active'); else titleEl.classList.remove('is-active');
   }
 
   row.dataset.id = item.id;

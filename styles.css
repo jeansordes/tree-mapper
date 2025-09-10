@@ -416,7 +416,9 @@
     position: absolute;
     display: flex;
     align-items: center;
-    width: 100%;
+    /* Allow rows to expand horizontally to content while still filling panel */
+    width: max-content;
+    min-width: 100%;
     /* Use layout containment only so indent guides can paint across row bounds */
     contain: layout;
     will-change: transform; /* hint compositor for smoother scroll */

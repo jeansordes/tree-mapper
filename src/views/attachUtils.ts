@@ -115,27 +115,29 @@ export function attachToViewBodyImpl(ctx: {
     debug('Virtualizer is already a child of view body, skipping append');
   }
 
+  // If using TanStack Virtual, it manages scroll listeners itself.
   host.removeEventListener('scroll', virtualTree._onScroll);
-  const bound = () => requestAnimationFrame(() => {
-    const sc1 = virtualTree.scrollContainer;
-    const sc2 = virtualTree.container;
-    const sc = sc1 instanceof HTMLElement ? sc1 : sc2;
-    const st = sc instanceof HTMLElement ? sc.scrollTop : 0;
-    if (st !== getLastScrollTop()) {
-      setLastScrollTop(st);
-      virtualTree._onScroll();
-    }
-  });
-  viewBody.addEventListener('scroll', bound);
-  setBoundScroll(bound);
+  const isTanstack = (virtualTree as unknown as { usesTanstack?: () => boolean }).usesTanstack?.() === true;
+  if (!isTanstack) {
+    const bound = () => requestAnimationFrame(() => {
+      const sc1 = virtualTree.scrollContainer;
+      const sc2 = virtualTree.container;
+      const sc = sc1 instanceof HTMLElement ? sc1 : sc2;
+      const st = sc instanceof HTMLElement ? sc.scrollTop : 0;
+      if (st !== getLastScrollTop()) {
+        setLastScrollTop(st);
+        virtualTree._onScroll();
+      }
+    });
+    viewBody.addEventListener('scroll', bound);
+    setBoundScroll(bound);
+  }
 
   setAttached(true);
   virtualTree.scrollContainer = viewBody;
-  try {
-    const minPanelWidth = viewBody.clientWidth;
-    const virtualizerEl = virtualTree.virtualizer;
-    if (virtualizerEl instanceof HTMLElement) virtualizerEl.style.width = `${Math.max(0, minPanelWidth)}px`;
-  } catch { /* ignore width init errors */ }
+  // Ensure the virtualizer updates to the new scroll element
+  try { (virtualTree as unknown as { syncScrollElement?: () => void }).syncScrollElement?.(); } catch { /* ignore */ }
+  // Avoid forcing widths here to prevent reflow; CSS governs width.
 
   setTimeout(() => {
     debug('[DotNavigator] Forcing render after attachment');

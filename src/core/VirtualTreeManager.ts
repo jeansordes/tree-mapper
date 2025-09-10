@@ -38,8 +38,8 @@ export class VirtualTreeManager {
       container: rootContainer,
       data,
       rowHeight,
-      // Use moderate overscan; we'll debug movement on scroll
-      buffer: 100,
+      // TanStack overscan (items beyond viewport)
+      buffer: 8,
       app: this.app,
       gap,
       onExpansionChange: () => this.onExpansionChange?.(),
@@ -50,7 +50,7 @@ export class VirtualTreeManager {
     debug('Virtual Tree init', {
       rowHeight,
       gap,
-      buffer: 100,
+      buffer: 8,
       items: data.length
     });
   }

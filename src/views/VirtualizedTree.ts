@@ -7,10 +7,10 @@ const debugError = debug.extend('error');
 import type { VItem } from '../core/virtualData';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
 import { renderRow } from './rowRender';
-import { logRenderWindow, scheduleWidthAdjust } from './renderUtils';
+// import { logRenderWindow, scheduleWidthAdjust } from './renderUtils';
 import { computeDendronParentId, expandAllInData, renamePathInPlace } from './treeOps';
 import { setupAttachment, attachToViewBodyImpl } from './attachUtils';
-import { collapseAll as collapseAllAction, revealPath as revealAction, scrollToIndex as scrollToIndexAction, selectPath as selectPathAction } from './treeActions';
+import { collapseAll as collapseAllAction, revealPath as revealAction, selectPath as selectPathAction } from './treeActions';
 import { bindRowHandlers, onRowClick as handleRowClick, onRowContextMenu as handleRowContextMenu } from './rowHandlers';
 // import { updateInstanceStyles } from './styleSheet';
 
@@ -205,10 +205,12 @@ export class ComplexVirtualTree extends VirtualTree {
   }
 
   // Ensure correct container gets scrolled when jumping to an index
-  public scrollToIndex(index: number): void { scrollToIndexAction(this.virtualTree, index); }
+  public scrollToIndex(index: number): void { super.scrollToIndex(index); }
 
   // Row rendering (Obsidian-like DOM)
-  private _renderRow(row: HTMLElement, item: RowItem, itemIndex: number): void { renderRow(this.virtualTree, row, item, itemIndex, this.app); }
+  private _renderRow(row: HTMLElement, item: RowItem, itemIndex: number, startPx?: number): void {
+    renderRow(this.virtualTree, row, item, itemIndex, this.app, startPx);
+  }
 
   // Override row click handling to support toggle/create/open
   public _onRowClick(e: MouseEvent, row: HTMLElement): void {
@@ -247,51 +249,95 @@ export class ComplexVirtualTree extends VirtualTree {
     handleRowContextMenu(this.app, this.virtualTree, e, row);
   }
 
-  // Override render to use the correct scroll container and windowing math
+  // Override render to use TanStack Virtual items when available
   public _render(): void {
     this._ensurePoolCapacity();
-    const scrollContainer = this.virtualTree.scrollContainer;
-    const container = this.virtualTree.container;
-    const sc = scrollContainer instanceof HTMLElement ? scrollContainer : container;
-    const scrollTop = sc.scrollTop;
-    const rowHeight: number = this.virtualTree.rowHeight;
-    const buffer: number = this.virtualTree.buffer;
+    // Scroll container isn't required here; TanStack Virtual manages scrolling.
+
+    const vItems = this.getVirtualItems?.() ?? [];
+
+    // Ensure our row pool is large enough for the current virtual window
+    if (vItems.length > this.virtualTree.poolSize) {
+      const start = this.virtualTree.poolSize;
+      const end = vItems.length;
+      const host = this.virtualTree.virtualizer;
+      if (host instanceof HTMLElement) {
+        for (let i = start; i < end; i++) {
+          const row = document.createElement('div');
+          row.className = 'tree-row';
+          row.dataset.poolIndex = String(i);
+          row.addEventListener('click', (ev) => { if (ev instanceof MouseEvent) this._onRowClick(ev, row); });
+          row.addEventListener('contextmenu', (ev) => { if (ev instanceof MouseEvent) this._onRowContextMenu(ev, row); });
+          host.appendChild(row);
+          this.virtualTree.pool.push(row);
+        }
+        this.virtualTree.poolSize = end;
+      }
+    }
+
     const total: number = this.virtualTree.total;
-    const poolSize: number = this.virtualTree.poolSize;
 
-    const startIndex = Math.max(Math.floor(scrollTop / rowHeight) - buffer, 0);
-    const endIndex = Math.min(startIndex + poolSize, total);
-
-    // Debug: log window movement and coverage
-    logRenderWindow(this.virtualTree, sc, startIndex, endIndex, scrollTop);
-
-    // Determine minimum width as current panel width
-    const minPanelWidth = sc.clientWidth || 0;
-    const appliedWidth = Math.max(this._maxRowWidth || 0, minPanelWidth);
-    const appliedWidthPx = appliedWidth > 0 ? `${appliedWidth}px` : '';
-
+    const poolSize = this.virtualTree.poolSize;
     for (let i = 0; i < poolSize; i++) {
-      const itemIndex = startIndex + i;
       const row: HTMLElement = this.virtualTree.pool[i];
-      if (itemIndex >= endIndex || itemIndex >= total) {
+      const vRow = vItems[i];
+      if (!vRow) {
+        row.classList.add('is-hidden');
+        continue;
+      }
+      const itemIndex: number = vRow.index;
+      if (itemIndex < 0 || itemIndex >= total) {
         row.classList.add('is-hidden');
         continue;
       }
       const item = this.virtualTree.visible[itemIndex];
-      this._renderRow(row, item, itemIndex);
+      this._renderRow(row, item, itemIndex, vRow.start);
       row.classList.remove('is-hidden');
-      // Apply cached width immediately for smooth scrolling
-      if (appliedWidthPx) row.style.width = appliedWidthPx;
-      else row.style.removeProperty('width');
     }
 
-    // Defer width adjustment until scroll settles
-    scheduleWidthAdjust(this.virtualTree, {
-      getTimer: () => this._widthAdjustTimer,
-      setTimer: (n) => { this._widthAdjustTimer = n; },
-      getMaxWidth: () => this._maxRowWidth,
-      setMaxWidth: (n) => { this._maxRowWidth = n; }
-    });
+    // After rendering rows, adjust widths when scrolling is idle to ensure
+    // a consistent max width across rows and enable horizontal scroll.
+    try {
+      const usesTS = (this.virtualTree as unknown as { usesTanstack?: () => boolean }).usesTanstack?.() === true;
+      const isScrolling = (this.virtualTree as unknown as { isScrolling?: () => boolean }).isScrolling?.() === true;
+      if (usesTS && !isScrolling) this._adjustWidthDebounced();
+    } catch { /* non-fatal */ }
+  }
+
+  private _adjustWidthDebounced(): void {
+    if (this._widthAdjustTimer) window.clearTimeout(this._widthAdjustTimer);
+    this._widthAdjustTimer = window.setTimeout(() => {
+      this._widthAdjustTimer = undefined as unknown as number;
+      this._adjustWidthNow();
+    }, 80);
+  }
+
+  private _adjustWidthNow(): void {
+    try {
+      const vt = this.virtualTree;
+      const rows = vt.pool.filter(r => !r.classList.contains('is-hidden'));
+      if (rows.length === 0) return;
+
+      // Read widths first (minimize write/read thrash)
+      let max = 0;
+      for (const row of rows) {
+        // Use offsetWidth; CSS uses width:max-content so this reflects content width
+        const w = Math.ceil(row.offsetWidth);
+        if (w > max) max = w;
+      }
+
+      const sc = (vt.scrollContainer instanceof HTMLElement ? vt.scrollContainer : vt.container);
+      const minPanelWidth = sc.clientWidth || 0;
+      const finalWidth = Math.max(max, minPanelWidth);
+      if (finalWidth <= 0 || finalWidth === this._maxRowWidth) return;
+
+      const widthPx = `${finalWidth}px`;
+      // Write widths
+      for (const row of rows) row.style.width = widthPx;
+      const vz = vt.virtualizer;
+      if (vz instanceof HTMLElement) vz.style.width = widthPx;
+      this._maxRowWidth = finalWidth;
+    } catch { /* ignore */ }
   }
 
   // Reapply selection by id after the visible list changes so highlight stays on the same item.

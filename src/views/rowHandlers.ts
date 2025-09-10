@@ -1,6 +1,5 @@
 import type { App } from 'obsidian';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
-import { ensurePoolCapacity } from './renderUtils';
 import { handleActionButtonClick, handleTitleClick } from './rowEvents';
 import createDebug from 'debug';
 const debugError = createDebug('dot-navigator:views:row-handlers:error');
@@ -11,15 +10,6 @@ export function bindRowHandlers(
   onRowContextMenu: (ev: MouseEvent, row: HTMLElement) => void,
   boundSet?: WeakSet<HTMLElement>
 ): WeakSet<HTMLElement> {
-  ensurePoolCapacity(vt, (row) => {
-    row.addEventListener('click', (ev) => {
-      if (ev instanceof MouseEvent) onRowClick(ev, row);
-    });
-    row.addEventListener('contextmenu', (ev) => {
-      if (ev instanceof MouseEvent) onRowContextMenu(ev, row);
-    });
-  });
-
   const set = boundSet ?? new WeakSet<HTMLElement>();
   for (const row of vt.pool) {
     if (!set.has(row)) {
