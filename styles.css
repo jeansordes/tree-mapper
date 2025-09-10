@@ -1,3 +1,9 @@
+/* Dark mode */
+.theme-dark .dotn_view {
+    --bg1: hsl(0, 0, 15%);
+    --bg2: hsl( 0, 0%, calc(15% - 2%) );
+    --bg3: hsla( 0, 0%, calc(15% + 40%), 0.12 );
+}
 
 .dotn_view {
     /* DO NOT REMOVE THIS LINE */
@@ -325,7 +331,7 @@
 
 /* Mobile dark mode */
 .theme-dark .dotn_view.dotn_view-mobile {
-    --dotn_bg-hover: var(--bg1);
+    --dotn_bg-hover: var(--bg3);
     --dotn_bg: var(--bg2);
 }
 
