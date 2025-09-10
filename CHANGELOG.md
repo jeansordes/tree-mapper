@@ -1,3 +1,13 @@
+# [1.12.0](https://github.com/jeansordes/dot-navigator/compare/1.11.3...1.12.0) (2025-09-10)
+
+### Bug Fixes
+
+* repair dark mode colors ([8bfbb62](https://github.com/jeansordes/dot-navigator/commit/8bfbb62625a59dd8c20ab000abead402b65c25c7))
+
+### Features
+
+* **virtualization:** integrate TanStack Virtualizer for improved performance and scrolling ([60a97ed](https://github.com/jeansordes/dot-navigator/commit/60a97ed2be235a3ee2dd197cced6d3ba0953c30b))
+
 ## [1.11.4](https://github.com/jeansordes/dot-navigator/compare/1.11.3...1.11.4) (2025-09-10)
 
 ### Bug Fixes
