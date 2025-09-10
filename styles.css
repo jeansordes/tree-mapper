@@ -6,7 +6,7 @@
     
     /* Background colors extracted from the Minimal Theme */
     --bg1: white;
-    --bg2: hsl(var(--base-h), var(--base-s), var(--base-l));
+    --bg2: #f5f5f5;
     --bg3: hsla( 0, 0%, calc(96% - 50%), 0.12 );
 
     /* Colors */
