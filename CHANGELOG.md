@@ -1,3 +1,9 @@
+## [1.12.1](https://github.com/jeansordes/dot-navigator/compare/1.12.0...1.12.1) (2025-09-10)
+
+### Bug Fixes
+
+* **virtualization:** enhance VirtualTree functionality with scroll/selection preservation ([aaeb385](https://github.com/jeansordes/dot-navigator/commit/aaeb385630ef463f468592604ed5fbba20cd9ad0))
+
 # [1.12.0](https://github.com/jeansordes/dot-navigator/compare/1.11.3...1.12.0) (2025-09-10)
 
 ### Bug Fixes
