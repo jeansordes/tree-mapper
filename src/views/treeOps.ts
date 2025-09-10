@@ -110,14 +110,43 @@ export function renamePathInPlace(
     destList.sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  // Prune empty virtual parent nodes (e.g., x.md with no children) after moves.
+  // Bulk renames that convert dotted notes (a.b.md) into folders (a/b.md) often
+  // leave behind a virtual parent (a.md) with no remaining children. This makes
+  // the UI show two seemingly identical entries (the virtual a and the folder a).
+  // Remove such empty virtuals to keep the tree consistent with the current data.
+  const pruneEmptyVirtuals = (items: VItem[]): boolean => {
+    let changed = false;
+    for (let i = items.length - 1; i >= 0; i--) {
+      const it = items[i];
+      if (Array.isArray(it.children) && it.children.length > 0) {
+        if (pruneEmptyVirtuals(it.children)) changed = true;
+      }
+      const hasNoChildren = !it.children || it.children.length === 0;
+      if (it.kind === 'virtual' && hasNoChildren) {
+        items.splice(i, 1);
+        changed = true;
+      }
+    }
+    return changed;
+  };
+  pruneEmptyVirtuals(vt.data);
+
   const newParentMap = new Map<string, string | undefined>();
+  const idSet = new Set<string>();
   const walk = (items: VItem[], parent?: string) => {
     for (const it of items) {
+      idSet.add(it.id);
       newParentMap.set(it.id, parent);
       if (it.children && it.children.length) walk(it.children, it.id);
     }
   };
   walk(vt.data);
+
+  // Filter expanded set to existing ids to avoid stale entries
+  const filteredExpanded = new Map<string, boolean>();
+  vt.expanded.forEach((v, k) => { if (v && idSet.has(k)) filteredExpanded.set(k, true); });
+  vt.expanded = filteredExpanded;
 
   const mapSelected = (selected?: string) => {
     if (!selected) return selected;
@@ -140,4 +169,3 @@ export function expandAllInData(data: VItem[], expanded: Map<string, boolean>): 
   }
   walk(data);
 }
-

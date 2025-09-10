@@ -221,16 +221,20 @@ export class ComplexVirtualTree extends VirtualTree {
   public toggle(id: string): void {
     super.toggle(id);
     this._reapplySelection();
+    // Re-render to reflect selection changes when the selected child becomes hidden
+    this.virtualTree._render();
     this._onExpansionChange?.();
   }
   public expand(id: string): void {
     super.expand(id);
     this._reapplySelection();
+    this.virtualTree._render();
     this._onExpansionChange?.();
   }
   public collapse(id: string): void {
     super.collapse(id);
     this._reapplySelection();
+    this.virtualTree._render();
     this._onExpansionChange?.();
   }
 

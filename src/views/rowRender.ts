@@ -20,6 +20,24 @@ export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, 
     }
     row.classList.add(`dotn_level-${item.level}`);
     if (hasChildren && !isExpanded) row.classList.add('collapsed'); else row.classList.remove('collapsed');
+
+    // Ensure presence/absence of the toggle button matches hasChildren
+    const existingToggle = row.querySelector('[data-action="toggle"]');
+    if (hasChildren) {
+      if (!existingToggle) {
+        const toggle = createToggleButton();
+        const indent = row.querySelector('.dotn_indent');
+        if (indent && indent.parentElement === row) {
+          row.insertBefore(toggle, indent.nextSibling);
+        } else {
+          row.insertBefore(toggle, row.firstChild);
+        }
+      }
+      row.setAttribute('aria-expanded', String(isExpanded));
+    } else {
+      if (existingToggle instanceof HTMLElement) existingToggle.remove();
+      row.removeAttribute('aria-expanded');
+    }
     const titleEl = row.querySelector('.dotn_tree-item-title');
     if (titleEl) {
       if (isSelected) titleEl.classList.add('is-active'); else titleEl.classList.remove('is-active');
@@ -27,7 +45,7 @@ export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, 
     row.dataset.index = String(itemIndex);
     row.setAttribute('tabindex', isFocused ? '0' : '-1');
     row.setAttribute('aria-selected', String(isSelected));
-    if (hasChildren) row.setAttribute('aria-expanded', String(isExpanded)); else row.removeAttribute('aria-expanded');
+    // aria-expanded handled above together with toggle button sync
     return;
   }
 
