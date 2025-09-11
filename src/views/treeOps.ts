@@ -80,7 +80,24 @@ export function renamePathInPlace(
   };
 
   if (sameDendronParent) {
-    updateIds(node);
+    // If the target id already exists in this list (e.g., a virtual placeholder),
+    // merge by adopting its children and replacing it with the renamed node.
+    const existingIdx = loc.list.findIndex((it, i) => it.id === newPath && i !== loc.index);
+    if (existingIdx !== -1) {
+      const existing = loc.list[existingIdx];
+      const adoptChildren = existing.kind === 'virtual' && Array.isArray(existing.children)
+        ? existing.children
+        : undefined;
+      // Remove the placeholder (or duplicate) before mutating ids to avoid duplicates
+      loc.list.splice(existingIdx, 1);
+      updateIds(node);
+      if (adoptChildren && adoptChildren.length) {
+        if (!Array.isArray(node.children)) node.children = [];
+        node.children.push(...adoptChildren);
+      }
+    } else {
+      updateIds(node);
+    }
     loc.list.sort((a, b) => a.name.localeCompare(b.name));
   } else {
     const findNode = (arr: VItem[], target: string): VItem | null => {
@@ -104,8 +121,25 @@ export function renamePathInPlace(
     const destList = getDestList(newParentId);
     if (!destList) return { applied: false, parentMap, mapSelected: (s) => s };
 
+    // If a node already exists at the destination with the target id (commonly a
+    // virtual placeholder), remove it and adopt its children into the moving node.
+    const existingIdx = destList.findIndex((it) => it.id === newPath);
+    let adoptChildren: VItem[] | undefined;
+    if (existingIdx !== -1) {
+      const existing = destList[existingIdx];
+      if (existing.kind === 'virtual' && Array.isArray(existing.children)) {
+        adoptChildren = existing.children;
+      }
+      // Remove the existing conflicting node regardless of kind to avoid duplicates
+      destList.splice(existingIdx, 1);
+    }
+
     const [movingNode] = loc.list.splice(loc.index, 1);
     updateIds(movingNode);
+    if (adoptChildren && adoptChildren.length) {
+      if (!Array.isArray(movingNode.children)) movingNode.children = [];
+      movingNode.children.push(...adoptChildren);
+    }
     destList.push(movingNode);
     destList.sort((a, b) => a.name.localeCompare(b.name));
   }
