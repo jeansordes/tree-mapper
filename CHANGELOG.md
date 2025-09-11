@@ -1,3 +1,12 @@
+## [1.12.2](https://github.com/jeansordes/dot-navigator/compare/1.12.1...1.12.2) (2025-09-11)
+
+### Bug Fixes
+
+* **main:** update view initialization and persistence logic ([b463a45](https://github.com/jeansordes/dot-navigator/commit/b463a45d50a0dd2ed945c6602f06b0f588496158))
+* reveal the border radius on the far right part of rows ([6bedc59](https://github.com/jeansordes/dot-navigator/commit/6bedc592dae28b98bb800e185f3bcbf879e81bd0))
+* **treeOps:** enhance renamePathInPlace function to handle existing nodes ([5fbfdc7](https://github.com/jeansordes/dot-navigator/commit/5fbfdc7b7011ae91d69e93cf4e1ebf24926213ce))
+* **virtualization:** improve row rendering and toggle button functionality ([2fb17de](https://github.com/jeansordes/dot-navigator/commit/2fb17deb6ade7dbbba0453c80f06360e443ec9b8))
+
 ## [1.12.1](https://github.com/jeansordes/dot-navigator/compare/1.12.0...1.12.1) (2025-09-10)
 
 ### Bug Fixes
