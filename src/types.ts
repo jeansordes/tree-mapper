@@ -12,6 +12,7 @@ export interface PluginSettings {
     // New: keep builtin items order separately so builtins are immutable and always present
     builtinMenuOrder?: string[]; // array of builtin item ids
     userMenuItems?: MoreMenuItemCommand[]; // only custom command items
+    viewWasOpen?: boolean; // Whether the view was open when plugin was unloaded
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {

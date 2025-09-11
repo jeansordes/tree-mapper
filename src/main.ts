@@ -58,10 +58,9 @@ export default class DotNavigatorPlugin extends Plugin {
 
         this.registerCommands();
 
-        // Use Obsidian's workspace.onLayoutReady for proper initialization
-        this.app.workspace.onLayoutReady(() => {
-            this.activateView();
-        });
+        // Do not auto-open the view on startup.
+        // The panel will open only when the user clicks the ribbon button or runs the command.
+        // When the view is opened, it will highlight the currently active file on its own.
     }
 
     private registerCommands() {
@@ -239,6 +238,12 @@ export default class DotNavigatorPlugin extends Plugin {
         if (this.pluginMainPanel) {
             this.settings.expandedNodes = this.pluginMainPanel.getExpandedNodesForSettings();
         }
+
+        // Persist whether the view is currently open, so we could optionally restore in the future
+        try {
+            const isOpen = this.app.workspace.getLeavesOfType(FILE_TREE_VIEW_TYPE).length > 0;
+            this.settings.viewWasOpen = isOpen;
+        } catch { /* ignore */ }
 
         await this.saveData(this.settings);
     }
