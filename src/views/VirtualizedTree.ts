@@ -8,7 +8,7 @@ import type { VItem } from '../core/virtualData';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
 import { renderRow } from './rowRender';
 // import { logRenderWindow, scheduleWidthAdjust } from './renderUtils';
-import { computeDendronParentId, expandAllInData, renamePathInPlace } from './treeOps';
+import { expandAllInData } from './treeOps';
 import { setupAttachment, attachToViewBodyImpl } from './attachUtils';
 import { collapseAll as collapseAllAction, revealPath as revealAction, selectPath as selectPathAction } from './treeActions';
 import { bindRowHandlers, onRowClick as handleRowClick, onRowContextMenu as handleRowContextMenu } from './rowHandlers';
@@ -119,10 +119,40 @@ export class ComplexVirtualTree extends VirtualTree {
     const host = scrollContainer instanceof HTMLElement ? scrollContainer : vt.container;
     const prevScrollTop = host.scrollTop;
 
+    // Build maps to compute diffs (by id)
+    const buildMap = (items: VItem[]): Map<string, VItem> => {
+      const map = new Map<string, VItem>();
+      const walk = (arr: VItem[]) => {
+        for (const it of arr) {
+          map.set(it.id, it);
+          if (Array.isArray(it.children) && it.children.length) walk(it.children);
+        }
+      };
+      walk(items);
+      return map;
+    };
+    const oldData = vt.data as unknown as VItem[] | undefined;
+    const oldMap = Array.isArray(oldData) ? buildMap(oldData) : new Map<string, VItem>();
+    const newMap = buildMap(data);
+
+    // Compute dirty ids where row content must be rebuilt (icon/actions/name changes)
+    const dirtyIds = new Set<string>();
+    newMap.forEach((n, id) => {
+      const o = oldMap.get(id);
+      if (!o) return;
+      const kindChanged = o.kind !== n.kind;
+      const extChanged = (o.extension || '') !== (n.extension || '');
+      const nameChanged = o.name !== n.name;
+      if (kindChanged || extChanged || nameChanged) dirtyIds.add(id);
+    });
+
     // Swap data and recompute visible rows based on current expansion map
     vt.data = data;
     this.setParentMap(parentMap);
     vt._recomputeVisible();
+
+    // Mark dirty rows for renderer to rebuild row content
+    try { (vt as unknown as { dirtyIds?: Set<string> }).dirtyIds = dirtyIds; } catch { /* ignore */ }
 
     // Reapply selection by id if any
     this._reapplySelection();
@@ -142,34 +172,6 @@ export class ComplexVirtualTree extends VirtualTree {
     vt._render();
     this._onExpansionChange?.();
   }
-
-  // Attempt to rename a single path in-place (only supports same-parent renames).
-  // Returns true if applied in place; false if caller should rebuild.
-  public renamePath(oldPath: string, newPath: string): boolean {
-    const vt = this.virtualTree;
-    const scrollContainer = vt.scrollContainer;
-    const host = scrollContainer instanceof HTMLElement ? scrollContainer : vt.container;
-    const prevScrollTop = host.scrollTop;
-
-    const { applied, parentMap, mapSelected } = renamePathInPlace(vt, this.parentMap, oldPath, newPath);
-    if (!applied) return false;
-
-    this.setParentMap(parentMap);
-    this._selectedId = mapSelected(this._selectedId);
-
-    vt._recomputeVisible();
-    this._reapplySelection();
-    vt._render();
-    host.scrollTop = prevScrollTop;
-    this._onExpansionChange?.();
-    return true;
-  }
-
-  // Compute the Dendron-style parent id for a given path.
-  // For files with dotted names (a.b.md), parent is a.md (under same folder).
-  // For single-segment files (a.md), parent is the containing folder.
-  // For folders, parent is the filesystem parent folder (or '/' for root).
-  private _computeDendronParentId(path: string, kind: 'folder' | 'file' | 'virtual'): string { return computeDendronParentId(path, kind); }
 
   public expandAll(): void {
     // Expand every folder/virtual item present in visible data by id.

@@ -12,8 +12,9 @@ export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, 
   const y = typeof startPx === 'number' ? startPx : (itemIndex * vt.rowHeight);
   row.style.transform = `translateY(${y}px)`;
 
-  // Fast path: if same item id, avoid rebuilding children; just update state
-  if (row.dataset.id === item.id) {
+  // Fast path: if same item id and not marked dirty, avoid rebuilding children; just update state
+  const isDirty = vt.dirtyIds?.has(item.id) === true;
+  if (!isDirty && row.dataset.id === item.id) {
     // Update level class if changed
     for (const cls of Array.from(row.classList)) {
       if (cls.startsWith('dotn_level-')) { row.classList.remove(cls); }
@@ -49,7 +50,7 @@ export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, 
     return;
   }
 
-  // Full (re)build for a new item
+  // Full (re)build for a new or dirty item
   for (const cls of Array.from(row.classList)) {
     if (cls.startsWith('dotn_level-')) row.classList.remove(cls);
   }

@@ -34,6 +34,9 @@ export class VirtualTree {
   private _scrollHandler?: () => void;
   private _onKeyDown: (e: KeyboardEvent) => void;
 
+  // IDs of items that must be fully re-rendered on next paint
+  public dirtyIds: Set<string> = new Set();
+
   // Optional external scroll container (e.g., Obsidian view body)
   public scrollContainer?: Element;
 
@@ -457,6 +460,8 @@ export class VirtualTree {
         if (isSelected) row.classList.add('is-selected'); else row.classList.remove('is-selected');
         if (isFocused) row.classList.add('is-focused'); else row.classList.remove('is-focused');
       }
+      // Clear dirty flags after a successful render
+      this.dirtyIds?.clear?.();
       return;
     }
 
@@ -489,6 +494,8 @@ export class VirtualTree {
       if (isSelected) row.classList.add('is-selected'); else row.classList.remove('is-selected');
       if (isFocused) row.classList.add('is-focused'); else row.classList.remove('is-focused');
     }
+    // Clear dirty flags after a successful render
+    this.dirtyIds?.clear?.();
   }
 
   protected _onRowClick(e: MouseEvent, row: HTMLElement): void {

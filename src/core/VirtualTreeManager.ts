@@ -55,19 +55,9 @@ export class VirtualTreeManager {
     });
   }
 
-  updateOnVaultChange(newPath?: string, oldPath?: string): void {
+  updateOnVaultChange(): void {
     if (!this.vt) return;
-    if (oldPath && newPath) {
-      try {
-        const didRename = this.vt.renamePath(oldPath, newPath);
-        if (didRename) {
-          this.onExpansionChange?.();
-          return;
-        }
-      } catch (e) {
-        debugError('In-place rename failed, will rebuild data:', e);
-      }
-    }
+    // We no longer attempt per-case in-place rename handling; always rebuild via diffed update
 
     const folders = this.app.vault.getAllFolders();
     const files = this.app.vault.getFiles();

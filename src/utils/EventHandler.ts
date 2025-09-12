@@ -30,7 +30,6 @@ export class DendronEventHandler {
         
         // Register event handlers using bound methods to maintain 'this' context
         this.app.vault.on('create', this.handleFileCreate);
-        this.app.vault.on('modify', this.handleFileModify);
         this.app.vault.on('delete', this.handleFileDelete);
         this.app.vault.on('rename', this.handleFileRename);
     }
@@ -40,7 +39,6 @@ export class DendronEventHandler {
      */
     unregisterFileEvents(): void {
         this.app.vault.off('create', this.handleFileCreate);
-        this.app.vault.off('modify', this.handleFileModify);
         this.app.vault.off('delete', this.handleFileDelete);
         this.app.vault.off('rename', this.handleFileRename);
     }
@@ -51,26 +49,14 @@ export class DendronEventHandler {
         this.queueRefresh(file?.path, true, false);
     };
     
-    private handleFileModify = (_file: TAbstractFile) => {
-        // Skip refreshes on file modifications as they don't affect the tree structure
-        // Only create, delete, and rename events should trigger tree refreshes
-        return;
-    };
-    
     private handleFileDelete = (file: TAbstractFile) => {
         // Full rebuild safest for structural delete; allow small debounce
         this.queueRefresh(file?.path, true, false);
     };
 
-    private handleFileRename = (file: TAbstractFile, oldPath: string) => {
-        // Renames should feel instant; bypass queue and notify with oldPath
-        try {
-            const newPath = file?.path;
-            this.refreshCallback(newPath, false, oldPath);
-        } catch {
-            // Fallback to queued refresh
-            this.queueRefresh(file?.path, false, true);
-        }
+    private handleFileRename = (file: TAbstractFile, _oldPath: string) => {
+        // Defer to unified rebuild path; debounce lightly for stability
+        this.queueRefresh(file?.path, false, true);
     };
     
     /**

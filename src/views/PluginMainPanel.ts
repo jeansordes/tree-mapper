@@ -238,10 +238,10 @@ export default class PluginMainPanel extends ItemView {
 
     // Expanded state persistence handled by VirtualTreeManager
 
-    async refresh(changedPath?: string, _forceFullRefresh: boolean = false, oldPath?: string) {
+    async refresh() {
         if (!this.containerEl) return;
         if (this.vtManager) {
-            this.vtManager.updateOnVaultChange(changedPath, oldPath);
+            this.vtManager.updateOnVaultChange();
             // After data updates, ensure the current active file is highlighted
             if (this.activeFile) {
                 this.vtManager.revealPath(this.activeFile.path);
