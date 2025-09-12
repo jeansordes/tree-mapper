@@ -1,3 +1,9 @@
+## [1.12.3](https://github.com/jeansordes/dot-navigator/compare/1.12.2...1.12.3) (2025-09-12)
+
+### Bug Fixes
+
+* **virtualization:** enhance VirtualTree and EventHandler functionality ([2b2c3f5](https://github.com/jeansordes/dot-navigator/commit/2b2c3f55df790cfa2ae825736a5ece695dda0376))
+
 ## [1.12.2](https://github.com/jeansordes/dot-navigator/compare/1.12.1...1.12.2) (2025-09-11)
 
 ### Bug Fixes
