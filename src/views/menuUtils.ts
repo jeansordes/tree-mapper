@@ -3,6 +3,7 @@ import { t } from '../i18n';
 import { FileUtils } from '../utils/FileUtils';
 import type { MoreMenuItem } from '../types';
 import { DEFAULT_MORE_MENU } from '../types';
+import { scrollIntoView } from '../utils/rowState';
 
 export function buildMoreMenu(app: App, path: string, items?: MoreMenuItem[]): Menu {
   const menu = new Menu();
@@ -99,7 +100,14 @@ export function buildMoreMenu(app: App, path: string, items?: MoreMenuItem[]): M
             }
             setTimeout(() => {
               const el = document.getElementById('dotnav-more-menu');
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              if (el) {
+                scrollIntoView({
+                  target: el,
+                  padding: 'var(--dotn_view-padding, 16px)',
+                  smooth: true,
+                  blockAlign: 'start'
+                });
+              }
             }, 100);
           }
         } catch { /* ignore */ }

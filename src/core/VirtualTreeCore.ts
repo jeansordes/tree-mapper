@@ -9,6 +9,7 @@ import {
   observeElementRect,
 } from '@tanstack/virtual-core';
 import { VirtualTreeBaseItem, VirtualTreeItem, VirtualTreeOptions } from '../types';
+import { setRowIndentation, scrollIntoView } from '../utils/rowState';
 import createDebug from 'debug';
 const debug = createDebug('dot-navigator:virtual-tree');
 const debugError = debug.extend('error');
@@ -392,16 +393,14 @@ export class VirtualTree {
   }
 
   private _ensureFocusVisible(): void {
-    const focusTop = this.focusedIndex * this.rowHeight;
-    const focusBottom = focusTop + this.rowHeight;
-    const viewTop = this.container.scrollTop;
-    const viewBottom = viewTop + this.container.clientHeight;
-    
-    if (focusTop < viewTop) {
-      this.container.scrollTop = focusTop;
-    } else if (focusBottom > viewBottom) {
-      this.container.scrollTop = focusBottom - this.container.clientHeight;
-    }
+    scrollIntoView({
+      rowIndex: this.focusedIndex,
+      rowHeight: this.rowHeight,
+      totalRows: this.total,
+      container: this.scrollContainer instanceof HTMLElement ? this.scrollContainer : this.container,
+      padding: 'var(--dotn_view-padding, 16px)',
+      smooth: false // Focus changes should be immediate
+    });
   }
 
   protected _render(): void {
@@ -440,11 +439,8 @@ export class VirtualTree {
         row.classList.remove('is-hidden');
         // Position using TanStack's computed start offset
         row.style.transform = `translateY(${vItem.start}px)`;
-        // Normalize previous level classes
-        for (const cls of Array.from(row.classList)) {
-          if (cls.startsWith('dotn_level-')) row.classList.remove(cls);
-        }
-        row.classList.add(`dotn_level-${item.level}`);
+        // Set dynamic indentation
+        setRowIndentation(row, item.level);
 
         // Minimal data attributes for interactions
         row.dataset.id = item.id;
@@ -481,10 +477,7 @@ export class VirtualTree {
       const item = this.visible[itemIndex];
       row.classList.remove('is-hidden');
       row.style.transform = `translateY(${itemIndex * this.rowHeight}px)`;
-      for (const cls of Array.from(row.classList)) {
-        if (cls.startsWith('dotn_level-')) row.classList.remove(cls);
-      }
-      row.classList.add(`dotn_level-${item.level}`);
+      setRowIndentation(row, item.level);
       row.dataset.id = item.id;
       row.dataset.index = String(itemIndex);
       const isFocused = itemIndex === this.focusedIndex;
@@ -560,11 +553,15 @@ export class VirtualTree {
     if (this._v) {
       try { this._v.scrollToIndex(index, { align: 'auto' }); return; } catch { /* fallthrough */ }
     }
-    const rowTop = index * this.rowHeight;
-    const rowBottom = rowTop + this.rowHeight;
-    const viewTop = this.container.scrollTop;
-    const viewBottom = viewTop + this.container.clientHeight;
-    if (rowTop >= viewTop && rowBottom <= viewBottom) return;
-    this.container.scrollTop = rowTop;
+    
+    // Use unified scrolling function
+    scrollIntoView({
+      rowIndex: index,
+      rowHeight: this.rowHeight,
+      totalRows: this.total,
+      container: this.scrollContainer instanceof HTMLElement ? this.scrollContainer : this.container,
+      padding: 'var(--dotn_view-padding, 16px)',
+      smooth: true
+    });
   }
 }

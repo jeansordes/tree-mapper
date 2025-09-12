@@ -1,6 +1,7 @@
 import type { App } from 'obsidian';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
 import { createActionButtons, createFolderIcon, createIndentGuides, createTitleElement, createToggleButton, maybeCreateExtension, createFileIconOrBadge } from './rowDom';
+import { setRowIndentation } from '../utils/rowState';
 
 export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, itemIndex: number, app: App, startPx?: number): void {
   const isFocused = itemIndex === vt.focusedIndex;
@@ -15,11 +16,8 @@ export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, 
   // Fast path: if same item id and not marked dirty, avoid rebuilding children; just update state
   const isDirty = vt.dirtyIds?.has(item.id) === true;
   if (!isDirty && row.dataset.id === item.id) {
-    // Update level class if changed
-    for (const cls of Array.from(row.classList)) {
-      if (cls.startsWith('dotn_level-')) { row.classList.remove(cls); }
-    }
-    row.classList.add(`dotn_level-${item.level}`);
+    // Update dynamic indentation if changed
+    setRowIndentation(row, item.level);
     if (hasChildren && !isExpanded) row.classList.add('collapsed'); else row.classList.remove('collapsed');
 
     // Ensure presence/absence of the toggle button matches hasChildren
@@ -51,11 +49,9 @@ export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, 
   }
 
   // Full (re)build for a new or dirty item
-  for (const cls of Array.from(row.classList)) {
-    if (cls.startsWith('dotn_level-')) row.classList.remove(cls);
-  }
   row.classList.remove('row');
-  row.classList.add('tree-row', `dotn_level-${item.level}`);
+  row.classList.add('tree-row');
+  setRowIndentation(row, item.level);
 
   if (hasChildren && !isExpanded) row.classList.add('collapsed'); else row.classList.remove('collapsed');
 

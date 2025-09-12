@@ -4,6 +4,7 @@ import type { RowItem, VirtualTreeLike } from './viewTypes';
 import type { MenuItemKind, MoreMenuItem, MoreMenuItemCommand } from '../types';
 import { DEFAULT_MORE_MENU } from '../types';
 import { t } from '../i18n';
+import { scrollIntoView } from '../utils/rowState';
 
 export function handleRowDefaultClick(vt: VirtualTreeLike, item: RowItem, idx: number, id: string, setSelectedId: (id: string) => void): void {
   if (item.kind === 'file') {
@@ -142,7 +143,14 @@ export function handleActionButtonClick(app: App, action: string | null, id: str
 
               setTimeout(() => {
                 const el = document.getElementById('dotnav-more-menu');
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (el) {
+                  scrollIntoView({
+                    target: el,
+                    padding: 'var(--dotn_view-padding, 16px)',
+                    smooth: true,
+                    blockAlign: 'start'
+                  });
+                }
               }, 100);
             }
           } catch { /* ignore */ }

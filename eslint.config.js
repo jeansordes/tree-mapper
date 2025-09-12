@@ -79,10 +79,10 @@ export default [
 					"selector": "AssignmentExpression[left.type='MemberExpression'][left.object.type='MemberExpression'][left.object.property.name='style']:not([left.property.name='transform']):not([left.property.name='width']):not([left.property.name='height'])",
 					"message": "Avoid setting styles via JavaScript; prefer CSS classes and stylesheet rules (transform, width, height allowed).",
 				},
-				// Disallow el.style.setProperty(...) except when setting 'transform', 'width', 'height'
+				// Disallow el.style.setProperty(...) except when setting 'transform', 'width', 'height', or CSS custom properties (--*)
 				{
-					"selector": "CallExpression[callee.property.name='setProperty'][callee.object.property.name='style']:not([arguments.0.value='transform']):not([arguments.0.value='width']):not([arguments.0.value='height'])",
-					"message": "Avoid setting styles via JavaScript; prefer CSS classes and stylesheet rules (transform, width, height allowed).",
+					"selector": "CallExpression[callee.property.name='setProperty'][callee.object.property.name='style']:not([arguments.0.value='transform']):not([arguments.0.value='width']):not([arguments.0.value='height']):not([arguments.0.value=/^--/])",
+					"message": "Avoid setting styles via JavaScript; prefer CSS classes and stylesheet rules (transform, width, height, and CSS custom properties allowed).",
 				},
 				// Optional (warn): discourage vault.trash in favor of app.fileManager.trashFile
 				{
@@ -162,7 +162,7 @@ export default [
 				{ "selector": "CallExpression[callee.property.name='insertAdjacentHTML']", "message": "Avoid insertAdjacentHTML; use DOM APIs or Obsidian helpers." },
 				{ "selector": "CallExpression[callee.property.name='setAttribute'][arguments.0.value='style']", "message": "Avoid inline styles; prefer CSS classes and stylesheet rules." },
 				{ "selector": "AssignmentExpression[left.type='MemberExpression'][left.object.type='MemberExpression'][left.object.property.name='style']:not([left.property.name='transform']):not([left.property.name='width']):not([left.property.name='height'])", "message": "Avoid setting styles via JavaScript; prefer CSS classes and stylesheet rules (transform, width, height allowed)." },
-				{ "selector": "CallExpression[callee.property.name='setProperty'][callee.object.property.name='style']:not([arguments.0.value='transform']):not([arguments.0.value='width']):not([arguments.0.value='height'])", "message": "Avoid setting styles via JavaScript; prefer CSS classes and stylesheet rules (transform, width, height allowed)." },
+				{ "selector": "CallExpression[callee.property.name='setProperty'][callee.object.property.name='style']:not([arguments.0.value='transform']):not([arguments.0.value='width']):not([arguments.0.value='height']):not([arguments.0.value=/^--/])", "message": "Avoid setting styles via JavaScript; prefer CSS classes and stylesheet rules (transform, width, height, and CSS custom properties allowed)." },
 				{ "selector": "CallExpression[callee.property.name='trash'][callee.object.property.name='vault']", "message": "Use app.fileManager.trashFile(file) to respect user preferences." }
 			],
 		},
