@@ -1,3 +1,9 @@
+## [1.12.4](https://github.com/jeansordes/dot-navigator/compare/1.12.3...1.12.4) (2025-09-12)
+
+### Bug Fixes
+
+* use a more robust approach for padding definition of rows + scroll into view works horizontally as well ([2f229ff](https://github.com/jeansordes/dot-navigator/commit/2f229ff59563d6cabb812db1a983d0c947661d0c))
+
 ## [1.12.3](https://github.com/jeansordes/dot-navigator/compare/1.12.2...1.12.3) (2025-09-12)
 
 ### Bug Fixes
