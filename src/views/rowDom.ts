@@ -77,28 +77,25 @@ export function createTitleElement(item: RowItem, app: App): HTMLElement {
   title.setAttribute('data-node-kind', item.kind);
   title.setAttribute('data-path', item.id);
 
-  // Check for YAML custom title
-  const yamlTitle = getYamlTitle(app, item.id);
+  const yamlTitle = item.title ?? getYamlTitle(app, item.id);
 
   if (yamlTitle) {
-    // Create custom title span
     const customTitle = document.createElement('span');
     customTitle.textContent = yamlTitle;
     customTitle.className = 'yaml-custom-title';
 
-    // Create separator
-    const separator = document.createTextNode(' — ');
+    const separator = document.createElement('span');
+    separator.textContent = '·';
+    separator.className = 'yaml-filename mx-2';
 
-    // Create filename span (grayed out)
     const filename = document.createElement('span');
     filename.textContent = item.name;
-    filename.className = 'yaml-filename';
+    filename.className = 'yaml-filename font-italic';
 
     title.appendChild(customTitle);
     title.appendChild(separator);
     title.appendChild(filename);
   } else {
-    // Use original filename display
     title.textContent = item.name;
   }
 
