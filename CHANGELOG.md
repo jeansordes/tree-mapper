@@ -1,3 +1,9 @@
+## [1.13.1](https://github.com/jeansordes/dot-navigator/compare/1.13.0...1.13.1) (2025-09-13)
+
+### Bug Fixes
+
+* **styles:** prevent the settings to apply to global Obsidian UI ([61a75de](https://github.com/jeansordes/dot-navigator/commit/61a75de3319f0b84e26dd3c2e73c4cbc48b93d27))
+
 # [1.13.0](https://github.com/jeansordes/dot-navigator/compare/1.12.4...1.13.0) (2025-09-13)
 
 ### Features
