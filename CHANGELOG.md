@@ -1,3 +1,9 @@
+## [1.14.1](https://github.com/jeansordes/dot-navigator/compare/1.14.0...1.14.1) (2025-09-13)
+
+### Bug Fixes
+
+* **tree:** show original filename with custom title ([#27](https://github.com/jeansordes/dot-navigator/issues/27)) ([40b3b81](https://github.com/jeansordes/dot-navigator/commit/40b3b8120482b6904dfc0c7189fa02079cd4797b))
+
 # [1.14.0](https://github.com/jeansordes/dot-navigator/compare/1.13.2...1.14.0) (2025-09-13)
 
 ### Features
