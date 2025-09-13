@@ -148,6 +148,16 @@
         background-color: unset;
     }
 
+    /* YAML custom title styles */
+    .yaml-custom-title {
+        font-weight: 500;
+    }
+
+    .yaml-filename {
+        color: var(--text-muted);
+        font-weight: 400;
+    }
+
     .dotn_extension {
         line-height: var(--dotn_button-size);
         text-transform: uppercase;

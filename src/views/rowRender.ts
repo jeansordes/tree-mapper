@@ -63,7 +63,7 @@ export function renderRow(vt: VirtualTreeLike, row: HTMLElement, item: RowItem, 
     const ic = createFileIconOrBadge(item);
     if (ic) row.appendChild(ic);
   }
-  row.appendChild(createTitleElement(item));
+  row.appendChild(createTitleElement(item, app));
   const extEl = maybeCreateExtension(item);
   if (extEl) row.appendChild(extEl);
   row.appendChild(createActionButtons(item, app));

@@ -2,6 +2,7 @@ import { App, setIcon } from 'obsidian';
 import { t } from '../i18n';
 import type { RowItem } from './viewTypes';
 import type { VItem } from '../core/virtualData';
+import { getYamlTitle } from '../utils/YamlTitleUtils';
 
 export function createIndentGuides(level: number): HTMLElement {
   const indent = document.createElement('div');
@@ -64,7 +65,7 @@ export function createFileIconOrBadge(item: RowItem): HTMLElement | null {
   return badge;
 }
 
-export function createTitleElement(item: RowItem): HTMLElement {
+export function createTitleElement(item: RowItem, app: App): HTMLElement {
   const titleClass = item.kind === 'virtual'
     ? 'dotn_tree-item-title mod-create-new'
     : item.kind === 'file'
@@ -75,7 +76,32 @@ export function createTitleElement(item: RowItem): HTMLElement {
   title.title = item.id;
   title.setAttribute('data-node-kind', item.kind);
   title.setAttribute('data-path', item.id);
-  title.textContent = item.name;
+
+  // Check for YAML custom title
+  const yamlTitle = getYamlTitle(app, item.id);
+
+  if (yamlTitle) {
+    // Create custom title span
+    const customTitle = document.createElement('span');
+    customTitle.textContent = yamlTitle;
+    customTitle.className = 'yaml-custom-title';
+
+    // Create separator
+    const separator = document.createTextNode(' — ');
+
+    // Create filename span (grayed out)
+    const filename = document.createElement('span');
+    filename.textContent = item.name;
+    filename.className = 'yaml-filename';
+
+    title.appendChild(customTitle);
+    title.appendChild(separator);
+    title.appendChild(filename);
+  } else {
+    // Use original filename display
+    title.textContent = item.name;
+  }
+
   return title;
 }
 

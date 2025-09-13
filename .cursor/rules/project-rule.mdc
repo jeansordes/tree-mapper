@@ -12,3 +12,4 @@ alwaysApply: true
 - Use debug module instead of console.log to log messages to the console
 - Don't add accessibility attributes to the DOM, it's not needed for this plugin
 - When a variable is declared but not used: if it contains a DOM element created with createElement/createEl, keep the creation but remove the variable assignment (e.g., change `const el = parent.createEl('div')` to `parent.createEl('div')` instead of removing the line entirely)
+- If there are too many files in a folder, try to split the folder into smaller folders, and update the imports accordingly

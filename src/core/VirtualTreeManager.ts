@@ -27,7 +27,7 @@ export class VirtualTreeManager {
     const files = this.app.vault.getFiles();
     const tb = new TreeBuilder();
     const root = tb.buildDendronStructure(folders, files);
-    const { data, parentMap } = buildVirtualizedData(root);
+    const { data, parentMap } = buildVirtualizedData(this.app, root);
 
     const gap = computeGap(rootContainer) ?? 4;
     const rowHeight = computeRowHeight(rootContainer) || (24 + gap);
@@ -67,7 +67,7 @@ export class VirtualTreeManager {
     const files = this.app.vault.getFiles();
     const tb = new TreeBuilder();
     const root = tb.buildDendronStructure(folders, files);
-    const { data, parentMap } = buildVirtualizedData(root);
+    const { data, parentMap } = buildVirtualizedData(this.app, root);
     try {
       this.vt.updateData(data, parentMap);
       this.onExpansionChange?.();
