@@ -28,6 +28,18 @@ export function nodeKind(node: TreeNode): Kind {
   return 'virtual';
 }
 
+function rawName(node: TreeNode): string {
+  const base = FileUtils.basename(node.path);
+  if (node.nodeType === TreeNodeType.FOLDER) return base.replace(/ \(\d+\)$/u, '');
+  const matched = base.match(/([^.]+)\.[^.]+$/u);
+  return (matched ? matched[1] : base).replace(/ \(\d+\)$/u, '');
+}
+
+function sortKey(app: App, node: TreeNode): string {
+  const yaml = getYamlTitle(app, node.path);
+  return yaml ?? rawName(node);
+}
+
 export function extOf(path: string): string | undefined {
   const idx = path.lastIndexOf('.');
   return idx > -1 ? path.slice(idx + 1) : undefined;
@@ -66,7 +78,7 @@ export function buildVirtualizedData(app: App, root: TreeNode): VirtualizedData 
     if (node.children && node.children.size > 0) {
       const children: VItem[] = [];
       Array.from(node.children.entries())
-        .sort(([_aKey, aNode], [_bKey, bNode]) => sortKey(aNode).localeCompare(sortKey(bNode)))
+        .sort(([_aKey, aNode], [_bKey, bNode]) => sortKey(app, aNode).localeCompare(sortKey(app, bNode)))
         .forEach(([, child]) => {
           children.push(build(child, node.path));
         });
@@ -78,7 +90,7 @@ export function buildVirtualizedData(app: App, root: TreeNode): VirtualizedData 
 
   const data: VItem[] = [];
   Array.from(root.children.entries())
-    .sort(([_aKey, aNode], [_bKey, bNode]) => sortKey(aNode).localeCompare(sortKey(bNode)))
+    .sort(([_aKey, aNode], [_bKey, bNode]) => sortKey(app, aNode).localeCompare(sortKey(app, bNode)))
     .forEach(([, child]) => data.push(build(child, root.path)));
 
   return { data, parentMap };

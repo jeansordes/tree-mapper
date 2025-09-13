@@ -147,7 +147,7 @@ export class ComplexVirtualTree extends VirtualTree {
       const kindChanged = o.kind !== n.kind;
       const extChanged = (o.extension || '') !== (n.extension || '');
       const nameChanged = o.name !== n.name;
-      const titleChanged = (o.title || '') !== (n.title || '');
+      const titleChanged = o.title !== n.title;
       if (kindChanged || extChanged || nameChanged || titleChanged) dirtyIds.add(id);
     });
 
