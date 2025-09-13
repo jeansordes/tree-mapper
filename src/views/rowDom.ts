@@ -1,8 +1,8 @@
-import { App, setIcon } from 'obsidian';
+import { setIcon } from 'obsidian';
+import type { App } from 'obsidian';
 import { t } from '../i18n';
 import type { RowItem } from './viewTypes';
 import type { VItem } from '../core/virtualData';
-import { getYamlTitle } from '../utils/YamlTitleUtils';
 
 export function createIndentGuides(level: number): HTMLElement {
   const indent = document.createElement('div');
@@ -65,7 +65,7 @@ export function createFileIconOrBadge(item: RowItem): HTMLElement | null {
   return badge;
 }
 
-export function createTitleElement(item: RowItem, app: App): HTMLElement {
+export function createTitleElement(item: RowItem): HTMLElement {
   const titleClass = item.kind === 'virtual'
     ? 'dotn_tree-item-title mod-create-new'
     : item.kind === 'file'
@@ -78,21 +78,21 @@ export function createTitleElement(item: RowItem, app: App): HTMLElement {
   title.setAttribute('data-path', item.id);
 
   // Check for YAML custom title
-  const yamlTitle = getYamlTitle(app, item.id);
-
-  if (yamlTitle) {
+  if (item.title) {
     // Create custom title span
     const customTitle = document.createElement('span');
-    customTitle.textContent = yamlTitle;
+    customTitle.textContent = item.title;
     customTitle.className = 'yaml-custom-title';
 
-    // Create separator
-    const separator = document.createTextNode(' — ');
+    // Create separator dot with spacing
+    const separator = document.createElement('span');
+    separator.textContent = '·';
+    separator.className = 'yaml-filename mx-2';
 
-    // Create filename span (grayed out)
+    // Create filename span with slight transparency and italic style
     const filename = document.createElement('span');
     filename.textContent = item.name;
-    filename.className = 'yaml-filename';
+    filename.className = 'yaml-filename font-italic';
 
     title.appendChild(customTitle);
     title.appendChild(separator);
