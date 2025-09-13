@@ -1,3 +1,9 @@
+# [1.14.0](https://github.com/jeansordes/dot-navigator/compare/1.13.2...1.14.0) (2025-09-13)
+
+### Features
+
+* **yaml:** enhance YAML title support in file display ([d6b7e6d](https://github.com/jeansordes/dot-navigator/commit/d6b7e6d4a6793ae7934fec9333e236b0c0830fc1))
+
 ## [1.13.2](https://github.com/jeansordes/dot-navigator/compare/1.13.1...1.13.2) (2025-09-13)
 
 ### Bug Fixes
