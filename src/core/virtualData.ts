@@ -48,6 +48,18 @@ export function extOf(path: string): string | undefined {
 export function buildVirtualizedData(app: App, root: TreeNode): VirtualizedData {
   const parentMap = new Map<string, string | undefined>();
 
+  function rawName(node: TreeNode): string {
+    const base = FileUtils.basename(node.path);
+    if (node.nodeType === TreeNodeType.FOLDER) return base.replace(/ \(\d+\)$/u, '');
+    const matched = base.match(/([^.]+)\.[^.]+$/u);
+    return (matched ? matched[1] : base).replace(/ \(\d+\)$/u, '');
+  }
+
+  function sortKey(node: TreeNode): string {
+    const yaml = getYamlTitle(app, node.path);
+    return yaml ?? rawName(node);
+  }
+
   function build(node: TreeNode, parentId?: string): VItem {
     parentMap.set(node.path, parentId);
     const yaml = getYamlTitle(app, node.path);
