@@ -469,382 +469,382 @@
 
 /* Rename dialog styles */
 /* Hide modal header and close button when rename dialog is active */
-.modal:has(.rename-dialog-content) .modal-close-button,
-.modal:has(.rename-dialog-content) .modal-header {
-    display: none;
-}
-
 .modal:has(.rename-dialog-content) {
     position: absolute;
     top: 80px;
     width: min(700px, 80vw) !important;
     max-width: 95vw;
+
+    .modal-close-button,
+    .modal-header {
+        display: none;
+    }
+
+    .rename-input-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        flex-wrap: nowrap;
+    }
+    
+    .rename-path-container {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .rename-name-container {
+        display: inline-block;
+    }
+    
+    .rename-path-input,
+    .rename-name-input {
+        display: inline-block;
+        padding: 8px 12px;
+        border: 1px solid var(--background-modifier-border);
+        border-radius: 4px;
+        background: var(--background-primary);
+        color: var(--text-normal);
+        font-size: 14px;
+        min-width: 80px;
+        width: auto;
+    }
+    
+    .rename-path-input:focus,
+    .rename-name-input:focus {
+        outline: none;
+        border-color: var(--interactive-accent);
+        box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+    }
+    
+    .rename-path-input.full-path-selected,
+    .rename-name-input.full-path-selected {
+        background: var(--text-selection);
+        color: var(--text-on-accent);
+        border-color: var(--interactive-accent);
+        box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+    }
+    
+    .rename-extension-display {
+        display: inline-block;
+        font-family: var(--font-monospace);
+        color: var(--text-muted);
+        background: var(--background-secondary);
+        padding: 8px 10px;
+        border-radius: 4px;
+        font-size: 14px;
+        border: 1px solid var(--background-modifier-border);
+        white-space: nowrap;
+        margin-left: 4px;
+    }
+    
+    .rename-mode-container {
+        margin: 12px 0;
+        padding: 0;
+        border: 1px solid var(--background-modifier-border);
+        border-radius: 6px;
+        background: var(--background-secondary);
+        cursor: pointer;
+    }
+    
+    /* Style the Obsidian Setting component inside the rename mode container */
+    .rename-mode-container .setting-item {
+        padding: 12px;
+        border: none;
+        background: transparent;
+    }
+    
+    .rename-mode-container .setting-item-info {
+        margin-right: 12px;
+    }
+    
+    .rename-mode-container .setting-item-name {
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .rename-mode-container .setting-item-description {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+    
+    .rename-path-hint {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin: 0 0 8px 0;
+        padding: 0 12px;
+    }
+    
+    .rename-path-suggestions {
+        background: var(--background-primary);
+        border: 1px solid var(--background-modifier-border);
+        border-radius: 4px;
+        max-height: 150px; /* ~5 rows at 30px each */
+        overflow-y: auto;
+        margin: 8px 0;
+        z-index: 10;
+        position: relative;
+    }
+    
+    .rename-path-suggestions-header {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 6px 12px 4px 12px;
+        border-bottom: 1px solid var(--background-modifier-border);
+        background: var(--background-secondary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .rename-suggestions-icon {
+        display: inline-flex;
+        align-items: center;
+        margin-right: 6px;
+    }
+    
+    .rename-suggestions-icon svg {
+        width: 12px;
+        height: 12px;
+        opacity: 0.7;
+    }
+    
+    .rename-path-suggestion {
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 13px;
+        border-bottom: 1px solid var(--background-modifier-border);
+    }
+    
+    .rename-path-suggestion:last-child {
+        border-bottom: none;
+    }
+    
+    .rename-path-suggestion:hover,
+    .rename-path-suggestion.selected {
+        background-color: var(--background-modifier-hover);
+    }
+    
+    .fuzzy-match-highlight {
+        /* color: var(--color-accent); */
+        font-weight: 900;
+    }
+    
+    .rename-path-suggestions-no-results {
+        padding: 12px;
+        text-align: center;
+        color: var(--text-muted);
+        font-style: italic;
+        font-size: 12px;
+    }
+    
+    .rename-path-hint-text {
+        margin-right: 8px;
+    }
+    
+    .rename-folder-labels {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+    }
+    
+    .rename-folder-label {
+        background: rgba(var(--color-yellow-rgb), 0.2);
+        color: var(--color-yellow);
+        border: 1px solid rgba(var(--color-yellow-rgb), 0.3);
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 500;
+        display: inline-block;
+    }
+    
+    /* Inline Diff Styles */
+    .rename-inline-diff {
+        font-family: var(--font-monospace);
+        font-size: 12px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        padding: 6px 12px;
+    }
+    
+    .diff-unchanged {
+        color: var(--text-normal);
+    }
+    
+    .diff-removed {
+        background: rgba(var(--color-red-rgb), 0.2);
+        color: var(--color-red);
+        text-decoration: line-through;
+    }
+    
+    .diff-added {
+        background: rgba(var(--color-green-rgb), 0.2);
+        color: var(--color-green);
+        font-weight: 500;
+    }
+    
+    /* Children List Styles */
+    .rename-children-container {
+        margin: 12px 0;
+        border: 1px solid var(--background-modifier-border);
+        border-radius: 4px;
+        background: var(--background-secondary);
+    }
+    
+    .rename-children-header {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 6px 12px;
+        border-bottom: 1px solid var(--background-modifier-border);
+        background: var(--background-modifier-border-hover);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .rename-children-icon {
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .rename-children-icon svg {
+        width: 12px;
+        height: 12px;
+        opacity: 0.7;
+    }
+    
+    .rename-children-list {
+        max-height: 150px; /* ~5 rows at 30px each */
+        overflow-y: auto;
+    }
+    
+    .rename-child-item {
+        border-bottom: 1px solid var(--background-modifier-border);
+    }
+    
+    .rename-child-item:last-child {
+        border-bottom: none;
+    }
+    
+    .rename-main-file {
+        background: rgba(var(--color-blue-rgb), 0.03);
+        border-left: 3px solid var(--color-blue);
+    }
+    
+    .rename-file-diff {
+        /* Container for the inline diff */
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .prompt-instructions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid var(--background-modifier-border);
+        font-size: 12px;
+        color: var(--text-muted);
+        gap: 8px;
+    }
+    
+    .prompt-instruction {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .prompt-instruction-command {
+        background: var(--background-secondary);
+        color: var(--text-normal);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: var(--font-monospace);
+        font-size: 11px;
+        font-weight: 500;
+        border: 1px solid var(--background-modifier-border);
+        min-width: 20px;
+        text-align: center;
+    }
+    
+    .prompt-instruction-text {
+        color: var(--text-muted);
+        font-size: 12px;
+    }
+    
+    /* Warning message styles */
+    .rename-warning-message {
+        margin: 8px 0 12px 0;
+        padding: 12px;
+        background: rgba(var(--color-red-rgb), 0.1);
+        border: 1px solid rgba(var(--color-red-rgb), 0.3);
+        border-radius: 6px;
+        border-left: 4px solid var(--color-red);
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+    
+    .rename-warning-icon {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 1px;
+        flex-shrink: 0;
+    }
+    
+    .rename-warning-icon svg {
+        width: 16px;
+        height: 16px;
+        color: var(--color-red);
+    }
+    
+    .rename-warning-content {
+        flex: 1;
+    }
+    
+    .rename-warning-title {
+        color: var(--color-red);
+        font-weight: 600;
+        margin: 0 0 4px 0;
+    }
+    
+    .rename-warning-description {
+        color: var(--text-muted);
+        margin: 0;
+    }
+    
+    /* Built-in badge for settings */
+    .dotn_builtin-badge {
+        display: inline-block;
+        background: var(--interactive-accent);
+        color: var(--text-on-accent);
+        font-size: 0.65rem;
+        font-weight: 500;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-right: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
 }
 
-.is-mobile .modal {
+.is-mobile .modal:has(.rename-dialog-content) {
     left: var(--size-4-3) !important;
     right: var(--size-4-3) !important;
     width: auto !important;
     max-height: min(700px, calc(100vh - var(--safe-area-inset-top) - var(--header-height) - var(--size-4-4)* 2));
-}
-
-.rename-input-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-    flex-wrap: nowrap;
-}
-
-.rename-path-container {
-    position: relative;
-    display: inline-block;
-}
-
-.rename-name-container {
-    display: inline-block;
-}
-
-.rename-path-input,
-.rename-name-input {
-    display: inline-block;
-    padding: 8px 12px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    background: var(--background-primary);
-    color: var(--text-normal);
-    font-size: 14px;
-    min-width: 80px;
-    width: auto;
-}
-
-.rename-path-input:focus,
-.rename-name-input:focus {
-    outline: none;
-    border-color: var(--interactive-accent);
-    box-shadow: 0 0 0 2px var(--interactive-accent-hover);
-}
-
-.rename-path-input.full-path-selected,
-.rename-name-input.full-path-selected {
-    background: var(--text-selection);
-    color: var(--text-on-accent);
-    border-color: var(--interactive-accent);
-    box-shadow: 0 0 0 2px var(--interactive-accent-hover);
-}
-
-.rename-extension-display {
-    display: inline-block;
-    font-family: var(--font-monospace);
-    color: var(--text-muted);
-    background: var(--background-secondary);
-    padding: 8px 10px;
-    border-radius: 4px;
-    font-size: 14px;
-    border: 1px solid var(--background-modifier-border);
-    white-space: nowrap;
-    margin-left: 4px;
-}
-
-.rename-mode-container {
-    margin: 12px 0;
-    padding: 0;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
-    background: var(--background-secondary);
-    cursor: pointer;
-}
-
-/* Style the Obsidian Setting component inside the rename mode container */
-.rename-mode-container .setting-item {
-    padding: 12px;
-    border: none;
-    background: transparent;
-}
-
-.rename-mode-container .setting-item-info {
-    margin-right: 12px;
-}
-
-.rename-mode-container .setting-item-name {
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.rename-mode-container .setting-item-description {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 4px;
-}
-
-.rename-path-hint {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin: 0 0 8px 0;
-    padding: 0 12px;
-}
-
-.rename-path-suggestions {
-    background: var(--background-primary);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    max-height: 150px; /* ~5 rows at 30px each */
-    overflow-y: auto;
-    margin: 8px 0;
-    z-index: 10;
-    position: relative;
-}
-
-.rename-path-suggestions-header {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 6px 12px 4px 12px;
-    border-bottom: 1px solid var(--background-modifier-border);
-    background: var(--background-secondary);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.rename-suggestions-icon {
-    display: inline-flex;
-    align-items: center;
-    margin-right: 6px;
-}
-
-.rename-suggestions-icon svg {
-    width: 12px;
-    height: 12px;
-    opacity: 0.7;
-}
-
-.rename-path-suggestion {
-    padding: 8px 12px;
-    cursor: pointer;
-    font-size: 13px;
-    border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.rename-path-suggestion:last-child {
-    border-bottom: none;
-}
-
-.rename-path-suggestion:hover,
-.rename-path-suggestion.selected {
-    background-color: var(--background-modifier-hover);
-}
-
-.fuzzy-match-highlight {
-    /* color: var(--color-accent); */
-    font-weight: 900;
-}
-
-.rename-path-suggestions-no-results {
-    padding: 12px;
-    text-align: center;
-    color: var(--text-muted);
-    font-style: italic;
-    font-size: 12px;
-}
-
-.rename-path-hint-text {
-    margin-right: 8px;
-}
-
-.rename-folder-labels {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-}
-
-.rename-folder-label {
-    background: rgba(var(--color-yellow-rgb), 0.2);
-    color: var(--color-yellow);
-    border: 1px solid rgba(var(--color-yellow-rgb), 0.3);
-    border-radius: 12px;
-    padding: 2px 8px;
-    font-size: 11px;
-    font-weight: 500;
-    display: inline-block;
-}
-
-/* Inline Diff Styles */
-.rename-inline-diff {
-    font-family: var(--font-monospace);
-    font-size: 12px;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    padding: 6px 12px;
-}
-
-.diff-unchanged {
-    color: var(--text-normal);
-}
-
-.diff-removed {
-    background: rgba(var(--color-red-rgb), 0.2);
-    color: var(--color-red);
-    text-decoration: line-through;
-}
-
-.diff-added {
-    background: rgba(var(--color-green-rgb), 0.2);
-    color: var(--color-green);
-    font-weight: 500;
-}
-
-/* Children List Styles */
-.rename-children-container {
-    margin: 12px 0;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    background: var(--background-secondary);
-}
-
-.rename-children-header {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 6px 12px;
-    border-bottom: 1px solid var(--background-modifier-border);
-    background: var(--background-modifier-border-hover);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.rename-children-icon {
-    display: inline-flex;
-    align-items: center;
-}
-
-.rename-children-icon svg {
-    width: 12px;
-    height: 12px;
-    opacity: 0.7;
-}
-
-.rename-children-list {
-    max-height: 150px; /* ~5 rows at 30px each */
-    overflow-y: auto;
-}
-
-.rename-child-item {
-    border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.rename-child-item:last-child {
-    border-bottom: none;
-}
-
-.rename-main-file {
-    background: rgba(var(--color-blue-rgb), 0.03);
-    border-left: 3px solid var(--color-blue);
-}
-
-.rename-file-diff {
-    /* Container for the inline diff */
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.prompt-instructions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 16px;
-    padding-top: 12px;
-    border-top: 1px solid var(--background-modifier-border);
-    font-size: 12px;
-    color: var(--text-muted);
-    gap: 8px;
-}
-
-.prompt-instruction {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.prompt-instruction-command {
-    background: var(--background-secondary);
-    color: var(--text-normal);
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-family: var(--font-monospace);
-    font-size: 11px;
-    font-weight: 500;
-    border: 1px solid var(--background-modifier-border);
-    min-width: 20px;
-    text-align: center;
-}
-
-.prompt-instruction-text {
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-/* Warning message styles */
-.rename-warning-message {
-    margin: 8px 0 12px 0;
-    padding: 12px;
-    background: rgba(var(--color-red-rgb), 0.1);
-    border: 1px solid rgba(var(--color-red-rgb), 0.3);
-    border-radius: 6px;
-    border-left: 4px solid var(--color-red);
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    font-size: 13px;
-    line-height: 1.4;
-}
-
-.rename-warning-icon {
-    display: inline-flex;
-    align-items: center;
-    margin-top: 1px;
-    flex-shrink: 0;
-}
-
-.rename-warning-icon svg {
-    width: 16px;
-    height: 16px;
-    color: var(--color-red);
-}
-
-.rename-warning-content {
-    flex: 1;
-}
-
-.rename-warning-title {
-    color: var(--color-red);
-    font-weight: 600;
-    margin: 0 0 4px 0;
-}
-
-.rename-warning-description {
-    color: var(--text-muted);
-    margin: 0;
-}
-
-/* Built-in badge for settings */
-.dotn_builtin-badge {
-    display: inline-block;
-    background: var(--interactive-accent);
-    color: var(--text-on-accent);
-    font-size: 0.65rem;
-    font-weight: 500;
-    padding: 2px 6px;
-    border-radius: 10px;
-    margin-right: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
