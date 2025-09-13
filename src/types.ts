@@ -42,6 +42,7 @@ export interface TreeNode {
 export interface VirtualTreeBaseItem {
     id: string;
     name: string;
+    title?: string;
     kind: 'file' | 'folder' | 'virtual';
     // Optional file extension (present for files when available)
     extension?: string;

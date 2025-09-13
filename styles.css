@@ -137,6 +137,7 @@
         margin-left: 0;
         border-radius: var(--dotn_border-radius);
         background-color: var(--dotn_bg-hover);
+        color: var(--dotn_color-text-hover);
     }
     
     .dotn_tree-item-title[data-node-kind="folder"] {
@@ -154,7 +155,7 @@
     }
 
     .yaml-filename {
-        color: var(--text-muted);
+        opacity: 0.6;
         font-weight: 400;
     }
 
