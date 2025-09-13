@@ -1,7 +1,7 @@
 {
 	"id": "dot-navigator",
 	"name": "Dot Navigator",
-	"version": "1.12.4",
+	"version": "1.13.0",
 	"minAppVersion": "0.15.0",
 	"description": "A Dendron-like hierarchical note management system for your vault.",
 	"author": "jeansordes",

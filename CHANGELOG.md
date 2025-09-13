@@ -1,3 +1,9 @@
+# [1.13.0](https://github.com/jeansordes/dot-navigator/compare/1.12.4...1.13.0) (2025-09-13)
+
+### Features
+
+* **rename:** add file/folder rename functionality with dialog UI ([b48812b](https://github.com/jeansordes/dot-navigator/commit/b48812b728f396d1cc7696552971b6d49afd50c4))
+
 ## [1.12.4](https://github.com/jeansordes/dot-navigator/compare/1.12.3...1.12.4) (2025-09-12)
 
 ### Bug Fixes
