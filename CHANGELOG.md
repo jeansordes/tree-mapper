@@ -1,3 +1,9 @@
+## [1.13.2](https://github.com/jeansordes/dot-navigator/compare/1.13.1...1.13.2) (2025-09-13)
+
+### Bug Fixes
+
+* **rename:** improve state management and input navigation ([9cc6253](https://github.com/jeansordes/dot-navigator/commit/9cc6253185442613679a4e06586b64dfdfd78460))
+
 ## [1.13.1](https://github.com/jeansordes/dot-navigator/compare/1.13.0...1.13.1) (2025-09-13)
 
 ### Bug Fixes
