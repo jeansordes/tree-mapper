@@ -30,10 +30,14 @@ export function setupPathAutocomplete(
     allDirectories: string[],
     callbacks: AutocompleteCallbacks
 ): () => AutocompleteState {
-    let suggestionsContainer: HTMLElement | null = null;
-    let suggestionElements: HTMLElement[] = [];
-    let currentSuggestionIndex = -1;
-    let originalTypedValue = '';
+    // Create a mutable state object
+    const state: AutocompleteState = {
+        suggestionsContainer: null,
+        suggestionElements: [],
+        currentSuggestionIndex: -1,
+        originalTypedValue: '',
+        allDirectories
+    };
 
     // Create suggestions container
     const createSuggestionsContainer = (): HTMLElement => {
@@ -45,18 +49,21 @@ export function setupPathAutocomplete(
             inputContainer.insertAdjacentElement('afterend', suggestions);
         }
 
+        state.suggestionsContainer = suggestions;
         return suggestions;
     };
 
     const showSuggestions = (query: string) => {
-        if (!suggestionsContainer) return;
+        if (!state.suggestionsContainer) {
+            return;
+        }
 
         // Clear existing content
-        suggestionsContainer.empty();
+        state.suggestionsContainer.empty();
 
         // Handle empty input
         if (!query.trim()) {
-            const _emptyMsg = suggestionsContainer.createEl('div', {
+            const _emptyMsg = state.suggestionsContainer.createEl('div', {
                 cls: 'rename-path-suggestions-no-results',
                 text: 'Type to search for paths...'
             });
@@ -67,7 +74,7 @@ export function setupPathAutocomplete(
 
         if (matches.length === 0) {
             // Show "no results" message
-            const _noResultsMsg = suggestionsContainer.createEl('div', {
+            const _noResultsMsg = state.suggestionsContainer.createEl('div', {
                 cls: 'rename-path-suggestions-no-results',
                 text: 'No matching paths found'
             });
@@ -75,7 +82,7 @@ export function setupPathAutocomplete(
         }
 
         // Add a header to clarify what the suggestions are for, show result count
-        const header = suggestionsContainer.createEl('div', {
+        const header = state.suggestionsContainer.createEl('div', {
             cls: 'rename-path-suggestions-header'
         });
 
@@ -89,12 +96,12 @@ export function setupPathAutocomplete(
         });
 
         // Reset suggestion tracking
-        suggestionElements = [];
-        currentSuggestionIndex = -1;
+        state.suggestionElements = [];
+        state.currentSuggestionIndex = -1;
 
         // Show all matches, but limit visible items to 10 with scrolling
         matches.forEach((matchResult, index) => {
-            const suggestion = suggestionsContainer!.createEl('div', {
+            const suggestion = state.suggestionsContainer!.createEl('div', {
                 cls: 'rename-path-suggestion'
             });
 
@@ -104,15 +111,15 @@ export function setupPathAutocomplete(
             // Create highlighted version of the match
             suggestion.appendChild(createHighlightedText(matchResult.item, matchResult.matches));
 
-            suggestionElements.push(suggestion);
+            state.suggestionElements.push(suggestion);
 
             suggestion.addEventListener('click', () => {
                 input.value = matchResult.item;
                 callbacks.validatePath();
                 autoResize(input);
                 callbacks.validateAndShowWarning();
-                currentSuggestionIndex = index;
-                updateSuggestionSelection(suggestionElements, index);
+                state.currentSuggestionIndex = index;
+                updateSuggestionSelection(state.suggestionElements, index);
 
                 // Update the diff sections when suggestion is selected
                 const childrenList = container.querySelector('.rename-children-list');
@@ -123,15 +130,14 @@ export function setupPathAutocomplete(
         });
     };
 
-    // Create the suggestions container
-    suggestionsContainer = createSuggestionsContainer();
-
     // Set up event listeners
     input.addEventListener('input', () => {
-        // Reset suggestion navigation when user types
-        currentSuggestionIndex = -1;
-        originalTypedValue = '';
-        showSuggestions(input.value);
+        // Reset suggestion navigation when user types (but not when navigating)
+        if (!input.hasAttribute('data-navigating')) {
+            state.currentSuggestionIndex = -1;
+            state.originalTypedValue = '';
+            showSuggestions(input.value);
+        }
     });
 
     input.addEventListener('focus', () => {
@@ -139,14 +145,11 @@ export function setupPathAutocomplete(
         showSuggestions(input.value);
     });
 
-    // Return a function to get the current state
-    return () => ({
-        suggestionsContainer,
-        suggestionElements,
-        currentSuggestionIndex,
-        originalTypedValue,
-        allDirectories
-    });
+    // Create the suggestions container
+    state.suggestionsContainer = createSuggestionsContainer();
+
+    // Return a function to get the current state (return the state object itself for mutability)
+    return () => state;
 }
 
 /**
@@ -159,14 +162,18 @@ export function navigateSuggestions(
     callbacks: AutocompleteCallbacks,
     container: HTMLElement
 ): AutocompleteState {
-    const { suggestionsContainer, suggestionElements, currentSuggestionIndex, originalTypedValue } = state;
+    const { suggestionElements, currentSuggestionIndex } = state;
 
-    if (suggestionElements.length === 0) return state;
+    if (suggestionElements.length === 0) {
+        return state;
+    }
+
+    // Set navigating flag to prevent input event from resetting navigation
+    input.setAttribute('data-navigating', 'true');
 
     // Store the original typed value if we haven't started navigation yet
-    let newOriginalTypedValue = originalTypedValue;
     if (currentSuggestionIndex === -1) {
-        newOriginalTypedValue = input.value;
+        state.originalTypedValue = input.value;
     }
 
     // Remove current selection
@@ -175,24 +182,23 @@ export function navigateSuggestions(
     }
 
     // Update index (allow going back to original typed value with -1)
-    let newCurrentSuggestionIndex: number;
     if (direction === 'down') {
-        newCurrentSuggestionIndex = Math.min(suggestionElements.length - 1, currentSuggestionIndex + 1);
+        state.currentSuggestionIndex = Math.min(suggestionElements.length - 1, currentSuggestionIndex + 1);
     } else {
-        newCurrentSuggestionIndex = Math.max(-1, currentSuggestionIndex - 1);
+        state.currentSuggestionIndex = Math.max(-1, currentSuggestionIndex - 1);
     }
 
     // Apply new selection
-    updateSuggestionSelection(suggestionElements, newCurrentSuggestionIndex);
+    updateSuggestionSelection(suggestionElements, state.currentSuggestionIndex);
 
     // Apply the selected value to the input
     let valueToApply: string;
-    if (newCurrentSuggestionIndex === -1) {
+    if (state.currentSuggestionIndex === -1) {
         // Back to original typed value
-        valueToApply = newOriginalTypedValue || '';
+        valueToApply = state.originalTypedValue || '';
     } else {
         // Use selected suggestion - get the data-value attribute or text content
-        const selectedElement = suggestionElements[newCurrentSuggestionIndex];
+        const selectedElement = suggestionElements[state.currentSuggestionIndex];
         valueToApply = selectedElement.getAttribute('data-value') || selectedElement.textContent || '';
     }
 
@@ -208,18 +214,15 @@ export function navigateSuggestions(
     }
 
     // Scroll into view if needed (only for actual suggestions, not original value)
-    if (newCurrentSuggestionIndex >= 0) {
-        const selectedElement = suggestionElements[newCurrentSuggestionIndex];
+    if (state.currentSuggestionIndex >= 0) {
+        const selectedElement = suggestionElements[state.currentSuggestionIndex];
         if (selectedElement) {
             selectedElement.scrollIntoView({ block: 'nearest' });
         }
     }
 
-    return {
-        suggestionsContainer,
-        suggestionElements,
-        currentSuggestionIndex: newCurrentSuggestionIndex,
-        originalTypedValue: newOriginalTypedValue,
-        allDirectories: state.allDirectories
-    };
+    // Reset navigating flag after navigation is complete
+    input.removeAttribute('data-navigating');
+
+    return state;
 }

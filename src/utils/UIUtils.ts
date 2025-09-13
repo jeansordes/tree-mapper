@@ -18,7 +18,7 @@ export function autoResize(input: HTMLInputElement): void {
 
     // Add some padding and set minimum width
     const minWidth = input.placeholder.length * 8; // Rough estimate
-    const newWidth = Math.max(minWidth, textWidth + 20); // Add padding
+    const newWidth = Math.max(minWidth, textWidth + 36); // Add padding (20px + 1rem = 16px)
     input.style.width = `${newWidth}px`;
 }
 

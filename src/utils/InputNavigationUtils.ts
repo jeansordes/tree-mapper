@@ -18,7 +18,7 @@ export interface NavigationContext {
     contentEl: HTMLElement;
     data: RenameDialogData;
     modeSelection: RenameMode;
-    autocompleteState: AutocompleteState | null;
+    autocompleteState: AutocompleteState | (() => AutocompleteState | null) | null;
     setAutocompleteState: (state: AutocompleteState | null) => void;
     validatePath: () => void;
     validateAndShowWarning: () => void;
@@ -43,7 +43,7 @@ export function setupInputNavigation(
             const cursorPosition = input.selectionStart || 0;
             const inputLength = input.value.length;
 
-            if (cursorPosition === inputLength) {
+            if (cursorPosition === inputLength && nameInput) {
                 e.preventDefault();
                 nameInput.focus();
                 nameInput.setSelectionRange(0, 0);
@@ -52,7 +52,7 @@ export function setupInputNavigation(
             // At the beginning of name input, jump to end of path input
             const cursorPosition = input.selectionStart || 0;
 
-            if (cursorPosition === 0) {
+            if (cursorPosition === 0 && pathInput) {
                 e.preventDefault();
                 pathInput.focus();
                 const pathLength = pathInput.value.length;
@@ -62,9 +62,18 @@ export function setupInputNavigation(
             // Up arrow in path input: navigate suggestions and update input instantly
             e.preventDefault();
             if (context.autocompleteState) {
+                // Get the current state (either from object or function)
+                const currentState = typeof context.autocompleteState === 'function'
+                    ? context.autocompleteState()
+                    : context.autocompleteState;
+
+                if (!currentState) {
+                    return; // State is null, skip navigation
+                }
+
                 const newState = navigateSuggestions(
                     'up',
-                    context.autocompleteState,
+                    currentState,
                     input,
                     {
                         validatePath: context.validatePath,
@@ -74,14 +83,28 @@ export function setupInputNavigation(
                     context.contentEl
                 );
                 context.setAutocompleteState(newState);
+
+                // Ensure input maintains focus after navigation
+                if (document.activeElement !== input) {
+                    input.focus();
+                }
             }
         } else if (e.key === 'ArrowDown' && isPathInput) {
             // Down arrow in path input: navigate suggestions and update input instantly
             e.preventDefault();
             if (context.autocompleteState) {
+                // Get the current state (either from object or function)
+                const currentState = typeof context.autocompleteState === 'function'
+                    ? context.autocompleteState()
+                    : context.autocompleteState;
+
+                if (!currentState) {
+                    return; // State is null, skip navigation
+                }
+
                 const newState = navigateSuggestions(
                     'down',
-                    context.autocompleteState,
+                    currentState,
                     input,
                     {
                         validatePath: context.validatePath,
@@ -91,6 +114,11 @@ export function setupInputNavigation(
                     context.contentEl
                 );
                 context.setAutocompleteState(newState);
+
+                // Ensure input maintains focus after navigation
+                if (document.activeElement !== input) {
+                    input.focus();
+                }
             }
         }
     });

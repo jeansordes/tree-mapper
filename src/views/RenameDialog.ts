@@ -86,13 +86,15 @@ export class RenameDialog extends Modal {
                 }
             );
             this.autocompleteState = getAutocompleteState();
+
+            // Set up navigation for path input before triggering focus
             setupInputNavigation(this.pathInput, {
                 pathInput: this.pathInput,
-                nameInput: this.nameInput,
+                nameInput: this.nameInput, // This will be undefined but navigation will handle it
                 contentEl,
                 data: this.data,
                 modeSelection: this.modeSelection,
-                autocompleteState: this.autocompleteState,
+                autocompleteState: () => this.autocompleteState, // Use getter to always get current state
                 setAutocompleteState: (state) => { this.autocompleteState = state; },
                 validatePath: () => validatePath(this.pathInput.value, this.app, contentEl),
                 validateAndShowWarning: () => validateAndShowWarning(this.pathInput.value.trim(), this.nameInput.value.trim(), this.data.extension || '', this.data.path, this.app, contentEl),
@@ -197,7 +199,8 @@ export class RenameDialog extends Modal {
         // Focus the name input after a small delay to ensure everything is set up
         setTimeout(() => {
             this.nameInput.focus();
-            this.nameInput.select();
+            // Position cursor at the end of the input instead of selecting all text
+            this.nameInput.setSelectionRange(this.nameInput.value.length, this.nameInput.value.length);
             // Trigger initial validation to check if the current path conflicts
             validateAndShowWarning(this.pathInput.value.trim(), this.nameInput.value.trim(), this.data.extension || '', this.data.path, this.app, contentEl);
         }, 0);
