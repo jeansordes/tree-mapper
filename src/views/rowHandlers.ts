@@ -1,6 +1,7 @@
 import type { App } from 'obsidian';
 import type { RowItem, VirtualTreeLike } from './viewTypes';
 import { handleActionButtonClick, handleTitleClick } from './rowEvents';
+import { RenameManager } from '../utils/RenameManager';
 import createDebug from 'debug';
 const debugError = createDebug('dot-navigator:views:row-handlers:error');
 
@@ -27,7 +28,8 @@ export function onRowClick(
   vt: VirtualTreeLike,
   e: MouseEvent,
   row: HTMLElement,
-  setSelectedId: (id: string) => void
+  setSelectedId: (id: string) => void,
+  renameManager?: RenameManager
 ): void {
   const id = row.dataset.id!;
   const idx = Number(row.dataset.index!);
@@ -45,7 +47,7 @@ export function onRowClick(
   const buttonEl = target.closest('.dotn_button-icon');
   if (buttonEl) {
     const action = buttonEl.getAttribute('data-action');
-    if (action && buttonEl instanceof HTMLElement) handleActionButtonClick(app, action, id, item.kind, vt, buttonEl, e);
+    if (action && buttonEl instanceof HTMLElement) handleActionButtonClick(app, action, id, item.kind, vt, buttonEl, e, renameManager);
     return;
   }
 
@@ -56,7 +58,7 @@ export function onRowClick(
   if (kind) handleTitleClick(app, kind, id, idx, vt, setSelectedId);
 }
 
-export function onRowContextMenu(app: App, vt: VirtualTreeLike, e: MouseEvent, row: HTMLElement): void {
+export function onRowContextMenu(app: App, vt: VirtualTreeLike, e: MouseEvent, row: HTMLElement, renameManager?: RenameManager): void {
   e.preventDefault();
   e.stopPropagation();
   const id = row.dataset.id!;
@@ -66,5 +68,5 @@ export function onRowContextMenu(app: App, vt: VirtualTreeLike, e: MouseEvent, r
   vt.focusedIndex = idx;
   vt.container.focus();
 
-  handleActionButtonClick(app, 'more', id, item.kind, vt, row, e);
+  handleActionButtonClick(app, 'more', id, item.kind, vt, row, e, renameManager);
 }

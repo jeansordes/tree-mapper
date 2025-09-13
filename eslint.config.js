@@ -9,7 +9,7 @@ export default [
 			"main.js",
 			"coverage/**",
 			"coverage",
-			// "scripts/",
+			"scripts/",
 			"esbuild.config.mjs",
 			"jest.config.js",
 			"version-bump.mjs",

@@ -1,6 +1,6 @@
 import { App, ButtonComponent, PluginSettingTab, Setting } from 'obsidian';
 import DotNavigatorPlugin from '../main';
-import { DEFAULT_MORE_MENU, MoreMenuItem, MoreMenuItemCommand } from '../types';
+import { DEFAULT_MORE_MENU, MoreMenuItem, MoreMenuItemCommand, MoreMenuItemBuiltin } from '../types';
 import { CommandSuggestModal } from './CommandSuggest';
 
 export class DotNavigatorSettingTab extends PluginSettingTab {
@@ -30,8 +30,23 @@ export class DotNavigatorSettingTab extends PluginSettingTab {
     builtinOrder.forEach((id, index) => {
       const item = builtinList.find((x) => x.id === id) || builtinList[index];
       const card = builtinWrap.createEl('div', { cls: 'dotn_settings-card' });
-      const header = new Setting(card)
-        .setName(`${index + 1}. ${this.describeItem(item)}`);
+      const header = new Setting(card);
+      
+      // Manually create the name element with badge
+      const nameEl = header.nameEl;
+      nameEl.empty();
+      nameEl.createSpan({ text: `${index + 1}. ` });
+      
+      if (item.type === 'builtin') {
+        nameEl.createSpan({
+          cls: 'dotn_builtin-badge',
+          text: 'Built-in'
+        });
+        nameEl.createSpan({ text: ` ${this.getBuiltinDisplayName(item)}` });
+      } else {
+        nameEl.createSpan({ text: this.describeItem(item) });
+      }
+      
       header.addExtraButton((btn) => {
         btn.setIcon('arrow-up')
           .setTooltip('Move up')
@@ -190,13 +205,17 @@ export class DotNavigatorSettingTab extends PluginSettingTab {
 
   private describeItem(item: MoreMenuItem): string {
     if (item.type === 'builtin') {
-      if (item.builtin === 'create-child') return 'Builtin: Add child note';
-      if (item.builtin === 'delete-file') return 'Builtin: Delete file';
-      if (item.builtin === 'delete-folder') return 'Builtin: Delete folder';
-      if (item.builtin === 'open-closest-parent') return 'Builtin: Open closest parent note';
-      return 'Builtin';
+      return this.getBuiltinDisplayName(item);
     }
     return `Command: ${item.label || item.commandId || '(unnamed)'}`;
+  }
+
+  private getBuiltinDisplayName(item: MoreMenuItemBuiltin): string {
+    if (item.builtin === 'create-child') return 'Add child note';
+    if (item.builtin === 'rename') return 'Rename';
+    if (item.builtin === 'delete') return 'Delete';
+    if (item.builtin === 'open-closest-parent') return 'Open closest parent note';
+    return 'Unknown';
   }
 
   private getBuiltinItems(): MoreMenuItem[] {

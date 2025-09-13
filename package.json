@@ -27,6 +27,7 @@
 		"release:beta": "npm run build && npm run bump:beta && npm run changelog && git add CHANGELOG.md beta-manifest.json && git add . && git commit -m \"chore(release): $(node -p \"require('./package.json').version\")\" && git tag \"$(node -p \"require('./package.json').version\")\" && git push origin master --tags",
 		"test": "jest",
 		"lint": "eslint .",
+		"lint:fn-length": "node scripts/analyze-functions.cjs",
 		"lint:ls": "npm run lint | grep -E '^[^ ]+\\.js|^[^ ]+\\.ts' | awk '{print $1}' | sort | uniq",
 		"lint:open": "scripts/lint-open.sh",
 		"prepare": "husky"

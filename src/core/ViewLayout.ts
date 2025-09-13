@@ -8,6 +8,10 @@ export class ViewLayout {
   private root: HTMLElement;
   private headerEl: HTMLElement | null = null;
   private treeContainer: HTMLElement | null = null;
+  private createHandlers: {
+    onCreateFile?: () => void;
+    onCreateFolder?: () => void;
+  } = {};
 
   constructor(root: HTMLElement) {
     this.root = root;
@@ -81,6 +85,40 @@ export class ViewLayout {
     }
   }
 
+  onCreateFileClick(handler: () => void): void {
+    this.createHandlers.onCreateFile = handler;
+    this._attachCreateFileHandler();
+  }
+
+  onCreateFolderClick(handler: () => void): void {
+    this.createHandlers.onCreateFolder = handler;
+    this._attachCreateFolderHandler();
+  }
+
+  private _attachCreateFileHandler(): void {
+    const header = this.headerEl;
+    const btn = header?.querySelector('.dotn_create-file');
+    if (btn instanceof HTMLElement && this.createHandlers.onCreateFile) {
+      const cloned = btn.cloneNode(true);
+      if (cloned instanceof HTMLElement) {
+        btn.replaceWith(cloned);
+        cloned.addEventListener('click', () => this.createHandlers.onCreateFile?.());
+      }
+    }
+  }
+
+  private _attachCreateFolderHandler(): void {
+    const header = this.headerEl;
+    const btn = header?.querySelector('.dotn_create-folder');
+    if (btn instanceof HTMLElement && this.createHandlers.onCreateFolder) {
+      const cloned = btn.cloneNode(true);
+      if (cloned instanceof HTMLElement) {
+        btn.replaceWith(cloned);
+        cloned.addEventListener('click', () => this.createHandlers.onCreateFolder?.());
+      }
+    }
+  }
+
   updateToggleDisplay(anyExpanded: boolean): void {
     const header = this.headerEl;
     const toggleButton: HTMLElement | null = header?.querySelector('.dotn_tree-toggle-button') || null;
@@ -103,6 +141,24 @@ export class ViewLayout {
   getTreeContainer(): HTMLElement | null { return this.treeContainer; }
 
   private ensureHeaderControls(header: HTMLElement): void {
+    // Create file button
+    if (!header.querySelector('.dotn_create-file')) {
+      const createFileBtn = document.createElement('div');
+      createFileBtn.className = 'dotn_button-icon dotn_create-file';
+      setIcon(createFileBtn, 'file-plus');
+      createFileBtn.setAttribute('title', t('tooltipCreateNewFile'));
+      header.appendChild(createFileBtn);
+    }
+
+    // Create folder button  
+    if (!header.querySelector('.dotn_create-folder')) {
+      const createFolderBtn = document.createElement('div');
+      createFolderBtn.className = 'dotn_button-icon dotn_create-folder';
+      setIcon(createFolderBtn, 'folder-plus');
+      createFolderBtn.setAttribute('title', t('tooltipCreateNewFolder'));
+      header.appendChild(createFolderBtn);
+    }
+
     // Toggle button
     if (!header.querySelector('.dotn_tree-toggle-button')) {
       const toggleButton = document.createElement('div');
@@ -124,5 +180,9 @@ export class ViewLayout {
       revealBtn.setAttribute('title', t('tooltipRevealActiveFile'));
       header.appendChild(revealBtn);
     }
+
+    // Attach handlers if they exist
+    this._attachCreateFileHandler();
+    this._attachCreateFolderHandler();
   }
 }

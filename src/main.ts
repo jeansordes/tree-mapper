@@ -5,12 +5,14 @@ import { FileUtils } from './utils/FileUtils';
 import PluginMainPanel from './views/PluginMainPanel';
 import createDebug from 'debug';
 import { DotNavigatorSettingTab } from './settings/SettingsTab';
+import { RenameManager } from './utils/RenameManager';
 
 const debug = createDebug('dot-navigator:main');
 
 export default class DotNavigatorPlugin extends Plugin {
     settings: PluginSettings;
     private pluginMainPanel: PluginMainPanel | null = null;
+    private renameManager?: RenameManager;
 
     async onload() {
         // Toggle debug output dynamically using debug.enable/disable
@@ -40,6 +42,9 @@ export default class DotNavigatorPlugin extends Plugin {
         
         await this.loadSettings();
 
+        // Initialize rename manager
+        this.renameManager = new RenameManager(this.app);
+
         // Settings tab
         this.addSettingTab(new DotNavigatorSettingTab(this.app, this));
 
@@ -47,7 +52,7 @@ export default class DotNavigatorPlugin extends Plugin {
         this.registerView(
             FILE_TREE_VIEW_TYPE,
             (leaf) => {
-                this.pluginMainPanel = new PluginMainPanel(leaf, this.settings);
+                this.pluginMainPanel = new PluginMainPanel(leaf, this.settings, this.renameManager);
                 return this.pluginMainPanel;
             }
         );
@@ -56,11 +61,25 @@ export default class DotNavigatorPlugin extends Plugin {
             this.activateView();
         });
 
+        // Add rename commands
+        this.addCommand({
+            id: 'undo-last-rename',
+            name: 'Undo Last Rename Operation',
+            callback: () => {
+                if (this.renameManager) {
+                    this.renameManager.undoLastRename();
+                }
+            }
+        });
+
         this.registerCommands();
 
-        // Do not auto-open the view on startup.
-        // The panel will open only when the user clicks the ribbon button or runs the command.
-        // When the view is opened, it will highlight the currently active file on its own.
+        // Auto-open the view on startup if it was previously open
+        this.app.workspace.onLayoutReady(() => {
+            if (this.settings.viewWasOpen) {
+                this.activateView();
+            }
+        });
     }
 
     private registerCommands() {
@@ -143,8 +162,24 @@ export default class DotNavigatorPlugin extends Plugin {
                 return true;
             }
         });
-    }
 
+        // Add a command to rename the current file
+        this.addCommand({
+            id: 'rename-current-file',
+            name: t('commandRename'),
+            checkCallback: (checking: boolean) => {
+                const activeFile = this.app.workspace.getActiveFile();
+                if (!activeFile) return false;
+
+                if (!checking) {
+                    if (this.renameManager) {
+                        this.renameManager.showRenameDialog(activeFile.path, 'file');
+                    }
+                }
+                return true;
+            }
+        });
+    }
 
     async initLeaf(): Promise<WorkspaceLeaf | null> {
         // Always create the view in the left panel
@@ -222,6 +257,30 @@ export default class DotNavigatorPlugin extends Plugin {
                 // Import at runtime to avoid cycle
                 const { DEFAULT_MORE_MENU } = await import('./types');
                 this.settings.builtinMenuOrder = DEFAULT_MORE_MENU.filter(i => i.type === 'builtin').map(i => i.id);
+            }
+
+            // Migrate old separate delete actions to single delete action
+            if (Array.isArray(this.settings.builtinMenuOrder)) {
+                const order = this.settings.builtinMenuOrder;
+                const hasOldDeleteFile = order.includes('builtin-delete-file');
+                const hasOldDeleteFolder = order.includes('builtin-delete-folder');
+                const hasNewDelete = order.includes('builtin-delete');
+                
+                if ((hasOldDeleteFile || hasOldDeleteFolder) && !hasNewDelete) {
+                    // Remove old delete actions and add new one at the first old delete position
+                    const newOrder = order.filter(id => id !== 'builtin-delete-file' && id !== 'builtin-delete-folder');
+                    const firstDeleteIndex = Math.min(
+                        hasOldDeleteFile ? order.indexOf('builtin-delete-file') : Infinity,
+                        hasOldDeleteFolder ? order.indexOf('builtin-delete-folder') : Infinity
+                    );
+                    if (firstDeleteIndex !== Infinity) {
+                        newOrder.splice(firstDeleteIndex, 0, 'builtin-delete');
+                    } else {
+                        newOrder.push('builtin-delete');
+                    }
+                    this.settings.builtinMenuOrder = newOrder;
+                    await this.saveData(this.settings);
+                }
             }
         } catch {
             debug("Settings migration failed; proceeding with defaults");

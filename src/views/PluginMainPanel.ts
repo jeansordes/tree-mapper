@@ -1,10 +1,12 @@
-import { ItemView, TFile, WorkspaceLeaf } from 'obsidian';
+import { ItemView, TFile, WorkspaceLeaf, Notice } from 'obsidian';
 import { t } from '../i18n';
 import { FILE_TREE_VIEW_TYPE, PluginSettings, TREE_VIEW_ICON } from '../types';
 import { DendronEventHandler } from '../utils/EventHandler';
 import { ComplexVirtualTree } from './VirtualizedTree';
 import { ViewLayout } from '../core/ViewLayout';
 import { VirtualTreeManager } from '../core/VirtualTreeManager';
+import { RenameManager } from '../utils/RenameManager';
+import { FileUtils } from '../utils/FileUtils';
 import createDebug from 'debug';
 const debug = createDebug('dot-navigator:views:plugin-main-panel');
 const debugError = debug.extend('error');
@@ -22,6 +24,7 @@ export default class PluginMainPanel extends ItemView {
     private eventHandler: DendronEventHandler;
     private layout: ViewLayout | null = null;
     private vtManager: VirtualTreeManager | null = null;
+    private renameManager?: RenameManager;
     // Debounced saver for expanded state persistence
     private _saveTimer: number | null = null;
     // Snapshot of last known expanded paths to survive VT teardown
@@ -30,10 +33,11 @@ export default class PluginMainPanel extends ItemView {
     // Track initialization to avoid duplicate onOpen work
     private _onOpenCalled: boolean = false;
 
-    constructor(leaf: WorkspaceLeaf, settings: PluginSettings) {
+    constructor(leaf: WorkspaceLeaf, settings: PluginSettings, renameManager?: RenameManager) {
         super(leaf);
         this.instanceId = ++PluginMainPanel.instanceCounter;
         this.settings = settings;
+        this.renameManager = renameManager;
 
         // Lower debounce to make updates feel snappier; structural ops still coalesce
         this.eventHandler = new DendronEventHandler(this.app, this.refresh.bind(this), 120);
@@ -91,7 +95,7 @@ export default class PluginMainPanel extends ItemView {
         this.vtManager = new VirtualTreeManager(this.app, () => {
             this._syncHeaderToggle();
             this._persistExpandedNodesDebounced();
-        });
+        }, this.renameManager);
         this.vtManager.init(viewRoot, this.settings?.expandedNodes);
         // Access internal instance for highlight calls
         this.virtualTree = this.vtManager.getInstance();
@@ -106,6 +110,14 @@ export default class PluginMainPanel extends ItemView {
         this.layout.onRevealClick(() => {
             const file = this.activeFile ?? this.app.workspace.getActiveFile();
             if (file) this.highlightFile(file);
+        });
+
+        // Create buttons
+        this.layout.onCreateFileClick(() => {
+            this.createNewFile();
+        });
+        this.layout.onCreateFolderClick(() => {
+            this.createNewFolder();
         });
 
         // Highlight current file once initial render is ready
@@ -325,5 +337,102 @@ export default class PluginMainPanel extends ItemView {
         this.activeFile = null;
 
         debug('onClose cleanup completed');
+    }
+
+    /**
+     * Create a new file and immediately open rename dialog
+     */
+    private async createNewFile(): Promise<void> {
+        try {
+            debug('Creating new file');
+            
+            // Generate a unique filename
+            let counter = 1;
+            const fileName = t('untitledPath');
+            let fullPath = `${fileName}.md`;
+            
+            while (this.app.vault.getAbstractFileByPath(fullPath)) {
+                fullPath = `${fileName} ${counter}.md`;
+                counter++;
+            }
+            
+            // Create the file
+            const newFile = await this.app.vault.create(fullPath, '');
+            debug('Created file:', fullPath);
+            
+            // Open the file before showing rename dialog
+            await FileUtils.openFile(this.app, newFile);
+            
+            // Refresh the tree to show the new file
+            await this.refresh();
+            
+            // Trigger rename dialog
+            if (this.renameManager) {
+                // Use a small delay to ensure the tree has been refreshed
+                setTimeout(() => {
+                    this.renameManager?.showRenameDialog(fullPath, 'file');
+                }, 100);
+            }
+            
+            new Notice(t('noticeCreatedNote', { path: fullPath }));
+            
+        } catch (error) {
+            debugError('Failed to create new file:', error);
+            new Notice(t('noticeFailedCreateNote', { path: 'new file' }));
+        }
+    }
+
+    /**
+     * Create a new folder and immediately open rename dialog
+     */
+    private async createNewFolder(): Promise<void> {
+        try {
+            debug('Creating new folder');
+            
+            // Generate a unique folder name
+            let counter = 1;
+            const folderName = t('untitledPath');
+            let fullPath = folderName;
+            
+            while (this.app.vault.getAbstractFileByPath(fullPath)) {
+                fullPath = `${folderName} ${counter}`;
+                counter++;
+            }
+            
+            // Create the folder
+            await this.app.vault.createFolder(fullPath);
+            debug('Created folder:', fullPath);
+            
+            // Ensure the folder is properly registered in the vault before proceeding
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            // Verify the folder exists before refreshing
+            const createdFolder = this.app.vault.getAbstractFileByPath(fullPath);
+            if (!createdFolder) {
+                throw new Error(`Failed to create folder: ${fullPath}`);
+            }
+            
+            // Refresh the tree to show the new folder
+            await this.refresh();
+            
+            // Trigger rename dialog with a longer delay to ensure everything is ready
+            if (this.renameManager) {
+                setTimeout(() => {
+                    // Double-check the folder still exists before showing rename dialog
+                    const folderCheck = this.app.vault.getAbstractFileByPath(fullPath);
+                    if (folderCheck) {
+                        this.renameManager?.showRenameDialog(fullPath, 'folder');
+                    } else {
+                        debugError('Folder disappeared before rename dialog could open:', fullPath);
+                    }
+                }, 150);
+            }
+            
+            new Notice(`Created folder: ${fullPath}`);
+            
+        } catch (error) {
+            debugError('Failed to create new folder:', error);
+            new Notice(`Failed to create folder: ${error instanceof Error ? error.message : String(error)}`);
+        }
     }
 } 

@@ -1,11 +1,19 @@
 import { App, Menu, TFile, TFolder, Platform } from 'obsidian';
+
+interface ObsidianInternalApp extends App {
+  setting?: {
+    open(): Promise<void>;
+    openTabById(id: string): void;
+  };
+}
 import { t } from '../i18n';
 import { FileUtils } from '../utils/FileUtils';
 import type { MoreMenuItem } from '../types';
 import { DEFAULT_MORE_MENU } from '../types';
 import { scrollIntoView } from '../utils/rowState';
+import { RenameManager } from '../utils/RenameManager';
 
-export function buildMoreMenu(app: App, path: string, items?: MoreMenuItem[]): Menu {
+export function buildMoreMenu(app: App, path: string, items?: MoreMenuItem[], renameManager?: RenameManager): Menu {
   const menu = new Menu();
   const af = app.vault.getAbstractFileByPath(path);
   const kind = af instanceof TFile ? 'file' : (af ? 'folder' : 'virtual');
@@ -24,28 +32,26 @@ export function buildMoreMenu(app: App, path: string, items?: MoreMenuItem[]): M
             .setIcon(it.icon || 'rotate-cw-square')
             .onClick(async () => { await FileUtils.createChildNote(app, path); });
         });
-      } else if (it.builtin === 'delete-file') {
-        if (!(af instanceof TFile)) continue;
+      } else if (it.builtin === 'delete') {
+        if (!(af instanceof TFile) && !(af instanceof TFolder)) continue;
+        const isFile = af instanceof TFile;
+        const title = isFile ? t('menuDeleteFile') : t('menuDeleteFolder');
+        
         menu.addItem((mi) => {
-          mi.setTitle(t('menuDeleteFile'))
-            .setIcon(it.icon || 'trash-2')
-            .onClick(async () => { await app.fileManager.trashFile(af); });
-          try {
-            if (Platform.isMobile) {
-              const maybeDom = Reflect.get(mi, 'dom');
-              const el = maybeDom instanceof HTMLElement ? maybeDom : undefined;
-              if (el) el.classList.add('tappable', 'is-warning');
-            }
-          } catch { /* ignore */ }
-        });
-      } else if (it.builtin === 'delete-folder') {
-        if (!(af instanceof TFolder)) continue;
-        menu.addItem((mi) => {
-          mi.setTitle(t('menuDeleteFolder'))
+          mi.setTitle(title)
             .setIcon(it.icon || 'trash-2')
             .onClick(async () => {
-              try { await app.fileManager.trashFile(af); }
-              catch { try { await app.vault.delete(af, true); } catch { /* ignore */ } }
+              if (isFile) {
+                await app.fileManager.trashFile(af);
+              } else {
+                try { 
+                  await app.fileManager.trashFile(af); 
+                } catch { 
+                  try { 
+                    await app.vault.delete(af, true); 
+                  } catch { /* ignore */ } 
+                }
+              }
             });
           try {
             if (Platform.isMobile) {
@@ -54,6 +60,16 @@ export function buildMoreMenu(app: App, path: string, items?: MoreMenuItem[]): M
               if (el) el.classList.add('tappable', 'is-warning');
             }
           } catch { /* ignore */ }
+        });
+      } else if (it.builtin === 'rename') {
+        menu.addItem((mi) => {
+          mi.setTitle(t('menuRename'))
+            .setIcon(it.icon || 'edit-3')
+            .onClick(async () => {
+              if (renameManager) {
+                await renameManager.showRenameDialog(path, kind);
+              }
+            });
         });
       } else if (it.builtin === 'open-closest-parent') {
         if (!(af instanceof TFile)) continue;
@@ -88,16 +104,14 @@ export function buildMoreMenu(app: App, path: string, items?: MoreMenuItem[]): M
     mi.setTitle(t('settingsAddCustomCommandLink') || 'Customize menu…')
       .onClick(async () => {
         try {
-          const plugins = Reflect.get(app, 'plugins');
-          const plugin = plugins?.getPlugin?.('dot-navigator');
-          if (plugin && typeof plugin === 'object') {
-            const settingsTab = Reflect.get(plugin, 'settingTab') ?? Reflect.get(plugin, 'settingsTab');
-            if (settingsTab && typeof settingsTab.open === 'function') {
-              settingsTab.open();
-            } else {
-              const settingObj = Reflect.get(app, 'setting');
-              if (settingObj && typeof settingObj.open === 'function') settingObj.open();
+          // Use the proper Obsidian API to open settings and navigate to plugin tab
+          const setting = (app as ObsidianInternalApp).setting;
+          if (setting && typeof setting.open === 'function') {
+            await setting.open();
+            if (typeof setting.openTabById === 'function') {
+              setting.openTabById('dot-navigator');
             }
+
             setTimeout(() => {
               const el = document.getElementById('dotnav-more-menu');
               if (el) {
@@ -146,7 +160,9 @@ export function getConfiguredMenuItems(app: App): MoreMenuItem[] {
 export function shouldShowFor(item: MoreMenuItem, kind: 'file' | 'folder' | 'virtual'): boolean {
   const show = item?.showFor && item.showFor.length > 0 ? item.showFor : undefined;
   if (!show) {
-    if (item?.type === 'builtin') return item.builtin === 'create-child' ? true : kind === 'file';
+    if (item?.type === 'builtin') {
+      return item.builtin === 'create-child' || item.builtin === 'delete' ? true : kind === 'file';
+    }
     return kind === 'file';
   }
   return show.includes(kind);

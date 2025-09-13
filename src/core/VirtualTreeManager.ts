@@ -2,6 +2,7 @@ import { App } from 'obsidian';
 import { ComplexVirtualTree } from '../views/VirtualizedTree';
 import { TreeBuilder } from '../utils/TreeBuilder';
 import { buildVirtualizedData } from './virtualData';
+import { RenameManager } from '../utils/RenameManager';
 import createDebug from 'debug';
 const debug = createDebug('dot-navigator:core:virtual-tree-manager');
 const debugError = debug.extend('error');
@@ -12,10 +13,12 @@ export class VirtualTreeManager {
   private vt: ComplexVirtualTree | null = null;
   private onExpansionChange?: () => void;
   private rootContainer?: HTMLElement;
+  private renameManager?: RenameManager;
 
-  constructor(app: App, onExpansionChange?: () => void) {
+  constructor(app: App, onExpansionChange?: () => void, renameManager?: RenameManager) {
     this.app = app;
     this.onExpansionChange = onExpansionChange;
+    this.renameManager = renameManager;
   }
 
   init(rootContainer: HTMLElement, expanded?: string[]): void {
@@ -43,6 +46,7 @@ export class VirtualTreeManager {
       app: this.app,
       gap,
       onExpansionChange: () => this.onExpansionChange?.(),
+      renameManager: this.renameManager,
     });
     this.vt.setParentMap(parentMap);
     if (expanded && expanded.length) this.vt.setExpanded(expanded);

@@ -18,7 +18,6 @@ This tool brings hierarchical note management capabilities to your vault, inspir
 
 <img width="2810" height="2339" alt="CleanShot 2025-09-10 at 03 15 52@2x" src="https://github.com/user-attachments/assets/f7528d55-758f-4656-a54b-d828614e86bb" />
 
-
 ## Installation
 
 Until the plugin is officially released, you can install it through BRAT (Beta Review and Testing)

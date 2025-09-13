@@ -11,3 +11,4 @@ alwaysApply: true
 - You don't need to run tests or build, simply use the linting to check for errors
 - Use debug module instead of console.log to log messages to the console
 - Don't add accessibility attributes to the DOM, it's not needed for this plugin
+- When a variable is declared but not used: if it contains a DOM element created with createElement/createEl, keep the creation but remove the variable assignment (e.g., change `const el = parent.createEl('div')` to `parent.createEl('div')` instead of removing the line entirely)

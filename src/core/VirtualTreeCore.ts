@@ -33,7 +33,6 @@ export class VirtualTree {
   private _onScroll: () => void;
   // Store the exact scroll handler we add so we can remove it later
   private _scrollHandler?: () => void;
-  private _onKeyDown: (e: KeyboardEvent) => void;
 
   // IDs of items that must be fully re-rendered on next paint
   public dirtyIds: Set<string> = new Set();
@@ -111,8 +110,6 @@ export class VirtualTree {
     this._onScroll = () => {
       try { this._v?.measure(); } catch { /* ignore */ }
     };
-    this._onKeyDown = (e: KeyboardEvent) => this._handleKeyDown(e);
-    this.container.addEventListener('keydown', this._onKeyDown);
 
     // Initialize TanStack Virtualizer
     this._initVirtualizer();
@@ -320,89 +317,6 @@ export class VirtualTree {
     this._v?._willUpdate();
   }
 
-  private _handleKeyDown(e: KeyboardEvent): void {
-    if (this.total === 0) return;
-    
-    let handled = true;
-    const oldIndex = this.focusedIndex;
-    
-    switch (e.key) {
-      case 'ArrowDown':
-        this.focusedIndex = Math.min(this.focusedIndex + 1, this.total - 1);
-        break;
-      case 'ArrowUp':
-        this.focusedIndex = Math.max(this.focusedIndex - 1, 0);
-        break;
-      case 'Home':
-        this.focusedIndex = 0;
-        break;
-      case 'End':
-        this.focusedIndex = this.total - 1;
-        break;
-      case 'PageDown':
-        this.focusedIndex = Math.min(this.focusedIndex + this.visibleCount, this.total - 1);
-        break;
-      case 'PageUp':
-        this.focusedIndex = Math.max(this.focusedIndex - this.visibleCount, 0);
-        break;
-      case 'ArrowRight':
-        if (this.focusedIndex >= 0 && this.focusedIndex < this.total) {
-          const item = this.visible[this.focusedIndex];
-          if (item.kind === 'folder' && !this.expanded.get(item.id)) {
-            this.expand(item.id);
-            this.onOpen(item);
-          }
-        }
-        break;
-      case 'ArrowLeft':
-        if (this.focusedIndex >= 0 && this.focusedIndex < this.total) {
-          const item = this.visible[this.focusedIndex];
-          if (item.kind === 'folder' && this.expanded.get(item.id)) {
-            this.collapse(item.id);
-          }
-        }
-        break;
-      case 'Enter':
-      case ' ':
-        if (this.focusedIndex >= 0 && this.focusedIndex < this.total) {
-          const item = this.visible[this.focusedIndex];
-          if (item.kind === 'folder') {
-            this.toggle(item.id);
-            this.onOpen(item);
-          } else {
-            this.selectedIndex = this.focusedIndex;
-            this.onSelect(item);
-          }
-        }
-        break;
-      default:
-        handled = false;
-        break;
-    }
-    
-    if (handled) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      if (this.focusedIndex !== oldIndex) {
-        // Ensure focused item is visible
-        this._ensureFocusVisible();
-        this._render();
-      }
-    }
-  }
-
-  private _ensureFocusVisible(): void {
-    scrollIntoView({
-      rowIndex: this.focusedIndex,
-      rowHeight: this.rowHeight,
-      totalRows: this.total,
-      container: this.scrollContainer instanceof HTMLElement ? this.scrollContainer : this.container,
-      padding: 'var(--dotn_view-padding, 16px)',
-      smooth: false // Focus changes should be immediate
-    });
-  }
-
   protected _render(): void {
     const v = this._v;
     if (v) {
@@ -517,9 +431,6 @@ export class VirtualTree {
     if (this._scrollHandler) {
       this.container.removeEventListener('scroll', this._scrollHandler);
       this._scrollHandler = undefined;
-    }
-    if (this._onKeyDown) {
-      this.container.removeEventListener('keydown', this._onKeyDown);
     }
     if (this._vunsub) {
       try { this._vunsub(); } catch { /* ignore */ }

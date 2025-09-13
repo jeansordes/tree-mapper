@@ -148,13 +148,11 @@ export function scrollIntoView(options: UnifiedScrollOptions): void {
     const targetTop = targetRect.top - containerRect.top + currentScrollTop;
     const targetLeft = targetRect.left - containerRect.left + currentScrollLeft;
     const targetBottom = targetTop + targetRect.height;
-    const targetRight = targetLeft + targetRect.width;
-    
+
     // Calculate visible area with padding
     const visibleTop = currentScrollTop + paddingPx;
     const visibleLeft = currentScrollLeft + paddingPx;
     const visibleBottom = currentScrollTop + scrollContainer.clientHeight - paddingPx;
-    const visibleRight = currentScrollLeft + scrollContainer.clientWidth - paddingPx;
     
     // Vertical scrolling (only if not already handled by rowIndex)
     if (typeof rowIndex !== 'number') {
@@ -171,8 +169,6 @@ export function scrollIntoView(options: UnifiedScrollOptions): void {
     // Horizontal scrolling (always handled by element)
     if (inlineAlign === 'start' || (inlineAlign === 'auto' && targetLeft < visibleLeft)) {
       newScrollLeft = Math.max(0, targetLeft - paddingPx);
-    } else if (inlineAlign === 'end' || (inlineAlign === 'auto' && targetRight > visibleRight)) {
-      newScrollLeft = Math.max(0, targetRight - scrollContainer.clientWidth + paddingPx);
     } else if (inlineAlign === 'center') {
       const centerX = targetLeft + (targetRect.width / 2) - (scrollContainer.clientWidth / 2);
       newScrollLeft = Math.max(0, centerX);

@@ -20,7 +20,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     expandedNodes: [],
     moreMenuItems: undefined,
     builtinMenuOrder: undefined,
-    userMenuItems: []
+    userMenuItems: [],
+    viewWasOpen: true // Auto-open the panel on first install
 }
 
 export enum TreeNodeType {
@@ -82,7 +83,7 @@ export interface MoreMenuItemBase {
 
 export interface MoreMenuItemBuiltin extends MoreMenuItemBase {
     type: 'builtin';
-    builtin: 'create-child' | 'delete-file' | 'delete-folder' | 'open-closest-parent';
+    builtin: 'create-child' | 'delete' | 'open-closest-parent' | 'rename';
 }
 
 export interface MoreMenuItemCommand extends MoreMenuItemBase {
@@ -102,6 +103,13 @@ export const DEFAULT_MORE_MENU: MoreMenuItem[] = [
         showFor: ['file', 'folder', 'virtual']
     },
     {
+        id: 'builtin-rename',
+        type: 'builtin',
+        builtin: 'rename',
+        icon: 'edit-3',
+        showFor: ['file', 'folder', 'virtual']
+    },
+    {
         id: 'builtin-open-closest-parent',
         type: 'builtin',
         builtin: 'open-closest-parent',
@@ -109,19 +117,48 @@ export const DEFAULT_MORE_MENU: MoreMenuItem[] = [
         showFor: ['file']
     },
     {
-        id: 'builtin-delete-file',
+        id: 'builtin-delete',
         type: 'builtin',
-        builtin: 'delete-file',
+        builtin: 'delete',
         icon: 'trash-2',
         section: 'danger',
-        showFor: ['file']
-    },
-    {
-        id: 'builtin-delete-folder',
-        type: 'builtin',
-        builtin: 'delete-folder',
-        icon: 'trash-2',
-        section: 'danger',
-        showFor: ['folder']
+        showFor: ['file', 'folder']
     }
 ];
+
+// Rename functionality types
+export enum RenameMode {
+    FILE_ONLY = 'file-only',
+    FILE_AND_CHILDREN = 'file-and-children'
+}
+
+export interface RenameOptions {
+    originalPath: string;
+    newPath: string;
+    newTitle: string;
+    mode: RenameMode;
+    kind: MenuItemKind;
+}
+
+export interface RenameProgress {
+    total: number;
+    completed: number;
+    successful: number;
+    failed: number;
+    errors: Array<{ path: string; error: string }>;
+}
+
+export interface RenameOperation {
+    originalPath: string;
+    newPath: string;
+    success: boolean;
+    error?: string;
+}
+
+export interface RenameDialogData {
+    path: string;
+    title: string;
+    extension?: string;
+    kind: MenuItemKind;
+    children?: string[];
+}

@@ -12,6 +12,7 @@ import { expandAllInData } from './treeOps';
 import { setupAttachment, attachToViewBodyImpl } from './attachUtils';
 import { collapseAll as collapseAllAction, revealPath as revealAction, selectPath as selectPathAction } from './treeActions';
 import { bindRowHandlers, onRowClick as handleRowClick, onRowContextMenu as handleRowContextMenu } from './rowHandlers';
+import { RenameManager } from '../utils/RenameManager';
 // import { updateInstanceStyles } from './styleSheet';
 
 export class ComplexVirtualTree extends VirtualTree {
@@ -34,6 +35,8 @@ export class ComplexVirtualTree extends VirtualTree {
   private _dbgLastEnd = -1;
   private _dbgLastScroll = -1;
   private _dbgLastLog = 0;
+  // Rename manager
+  private _renameManager?: RenameManager;
 
   // Cast this to access VirtualTree properties with proper typing
   private get virtualTree(): VirtualTreeLike {
@@ -41,7 +44,7 @@ export class ComplexVirtualTree extends VirtualTree {
     return this as unknown as VirtualTreeLike;
   }
 
-  constructor(options: { container: HTMLElement; data: VItem[]; rowHeight?: number; buffer?: number; app: App; gap?: number; onExpansionChange?: () => void }) {
+  constructor(options: { container: HTMLElement; data: VItem[]; rowHeight?: number; buffer?: number; app: App; gap?: number; onExpansionChange?: () => void; renameManager?: RenameManager }) {
     // VirtualTree constructor expects specific parameters, we need to cast to satisfy TypeScript
     const constructorOptions: VirtualTreeOptions = {
       container: options.container,
@@ -54,6 +57,7 @@ export class ComplexVirtualTree extends VirtualTree {
     this.app = options.app;
     if (typeof options.gap === 'number' && options.gap >= 0) this._gap = options.gap;
     this._onExpansionChange = options.onExpansionChange;
+    this._renameManager = options.renameManager;
 
     setupAttachment({
       container: options.container,
@@ -216,7 +220,7 @@ export class ComplexVirtualTree extends VirtualTree {
 
   // Override row click handling to support toggle/create/open
   public _onRowClick(e: MouseEvent, row: HTMLElement): void {
-    handleRowClick(this.app, this.virtualTree, e, row, (sid) => { this._selectedId = sid; });
+    handleRowClick(this.app, this.virtualTree, e, row, (sid) => { this._selectedId = sid; }, this._renameManager);
   }
 
   // Forwarders that notify expansion changes so the header button stays in sync
@@ -252,7 +256,7 @@ export class ComplexVirtualTree extends VirtualTree {
 
   // Right-click handler: open the More menu for the row
   private _onRowContextMenu(e: MouseEvent, row: HTMLElement): void {
-    handleRowContextMenu(this.app, this.virtualTree, e, row);
+    handleRowContextMenu(this.app, this.virtualTree, e, row, this._renameManager);
   }
 
   // Override render to use TanStack Virtual items when available
