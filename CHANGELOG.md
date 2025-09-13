@@ -1,3 +1,9 @@
+## [1.14.2](https://github.com/jeansordes/dot-navigator/compare/1.14.1...1.14.2) (2025-09-13)
+
+### Bug Fixes
+
+* **tree:** restore YAML title rendering ([#28](https://github.com/jeansordes/dot-navigator/issues/28)) ([fec593b](https://github.com/jeansordes/dot-navigator/commit/fec593bc28d0a6441313d8560a51985d4ad3e404))
+
 ## [1.14.1](https://github.com/jeansordes/dot-navigator/compare/1.14.0...1.14.1) (2025-09-13)
 
 ### Bug Fixes
